@@ -37,6 +37,8 @@ Para birimleri: TRY (baz), EUR, USD — TCMB kurlarıyla otomatik türetme + man
 | Branch, commit, PR ve merge kuralları | `docs/git.md` |
 | Test stratejisi, kanıt ve CI beklentileri | `docs/testing.md` |
 | Frontend konvansiyonları (web + admin-web) | `docs/frontend.md` |
+| Roller | `docs/roles/` — oturum açılışında rolünü üstlen. |
+| Sorun protokolleri | `docs/ap.md` — AP kodlarının çözümü. |
 | Spec şablonu | `specs/TEMPLATE.md` |
 | Tamamlanmış spec'ler + görsel kanıtlar | `specs/done/` |
 
