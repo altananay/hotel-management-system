@@ -2,8 +2,9 @@
 
 Definition of Done'ı karşılanan spec dosyaları buraya taşınır.
 
-- **Spec dosyası:** `specs/done/<####>-<kısa-ad>.md`
-- **Görsel kanıtlar:** `specs/done/evidence/<####>/AC-n-<kısa-ad>.png`
+- **Spec dosyası:** `specs/done/<####>-<english-name>.md`
+- **Görsel kanıtlar:** `specs/done/evidence/<####>/AC-n-<english-name>.png`
+- **İsimlendirme:** İngilizce kebab-case (bkz. `docs/conventions.md` §1); spec içerikleri Türkçe.
 - Taşımadan önce SCORECARD alanı doldurulmuş olmalıdır (bkz. `specs/TEMPLATE.md`).
 
 Kurallar:

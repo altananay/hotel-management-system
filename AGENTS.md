@@ -17,7 +17,7 @@ Para birimleri: TRY (baz), EUR, USD — TCMB kurlarıyla otomatik türetme + man
 
 ## Altın Kurallar (7)
 
-1. **Spec'siz iş yok.** Her feature `specs/<####>-<kısa-ad>.md` spec'iyle başlar; kabul kriterleri yazılmadan kod yazılmaz. Branch: `feature/<spec-no>-<kısa-ad>` (yalnız `releasable`'dan). → `docs/git.md`
+1. **Spec'siz iş yok.** Her feature `specs/<####>-<english-name>.md` spec'iyle başlar; kabul kriterleri yazılmadan kod yazılmaz. Branch: `feature/<spec-no>-<english-name>` (yalnız `releasable`'dan). İsimler İngilizce kebab-case; içerik Türkçe. → `docs/git.md`, `docs/conventions.md`
 2. **Sınıra saygı.** Modüller ve uygulamalar birbirine yalnızca public API üzerinden erişir; tabloya, internal tipe, karşı tarafın veritabanına doğrudan erişim yasaktır. admin-web hiçbir DB/sırrı görmez; iş verisi yalnız hotel-api'de yaşar. → `docs/architecture.md` §Yasaklar
 3. **Para ve yüzde her zaman BigDecimal.** `double`/`float` yasak. Tutar her yerde para birimini taşır; yuvarlama gizli varsayımla değil, açık kuralla uygulanır. → `docs/conventions.md`
 4. **Öneri kuralı.** Soru, seçenek, bulgu veya açık konu getiren; kendi önerisini ve gerekçesini de getirir. Kararı Takım Yöneticisi verir; onaylanmamış öneri uygulanmaz.
@@ -42,7 +42,7 @@ Para birimleri: TRY (baz), EUR, USD — TCMB kurlarıyla otomatik türetme + man
 
 ## Çalışma Disiplini
 
-- **Roller:** *Takım Yöneticisi* karar verir ve onaylar (insan). Ajanlar ekip üyesi gibi çalışır: geliştirici, gözden geçiren, test eden. Ajan commit'leri de aynı standarda uyar; mesajı yazan üye, onayı Takım Yöneticisi verir.
+- **Roller:** *Takım Yöneticisi* karar verir ve onaylar (insan). Ajanlar ekip üyesi gibi çalışır: analist (spec yazar), geliştirici, gözden geçiren, test eden. Ajan commit'leri de aynı standarda uyar; mesajı yazan üye, onayı Takım Yöneticisi verir.
 - **Başlamadan önce:** ilgili spec'i ve dokümanı oku. Spec kapsamı dışına taşan iş → yeni spec.
 - **Küçük adımlar:** spec'teki adımlara bağlı, küçük commit'ler.
 - **Bloke olunca:** dur ve sor — soru + öneri + gerekçe (Altın Kural 4).

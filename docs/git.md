@@ -9,14 +9,15 @@
   - **`releasable` = PROD ortamının branchidir.**
   - `main`/`master` = yalnızca korumalı başlangıç noktasıdır; geliştirme yapılmaz.
 - İlk kurulumda `master`'dan boş `integration` ve `releasable` açılır; üçü de korumaya alınır.
-- **Her geliştirme, `releasable` üzerinden açılan `feature/<spec-no>-<kısa-ad>` branch'inde yapılır.**
-  - Örnek: `feature/0007-oda-listeleme`
+- **Her geliştirme, `releasable` üzerinden açılan `feature/<spec-no>-<english-name>` branch'inde yapılır.**
+  - İsimler İngilizce + kebab-case'dir (spec dosya adıyla aynı); içerik Türkçe'dir.
+  - Örnek: `feature/0007-room-listing`
 - **SPEC'SİZ BRANCH AÇILMAZ.** Branch adındaki numara, `specs/` altındaki spec numarasıdır.
 
 ## 2. Akış
 
 ```
-feature/<spec-no>-<ad>  ──PR (squash)──►  integration (TEST)  ──doğrulama──►  releasable (PROD)
+feature/<spec-no>-<english-name>  ──PR (squash)──►  integration (TEST)  ──doğrulama──►  releasable (PROD)
         ▲                                                                          │
         └──────────────────────── yeni feature, releasable'dan açılır ────────────┘
 ```

@@ -21,7 +21,7 @@
 
 ## 3. Arayüz: Görsel Kanıt + Smoke
 
-- Her mini-spec kriteri için ekran görüntüsü alınır: `specs/done/evidence/<####>/AC-n-<kısa-ad>.png`
+- Her mini-spec kriteri için ekran görüntüsü alınır: `specs/done/evidence/<####>/AC-n-<english-name>.png` (isimler İngilizce kebab-case; içerik Türkçe)
 - **Kritik akışlara smoke test** yazılır (Playwright). Örnek zincir: "rezervasyon oluştur → fake ödeme → onay e-postası".
 - Bileşen/birim testleri: **Vitest** (+ Testing Library); API mock'ları MSW ile.
 - Her ekranda **yükleme / boş / hata** durumunun kanıtı zorunludur (bkz. `docs/frontend.md`).

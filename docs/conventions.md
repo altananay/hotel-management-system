@@ -5,6 +5,7 @@
 ## 1. Genel İlkeler
 
 - Kod ve teknik isimler **İngilizce**; doküman, spec ve iş iletişimi **Türkçe**.
+- **Dosya, klasör, spec ve branch isimleri İngilizce + kebab-case'dir; içerikleri Türkçe'dir.** İsimlerde Türkçe karakter kullanılmaz. Örnek: `specs/0001-project-architecture.md` (içerik Türkçe), branch `feature/0001-project-architecture`.
 - Her değişikliğin bir spec'i vardır (`specs/TEMPLATE.md`). Spec kapsamı dışına taşan iş → yeni spec.
 - Belirsizlikte varsayım yapma: **soru + öneri + gerekçe** ile Takım Yöneticisi'ne gel (Altın Kural 4).
 

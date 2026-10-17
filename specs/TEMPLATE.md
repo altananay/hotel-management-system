@@ -1,7 +1,7 @@
 # Spec Şablonu
 
 > Doldurmadan önce: `AGENTS.md` (altın kurallar) ve `docs/architecture.md` okunur.
-> Numara: `specs/` altındaki en büyük numaranın + 1'i. Dosya: `specs/<####>-<kısa-ad>.md`. Branch: `feature/<####>-<kısa-ad>` (yalnızca `releasable`'dan).
+> Numara: `specs/` altındaki en büyük numaranın + 1'i. Dosya: `specs/<####>-<english-name>.md` (İngilizce kebab-case; içerik Türkçe). Branch: `feature/<####>-<english-name>` (yalnızca `releasable`'dan). Örnek: `specs/0001-project-architecture.md`.
 > Spec onaylanmadan kod yazılmaz (Altın Kural 1). Onayı Takım Yöneticisi verir.
 
 ---
@@ -11,7 +11,7 @@
 - **Spec No:** `<####>`
 - **Başlık:** 
 - **Durum:** Taslak / Onaylandı / Geliştiriliyor / Tamamlandı
-- **Branch:** `feature/<####>-<kısa-ad>`
+- **Branch:** `feature/<####>-<english-name>`
 - **İlgili doküman/kararlar:** ör. `docs/architecture.md` §5, karar D6
 - **Tarih:** 
 - **Sahip:** 
