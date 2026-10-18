@@ -1,0 +1,19 @@
+{
+  "siteTitle": "Kapadokya Taş Konak Otel",
+  "siteSubtitle": "Nevşehir / Kapadokya Rezervasyon ve Misafir Deneyimi",
+  "languageLabel": "Dil",
+  "switchTr": "TR",
+  "switchEn": "EN",
+  "statusSectionTitle": "Oda Vitrini Durumu",
+  "loadingTitle": "Oda vitrini yükleniyor...",
+  "loadingDescription": "Güncel oda ve müsaitlik bilgileri hazırlanıyor.",
+  "emptyTitle": "Henüz yayınlanmış oda bulunmuyor",
+  "emptyDescription": "Oda kataloğu hazırlandığında konaklama seçenekleri burada listelenecektir.",
+  "errorTitle": "Bilgiler şu anda yüklenemedi",
+  "errorRetry": "Tekrar Dene",
+  "errors": {
+    "system.internal_error": "Sistemde geçici bir sorun oluştu. Lütfen kısa süre sonra tekrar deneyin.",
+    "system.not_found": "İstenen bilgi bulunamadı.",
+    "default": "Bağlantı sırasında beklenmeyen bir sorun oluştu. Lütfen tekrar deneyin."
+  }
+}
