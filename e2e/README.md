@@ -11,6 +11,7 @@ Tüm komutlar **depo kökünden** çalıştırılır. `(cd <dizin> && <komut>)` 
    ```bash
    cp .env.example .env   # kökte .env yoksa; varsa atlayın
    docker compose --env-file .env -f infra/docker-compose.yml up -d --wait
+   docker compose --env-file .env -f infra/docker-compose.yml --profile init run --rm minio-init
    ```
 
 2. **Veritabanı şema geçişlerini (`migrator` ile) çalıştırın:**

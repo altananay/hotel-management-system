@@ -7,7 +7,7 @@ Bu dizin, geliştirme ortamı için gerekli altyapı servislerini (`PostgreSQL`,
 | Servis | Portlar | Açıklama |
 |---|---|---|
 | `postgres` | `5432` | Tek sunucuda iki veritabanı: `hotel_core` ve `hotel_admin`; roller: `migrator` (DDL) ve `app` (yalnız DML; `public` şemasına erişemez) |
-| `minio` | `9000` (API) / `9001` (Konsol) | S3 uyumlu medya deposu (`minio-init` işi ile `hotel-media` bucket'ı otomatik açılır) |
+| `minio` | `9000` (API) / `9001` (Konsol) | S3 uyumlu medya deposu; `hotel-media` bucket'ı tek seferlik `minio-init` init job'u ile açılır |
 | `mailpit` | `1025` (SMTP) / `8025` (Web UI) | Yerel e-posta yakalama ve test servisi |
 
 ## Ortam Değişkenleri: Her Katman Nereden Okur?
@@ -34,6 +34,7 @@ HOTEL_ADMIN_DB_URL=jdbc:postgresql://localhost:5433/hotel_admin
 
 ```bash
 docker compose --env-file .env -f infra/docker-compose.yml up -d --wait
+docker compose --env-file .env -f infra/docker-compose.yml --profile init run --rm minio-init
 (cd backend/hotel-api && ./mvnw flyway:migrate "-DHOTEL_CORE_DB_URL=jdbc:postgresql://localhost:5433/hotel_core")
 (cd backend/admin-api && ./mvnw flyway:migrate "-DHOTEL_ADMIN_DB_URL=jdbc:postgresql://localhost:5433/hotel_admin")
 ```
@@ -43,10 +44,12 @@ docker compose --env-file .env -f infra/docker-compose.yml up -d --wait
 ```bash
 cp .env.example .env
 docker compose --env-file .env -f infra/docker-compose.yml up -d --wait
+docker compose --env-file .env -f infra/docker-compose.yml --profile init run --rm minio-init
 docker compose --env-file .env -f infra/docker-compose.yml ps
 ```
 
 > `.env` dosyanız yoksa `--env-file .env` kısmını çıkarın; compose dosyadaki `:-` varsayılanlarını kullanır.
+> İkinci komut tek seferlik `minio-init` job'udur (idempotent; `hotel-media` bucket'ını açar). `up --wait` exit eden job'ları hata saydığı için (docker/compose#10596) init job'u `--profile init` ile ayrı `run` edilir ve kendi exit koduyla doğrulanır.
 
 ## Veritabanı Şema Geçişleri (Flyway — `migrator` Kimliğiyle)
 
@@ -75,6 +78,7 @@ Override örneği:
 ```bash
 docker compose --env-file .env -f infra/docker-compose.yml down -v
 docker compose --env-file .env -f infra/docker-compose.yml up -d --wait
+docker compose --env-file .env -f infra/docker-compose.yml --profile init run --rm minio-init
 ```
 
 ## Sıfırlama (Geliştirme Verisini Temizleme)

@@ -45,6 +45,9 @@ services:
   minio-init:
     image: rancher/mirrored-minio-mc:RELEASE.2023-06-28T21-54-17Z
     container_name: hotel-minio-init
+    # Tek seferlik init job'u: varsayılan `up --wait` akışının dışında tutulur (docker/compose#10596).
+    # Çalıştırma: docker compose --profile init run --rm minio-init
+    profiles: ["init"]
     depends_on:
       minio:
         condition: service_healthy
