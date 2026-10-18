@@ -56,6 +56,8 @@ Personel ─► admin-web (Next.js, shadcn)        │
 
 Kurallar: gateway yalnızca **taşır**; dönüştürme dışında mantık eklemek yasaktır (§8.11). Admin-web'e özel bir birleştirme (aggregation) ihtiyacı doğarsa önce bu doküman güncellenir.
 
+**Modül bağımlılık listesi (kapalı):** `adminidentity`, `adminaudit`, `preferences` ve `gateway` arasında **onaylanmış çapraz bağımlılık yoktur; liste boştur.** Yeni bir çapraz bağımlılık gerektiğinde önce bu doküman güncellenir, ardından `AdminApiModularityTest`'teki kapalı izin listesine işlenir (§5 R3'teki kapalı liste felsefesinin aynısı).
+
 Ayrıca: admin-api'nin kendi REST yüzeyi de `/admin-api/**` ön ekini kullanır; admin-web yalnızca bu ön eki bilir. Gateway, gelen `/admin-api/**` isteğini hotel-api'nin aynı adlı yüzeyine iletir.
 
 ## 5. İletişim Kuralları
