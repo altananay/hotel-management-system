@@ -3,6 +3,14 @@
 -- Creates:
 --   Roles: migrator (DDL owner), app (DML runtime user, no DDL)
 --   Databases: hotel_core (hotel-api), hotel_admin (admin-api)
+-- Security model:
+--   - public schema is closed to applications: only migrator gets USAGE+CREATE.
+--     app must never reach public (Flyway schema history included).
+--   - app DML grants are defined only in module schemas, by each module's own
+--     migration (db/migration/<module>/V<n>__*.sql ->
+--      ALTER DEFAULT PRIVILEGES FOR ROLE migrator IN SCHEMA <module> ...).
+--   - This file runs ONLY on an empty data volume; after changes reset with:
+--     docker compose --env-file .env -f infra/docker-compose.yml down -v
 -- =============================================================================
 
 DO $$
@@ -29,32 +37,12 @@ GRANT CONNECT ON DATABASE hotel_admin TO app;
 
 \connect hotel_core
 
-REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+-- public schema: closed to everyone except migrator (Flyway history lives here).
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
 GRANT USAGE, CREATE ON SCHEMA public TO migrator;
-GRANT USAGE ON SCHEMA public TO app;
-
-ALTER DEFAULT PRIVILEGES FOR ROLE migrator
-    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO app;
-ALTER DEFAULT PRIVILEGES FOR ROLE migrator
-    GRANT USAGE, SELECT ON SEQUENCES TO app;
-
-ALTER DEFAULT PRIVILEGES FOR ROLE migrator IN SCHEMA public
-    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO app;
-ALTER DEFAULT PRIVILEGES FOR ROLE migrator IN SCHEMA public
-    GRANT USAGE, SELECT ON SEQUENCES TO app;
 
 \connect hotel_admin
 
-REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+-- public schema: closed to everyone except migrator (Flyway history lives here).
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
 GRANT USAGE, CREATE ON SCHEMA public TO migrator;
-GRANT USAGE ON SCHEMA public TO app;
-
-ALTER DEFAULT PRIVILEGES FOR ROLE migrator
-    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO app;
-ALTER DEFAULT PRIVILEGES FOR ROLE migrator
-    GRANT USAGE, SELECT ON SEQUENCES TO app;
-
-ALTER DEFAULT PRIVILEGES FOR ROLE migrator IN SCHEMA public
-    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO app;
-ALTER DEFAULT PRIVILEGES FOR ROLE migrator IN SCHEMA public
-    GRANT USAGE, SELECT ON SEQUENCES TO app;
