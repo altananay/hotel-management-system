@@ -110,6 +110,18 @@ class HotelApiModularityTest {
     }
 
     @Test
+    void shouldForbidSpringWebAndHttpDependencies_whenInspectingSharedKernel() {
+        noClasses()
+                .that()
+                .resideInAPackage("com.hotel.sharedkernel..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAnyPackage("org.springframework.web..", "org.springframework.http..")
+                .allowEmptyShould(true)
+                .check(productionClasses);
+    }
+
+    @Test
     void shouldForbidForbiddenModuleDependencies_whenCheckingClosedAllowlist() {
         // Explicit negative direction assertions (docs/architecture.md §5 R3)
         noClasses()

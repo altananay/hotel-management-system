@@ -13,6 +13,7 @@ import com.hotel.config.ClockConfig;
 import com.hotel.config.SecurityConfig;
 import com.hotel.scaffold.SampleItemsController;
 import com.hotel.sharedkernel.api.DomainError;
+import jakarta.servlet.RequestDispatcher;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.junit.jupiter.api.Test;
@@ -20,21 +21,26 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Tests for API surface separation, CORS, X-Request-Id, RFC 7807 error envelope, and scaffold
- * endpoint on {@code hotel-api} (AC-6, AC-11).
+ * Tests for API surface separation, unknown-path handling, CORS, X-Request-Id, RFC 7807 error
+ * envelope, domain error categories, /error dispatch and scaffold endpoint on {@code hotel-api}
+ * (AC-6, AC-11, CR-1…CR-6).
  */
 @WebMvcTest(
         controllers = {
             SampleItemsController.class,
+            ProblemErrorController.class,
             ApiSurfaceAndErrorHandlingTest.TestProbeController.class
         })
 @Import({
@@ -58,7 +64,24 @@ class ApiSurfaceAndErrorHandlingTest {
 
         @GetMapping("/api/test/domain-error")
         public void throwDomainError() {
-            throw new DomainError("booking.room_not_available", "Selected room is not available.");
+            throw DomainError.conflict(
+                    "booking.room_not_available", "Selected room is not available.");
+        }
+
+        @GetMapping("/api/test/domain-not-found")
+        public void throwDomainNotFound() {
+            throw DomainError.notFound(
+                    "booking.reservation_not_found", "Reservation was not found.");
+        }
+
+        @GetMapping("/api/test/access-denied")
+        public void throwAccessDenied() {
+            throw new AccessDeniedException("Access is denied for the current principal.");
+        }
+
+        @GetMapping("/api/test/response-status")
+        public void throwResponseStatus() {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Unprocessable");
         }
 
         @GetMapping("/api/test/internal-error")
@@ -109,6 +132,36 @@ class ApiSurfaceAndErrorHandlingTest {
     }
 
     @Test
+    void shouldReturn401ProblemDetail_whenCallingUnknownPublicPathOutsideAllowlist()
+            throws Exception {
+        mockMvc.perform(get("/unknown-public-path"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(
+                        content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code").value("security.unauthorized"))
+                .andExpect(jsonPath("$.instance").value("/unknown-public-path"));
+    }
+
+    @Test
+    void shouldReturnProblemDetailFromErrorDispatch_whenContainerForwardsToErrorEndpoint()
+            throws Exception {
+        mockMvc.perform(
+                        get("/error")
+                                .requestAttr(RequestDispatcher.ERROR_STATUS_CODE, 404)
+                                .requestAttr(
+                                        RequestDispatcher.ERROR_REQUEST_URI,
+                                        "/some/unknown/resource"))
+                .andExpect(status().isNotFound())
+                .andExpect(
+                        content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value("about:blank"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.instance").value("/some/unknown/resource"))
+                .andExpect(jsonPath("$.code").value("system.not_found"))
+                .andExpect(jsonPath("$.requestId").isNotEmpty());
+    }
+
+    @Test
     void shouldAcceptValidRequestIdAndPropagateToMdcAndResponse_whenHeaderMatchesPattern()
             throws Exception {
         String validId = "client_trace-2026.10.18";
@@ -136,7 +189,7 @@ class ApiSurfaceAndErrorHandlingTest {
     }
 
     @Test
-    void shouldReturnStandardProblemDetailEnvelope_whenValidation400NotFound404Method405DomainErrorAnd500Occur()
+    void shouldReturnStandardProblemDetailEnvelope_whenValidation400NotFound404Method405Occur()
             throws Exception {
         // 400 -> validation.invalid_request
         mockMvc.perform(
@@ -173,18 +226,80 @@ class ApiSurfaceAndErrorHandlingTest {
                 .andExpect(jsonPath("$.code").value("system.method_not_allowed"))
                 .andExpect(jsonPath("$.instance").value("/api/system/sample-items"))
                 .andExpect(jsonPath("$.requestId").isNotEmpty());
+    }
 
-        // DomainError -> booking.room_not_available
-        mockMvc.perform(get("/api/test/domain-error"))
-                .andExpect(status().isBadRequest())
+    @Test
+    void shouldPreserveClientErrorStatuses_when415And406Occur() throws Exception {
+        // 415 -> system.unsupported_media_type
+        mockMvc.perform(
+                        post("/api/test/validation")
+                                .contentType(MediaType.TEXT_PLAIN)
+                                .content("plain text body"))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(
+                        content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(415))
+                .andExpect(jsonPath("$.code").value("system.unsupported_media_type"));
+
+        // 406 -> system.not_acceptable (client only accepts XML, endpoint produces JSON)
+        mockMvc.perform(get("/api/system/sample-items").accept(MediaType.APPLICATION_XML))
+                .andExpect(status().isNotAcceptable())
+                .andExpect(
+                        content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(406))
+                .andExpect(jsonPath("$.code").value("system.not_acceptable"));
+    }
+
+    @Test
+    void shouldReturn403Forbidden_whenAccessDeniedExceptionThrown() throws Exception {
+        mockMvc.perform(get("/api/test/access-denied"))
+                .andExpect(status().isForbidden())
                 .andExpect(
                         content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.type").value("about:blank"))
-                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.code").value("security.forbidden"))
+                .andExpect(jsonPath("$.instance").value("/api/test/access-denied"))
+                .andExpect(jsonPath("$.requestId").isNotEmpty());
+    }
+
+    @Test
+    void shouldPreserveResponseStatusExceptionStatus_whenUnprocessableEntityThrown()
+            throws Exception {
+        mockMvc.perform(get("/api/test/response-status"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(
+                        content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(422))
+                .andExpect(jsonPath("$.code").value("system.http_422"));
+    }
+
+    @Test
+    void shouldMapDomainErrorCategoriesToHttpStatuses_whenConflictAndNotFoundThrown()
+            throws Exception {
+        // CONFLICT -> 409
+        mockMvc.perform(get("/api/test/domain-error"))
+                .andExpect(status().isConflict())
+                .andExpect(
+                        content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value("about:blank"))
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.title").value("Conflict"))
                 .andExpect(jsonPath("$.code").value("booking.room_not_available"))
                 .andExpect(jsonPath("$.detail").value("Selected room is not available."));
 
-        // 500 -> system.internal_error (no stack trace or internal class names leaked)
+        // NOT_FOUND -> 404
+        mockMvc.perform(get("/api/test/domain-not-found"))
+                .andExpect(status().isNotFound())
+                .andExpect(
+                        content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.code").value("booking.reservation_not_found"));
+    }
+
+    @Test
+    void shouldReturn500ProblemDetailWithoutLeakingDetails_whenUnexpectedExceptionOccurs()
+            throws Exception {
         MvcResult result500 =
                 mockMvc.perform(get("/api/test/internal-error"))
                         .andExpect(status().isInternalServerError())

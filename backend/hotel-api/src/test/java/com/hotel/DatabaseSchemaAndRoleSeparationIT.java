@@ -8,6 +8,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.List;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeAll;
@@ -29,7 +32,11 @@ import org.testcontainers.utility.MountableFile;
  * Integration test verifying Testcontainers initialization from {@code infra/postgres/init},
  * Flyway migration execution as {@code migrator}, presence of the 6 module schemas in {@code
  * hotel_core}, DDL rejection for the runtime {@code app} role, and Actuator health posture (AC-3,
- * AC-6, AC-12).
+ * AC-6, AC-12, CR-2, CR-7).
+ *
+ * <p>Also proves the DML/default-privilege model: {@code app} can INSERT/SELECT/UPDATE/DELETE on
+ * module-schema tables created by {@code migrator}, while {@code app} can never reach {@code
+ * public} (Flyway history included) and can never run DDL.
  */
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -55,7 +62,7 @@ class DatabaseSchemaAndRoleSeparationIT {
     }
 
     @BeforeAll
-    static void runMigrationsAsMigrator() {
+    static void runMigrationsAsMigratorAndCreateProbeTable() throws Exception {
         Flyway.configure()
                 .dataSource(hotelCoreJdbcUrl(), "migrator", "migrator_local_dev")
                 .locations(
@@ -67,6 +74,14 @@ class DatabaseSchemaAndRoleSeparationIT {
                         "classpath:db/migration/notification")
                 .load()
                 .migrate();
+
+        try (Connection connection =
+                        DriverManager.getConnection(
+                                hotelCoreJdbcUrl(), "migrator", "migrator_local_dev");
+                Statement statement = connection.createStatement()) {
+            statement.execute(
+                    "CREATE TABLE catalog.schema_probe (id INT PRIMARY KEY, name TEXT NOT NULL)");
+        }
     }
 
     @DynamicPropertySource
@@ -103,7 +118,26 @@ class DatabaseSchemaAndRoleSeparationIT {
     }
 
     @Test
-    void shouldRejectDdlStatements_whenExecutedByRuntimeAppUser() {
+    void shouldAllowAppDml_whenOperatingOnModuleSchemaTableCreatedByMigrator() {
+        jdbcTemplate.update("INSERT INTO catalog.schema_probe (id, name) VALUES (?, ?)", 1, "one");
+        jdbcTemplate.update("UPDATE catalog.schema_probe SET name = ? WHERE id = ?", "updated", 1);
+        Integer count =
+                jdbcTemplate.queryForObject("SELECT COUNT(*) FROM catalog.schema_probe", Integer.class);
+        String name =
+                jdbcTemplate.queryForObject(
+                        "SELECT name FROM catalog.schema_probe WHERE id = 1", String.class);
+
+        assertThat(count).isEqualTo(1);
+        assertThat(name).isEqualTo("updated");
+
+        jdbcTemplate.update("DELETE FROM catalog.schema_probe WHERE id = ?", 1);
+        Integer afterDelete =
+                jdbcTemplate.queryForObject("SELECT COUNT(*) FROM catalog.schema_probe", Integer.class);
+        assertThat(afterDelete).isZero();
+    }
+
+    @Test
+    void shouldRejectAppDdlStatements_whenExecutedByRuntimeAppUser() {
         assertThatThrownBy(
                         () ->
                                 jdbcTemplate.execute(
@@ -111,6 +145,25 @@ class DatabaseSchemaAndRoleSeparationIT {
                 .isInstanceOf(DataAccessException.class);
 
         assertThatThrownBy(() -> jdbcTemplate.execute("CREATE SCHEMA unauthorized_schema"))
+                .isInstanceOf(DataAccessException.class);
+    }
+
+    @Test
+    void shouldDenyAppAccessToPublicSchemaAndFlywayHistory_whenRuntimeAppUserQueriesPublic() {
+        // public schema is closed to app: neither DDL nor DML nor reads
+        assertThatThrownBy(() -> jdbcTemplate.execute("CREATE TABLE public.unauthorized (id INT)"))
+                .isInstanceOf(DataAccessException.class);
+
+        assertThatThrownBy(
+                        () ->
+                                jdbcTemplate.queryForList(
+                                        "SELECT version FROM public.flyway_schema_history"))
+                .isInstanceOf(DataAccessException.class);
+
+        assertThatThrownBy(
+                        () ->
+                                jdbcTemplate.execute(
+                                        "DELETE FROM public.flyway_schema_history"))
                 .isInstanceOf(DataAccessException.class);
     }
 

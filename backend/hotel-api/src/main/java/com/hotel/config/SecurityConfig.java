@@ -55,9 +55,7 @@ public class SecurityConfig {
                 .exceptionHandling(
                         ex ->
                                 ex.authenticationEntryPoint(this::writeUnauthorizedProblem)
-                                        .accessDeniedHandler(
-                                                (req, res, denied) ->
-                                                        writeUnauthorizedProblem(req, res, null)));
+                                        .accessDeniedHandler(this::writeForbiddenProblem));
         return http.build();
     }
 
@@ -76,14 +74,14 @@ public class SecurityConfig {
                                         .denyAll()
                                         .requestMatchers("/api/**")
                                         .permitAll()
+                                        .requestMatchers("/error")
+                                        .permitAll()
                                         .anyRequest()
-                                        .permitAll())
+                                        .denyAll())
                 .exceptionHandling(
                         ex ->
                                 ex.authenticationEntryPoint(this::writeUnauthorizedProblem)
-                                        .accessDeniedHandler(
-                                                (req, res, denied) ->
-                                                        writeUnauthorizedProblem(req, res, null)));
+                                        .accessDeniedHandler(this::writeForbiddenProblem));
         return http.build();
     }
 
@@ -106,19 +104,25 @@ public class SecurityConfig {
     private void writeUnauthorizedProblem(
             HttpServletRequest request, HttpServletResponse response, Exception authException)
             throws IOException {
+        writeProblem(response, request, HttpStatus.UNAUTHORIZED);
+    }
+
+    private void writeForbiddenProblem(
+            HttpServletRequest request, HttpServletResponse response, Exception accessDenied)
+            throws IOException {
+        writeProblem(response, request, HttpStatus.FORBIDDEN);
+    }
+
+    private void writeProblem(
+            HttpServletResponse response, HttpServletRequest request, HttpStatus status)
+            throws IOException {
         String requestId = RequestIdFilter.resolveRequestId(request);
-        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        response.setStatus(status.value());
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
         response.setHeader(RequestIdFilter.HEADER_NAME, requestId);
 
-        ProblemDetail problem =
-                ProblemDetailFactory.create(
-                        HttpStatus.UNAUTHORIZED,
-                        "Unauthorized",
-                        "Authentication is required to access this resource.",
-                        "security.unauthorized",
-                        request);
+        ProblemDetail problem = ProblemDetailFactory.forStatus(status, request);
         objectMapper.writeValue(response.getWriter(), problem);
     }
 }
