@@ -1,3 +1,9 @@
-﻿=== git grep -n -i 'hotel_core' -- backend/admin-api ===
+﻿=== git grep -n -i 'hotel_core' -- backend/admin-api ':!backend/admin-api/src/test' (production sources + config) ===
 ExitCode: 1 (1 = no matches found)
 Matches: 0
+
+=== Reference: full grep including tests (CR-8: literal token only in the guard test) ===
+backend/admin-api/src/test/java/com/hotel/architecture/AdminApiModularityTest.java:257:                    .doesNotContain("hotel_core");
+
+Not: CI (backend job) ayni korumayi calistirir:
+  git grep -n -i 'hotel_core' -- backend/admin-api ':!backend/admin-api/src/test' ':!backend/admin-api/target'
