@@ -1,7 +1,7 @@
 # Mimari (v1.1)
 
 > Bu dosya mimarinin **tek gerçek kaynağıdır**. Kurallar buraya yazılır; diğer dosyalar buraya işaret eder.
-> Son güncelleme: 2026-10-17 — Karar kaydı (D1–D19) §10'dadır.
+> Son güncelleme: 2026-10-18 — Karar kaydı (D1–D19) §10'dadır; toolchain §10'da, local portlar ve dev bağlantı düzeni §11'dedir.
 
 ## 1. Sistem Topolojisi
 
@@ -55,6 +55,8 @@ Personel ─► admin-web (Next.js, shadcn)        │
 | **gateway** | hotel-api admin API'sine pass-through: kimlik iliştirme, zaman aşımı, hata eşleme | Veri sahibi değil |
 
 Kurallar: gateway yalnızca **taşır**; dönüştürme dışında mantık eklemek yasaktır (§8.11). Admin-web'e özel bir birleştirme (aggregation) ihtiyacı doğarsa önce bu doküman güncellenir.
+
+Ayrıca: admin-api'nin kendi REST yüzeyi de `/admin-api/**` ön ekini kullanır; admin-web yalnızca bu ön eki bilir. Gateway, gelen `/admin-api/**` isteğini hotel-api'nin aynı adlı yüzeyine iletir.
 
 ## 5. İletişim Kuralları
 
@@ -183,21 +185,28 @@ Yaprak modüller: `catalog`, `pricing`, `payment`. `catalog` asla `booking`'e ba
 | D18 | Hero video | Pexels 30653318 (Pexels License; kaynak + lisans `CREDITS.md`'ye işlenir) |
 | D19 | Admin DB erişimi | **Spring Data JPA + Flyway** (admin-api içinde); Drizzle/Prisma kullanılmaz |
 | — | Para kuralı | Para/yüzde alanları **her zaman BigDecimal**; `double`/`float` yasak (kural) |
+| — | Toolchain | Backend **Maven** (`pom.xml` + `mvnw`), frontend **npm** (`package-lock.json`); Java 25 + Spring Boot 4.x + uyumlu Spring Modulith; Gradle/pnpm kullanılmaz (karar, 2026-10-18) |
 
 ## 11. Ortam ve Portlar (local)
 
 | Bileşen | Port | Not |
 |---|---|---|
 | web | 3000 | Next.js public |
-| admin-web | 3001 | Next.js admin (rewrites → 8081) |
-| hotel-api | 8080 | Spring Boot |
-| admin-api | 8081 | Spring Boot |
+| admin-web | 3001 | Next.js admin (rewrites → 8082) |
+| hotel-api | 8081 | Spring Boot |
+| admin-api | 8082 | Spring Boot |
 | postgres | 5432 | `hotel_core` + `hotel_admin` |
 | minio | 9000 / 9001 | S3 API / konsol |
 | mailpit | 1025 / 8025 | SMTP / web arayüz |
 | redpanda | 9092 | Aşama 2 |
 | kafbat-ui | 8090 | Aşama 2 |
 | webhook (fake sağlayıcı) | hotel-api içinde | `/api/webhooks/payments/fake` |
+
+**Dev bağlantı düzeni:**
+- web → hotel-api: doğrudan (`NEXT_PUBLIC_API_BASE_URL=http://localhost:8081`); hotel-api CORS allowlist yalnız `http://localhost:3000` (credential yok).
+- admin-web → admin-api: rewrites (`/admin-api/:path*` → `http://localhost:8082`); aynı origin (çerez/CSRF).
+- admin-api → hotel-api: iç çağrı `http://localhost:8081/admin-api/**`.
+- Not (2026-10-18): Local'de 8080 portu dolu olduğundan hotel-api `8081`'e, admin-api `8082`'ye alındı. Prod topolojisi (ters proxy/alan adları) ayrıca ele alınır.
 
 **Repo düzeni:**
 

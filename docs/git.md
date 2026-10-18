@@ -13,6 +13,7 @@
   - İsimler İngilizce + kebab-case'dir (spec dosya adıyla aynı); içerik Türkçe'dir.
   - Örnek: `feature/0007-room-listing`
 - **SPEC'SİZ BRANCH AÇILMAZ.** Branch adındaki numara, `specs/` altındaki spec numarasıdır.
+- **Bootstrap istisnası (tek seferlik, 2026-10-18):** Depo ilk kurulumunda dokümantasyon commit'leri (3 adet) `master` üzerine doğrudan yapıldı; spec atıfı taşımazlar. `integration` ve `releasable` açıldıktan sonraki tüm değişiklikler §2'deki akışa tabidir.
 
 ## 2. Akış
 
@@ -73,8 +74,7 @@ PR şablonu taslağı (`.github/pull_request_template.md` olarak ilk dilimde olu
 ## Riskler / Notlar
 ```
 
-## 6. İlk Dilimde Kurulacaklar
+## 6. Bootstrap ve İlk Dilim Kurulumu
 
-- `integration` ve `releasable` branch'lerinin açılması + üç branch'e protection kuralı.
-- `.github/pull_request_template.md` dosyasının oluşturulması.
-- CI pipeline: lint + build + test + smoke (detay: `docs/testing.md`, `docs/frontend.md`).
+- **Bootstrap (yapıldı — 2026-10-18):** `integration` ve `releasable`, `master`'dan açıldı ve origin'e gönderildi. **GitHub koruması yönetici tarafından arayüzden uygulanır** (öneri: PR zorunlu + en az 1 onay; force push ve branch silme kapalı; "Include administrators" kapalı). CI eklendiğinde "required status checks" de bağlanır.
+- **İlk dilimde kurulacaklar:** `.github/pull_request_template.md` dosyasının oluşturulması; CI pipeline: lint + build + test + smoke (detay: `docs/testing.md`, `docs/frontend.md`).

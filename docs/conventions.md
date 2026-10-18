@@ -63,3 +63,12 @@
 ## 6. Test ve Git
 
 - Test stratejisi: `docs/testing.md`. Branch/commit/PR: `docs/git.md`.
+
+## 7. Toolchain ve Sürümler
+
+- **Backend build:** **Maven** (`pom.xml` + `mvnw`); **Gradle kullanılmaz.** Her uygulama (`hotel-api`, `admin-api`) kendi Maven projesidir; Maven Wrapper commit edilir, CI `./mvnw` kullanır.
+- **Java:** 25 (LTS); `maven.compiler.release=25`.
+- **Spring:** Spring Boot 4.x + uyumlu Spring Modulith; sürümler BOM üzerinden yönetilir; tam sürüm scaffold'ta pinlenir.
+- **Frontend paket yöneticisi:** **npm**; **pnpm/yarn kullanılmaz.** `package-lock.json` commit edilir; CI `npm ci` kullanır.
+- **Node:** güncel LTS; `package.json` → `engines` ile pinlenir.
+- Sürümler tek kaynaktan yönetilir; majör yükseltmeler ayrı spec ister.
