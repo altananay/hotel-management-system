@@ -44,7 +44,7 @@
 - DB'de `timestamptz` + **UTC**; iş günü Europe/Istanbul (`HotelDate`); konaklama tarihleri `LocalDate`.
 - Public ID'ler **UUIDv7** (üretim daima v7, pinlenmiş kütüphane ile); gelen kimliklerde yalnızca biçim doğrulanır (geçersiz → `sharedkernel.invalid_id`); DB sequence'i dışarı sızdırılmaz.
 - Log: yapılı (structured); `X-Request-Id` → MDC; gereksiz PII loglanmaz. **Request-id kabulü:** istemci değeri yalnız `^[A-Za-z0-9._-]{8,64}$` ile eşleşirse kabul edilir, aksi halde UUIDv7 üretilir; değer her yanıta eklenir. JSON log encoder'ı ilk ops dilimine ertelenmiştir.
-- Config: environment değişkenleri; repoda sır **yok** (`.env.example` tutulur).
+- Config: environment değişkenleri; repoda **gerçek sır yok** (`.env.example` tutulur). Yerel geliştirme için açıkça işaretlenmiş sabit varsayılanlar sır sayılmaz; prod değerleri asla repoya girmez.
 
 ## 3. Para ve Yüzde
 

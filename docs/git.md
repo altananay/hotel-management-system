@@ -46,7 +46,7 @@ feature/<spec-no>-<english-name>  ──PR (squash)──►  integration (TEST)
 - **Force push** (`--force` / `--force-with-lease`) — hiçbir branch'te.
 - **Geçmiş silme** (yayımlanmış geçmişi rebase/amend ile değiştirmek). Geri alma zorunlu olarak **`git revert`** ile yapılır.
 - Spec'siz branch, commit veya PR.
-- Repoya sır (parola, anahtar, token) commit etmek.
+- Repoya sır (parola, anahtar, token) commit etmek (yerel, açıkça işaretli sabit varsayılanlar sır sayılmaz — tanım: `docs/conventions.md` §2.4).
 
 ## 5. PR Kuralları
 
