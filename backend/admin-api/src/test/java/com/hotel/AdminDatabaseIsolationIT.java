@@ -8,6 +8,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -26,8 +29,9 @@ import org.testcontainers.utility.MountableFile;
 
 /**
  * Integration test verifying {@code admin-api} connects exclusively to {@code hotel_admin},
- * migrates via {@code migrator}, runs as {@code app} with DDL rejected, and exposes only {@code
- * /actuator/health} (AC-5, AC-6, AC-12).
+ * migrates via {@code migrator}, runs as {@code app} with DML-only rights on module schemas, can
+ * never reach {@code public} (Flyway history included), and exposes only {@code /actuator/health}
+ * (AC-5, AC-6, AC-12, CR-2, CR-7).
  */
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -53,12 +57,20 @@ class AdminDatabaseIsolationIT {
     }
 
     @BeforeAll
-    static void runMigrationsAsMigrator() {
+    static void runMigrationsAsMigratorAndCreateProbeTable() throws Exception {
         Flyway.configure()
                 .dataSource(hotelAdminJdbcUrl(), "migrator", "migrator_local_dev")
                 .locations("classpath:db/migration")
                 .load()
                 .migrate();
+
+        try (Connection connection =
+                        DriverManager.getConnection(
+                                hotelAdminJdbcUrl(), "migrator", "migrator_local_dev");
+                Statement statement = connection.createStatement()) {
+            statement.execute(
+                    "CREATE TABLE admin_platform.schema_probe (id INT PRIMARY KEY, name TEXT NOT NULL)");
+        }
     }
 
     @DynamicPropertySource
@@ -85,11 +97,43 @@ class AdminDatabaseIsolationIT {
     }
 
     @Test
+    void shouldAllowAppDml_whenOperatingOnAdminPlatformTableCreatedByMigrator() {
+        jdbcTemplate.update("INSERT INTO admin_platform.schema_probe (id, name) VALUES (?, ?)", 1, "one");
+        jdbcTemplate.update(
+                "UPDATE admin_platform.schema_probe SET name = ? WHERE id = ?", "updated", 1);
+        String name =
+                jdbcTemplate.queryForObject(
+                        "SELECT name FROM admin_platform.schema_probe WHERE id = 1", String.class);
+        assertThat(name).isEqualTo("updated");
+
+        jdbcTemplate.update("DELETE FROM admin_platform.schema_probe WHERE id = ?", 1);
+        Integer count =
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM admin_platform.schema_probe", Integer.class);
+        assertThat(count).isZero();
+    }
+
+    @Test
     void shouldRejectDdlStatements_whenExecutedByRuntimeAppUserInAdminDb() {
         assertThatThrownBy(
                         () ->
                                 jdbcTemplate.execute(
                                         "CREATE TABLE admin_platform.unauthorized_table (id INT PRIMARY KEY)"))
+                .isInstanceOf(DataAccessException.class);
+    }
+
+    @Test
+    void shouldDenyAppAccessToPublicSchemaAndFlywayHistory_whenRuntimeAppUserQueriesPublic() {
+        assertThatThrownBy(() -> jdbcTemplate.execute("CREATE TABLE public.unauthorized (id INT)"))
+                .isInstanceOf(DataAccessException.class);
+
+        assertThatThrownBy(
+                        () ->
+                                jdbcTemplate.queryForList(
+                                        "SELECT version FROM public.flyway_schema_history"))
+                .isInstanceOf(DataAccessException.class);
+
+        assertThatThrownBy(() -> jdbcTemplate.execute("DELETE FROM public.flyway_schema_history"))
                 .isInstanceOf(DataAccessException.class);
     }
 

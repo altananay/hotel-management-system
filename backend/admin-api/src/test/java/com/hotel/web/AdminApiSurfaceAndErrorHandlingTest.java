@@ -15,19 +15,28 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Tests for {@code /admin-api/**} prefix, X-Request-Id, RFC 7807 error envelope, and scaffold
- * endpoint on {@code admin-api} (AC-6, AC-11).
+ * Tests for {@code /admin-api/**} prefix, deny-by-default surface, X-Request-Id, RFC 7807 error
+ * envelope, and scaffold endpoint on {@code admin-api} (AC-6, AC-11, CR-1, CR-4).
  */
 @WebMvcTest(
         controllers = {
@@ -39,11 +48,29 @@ import org.springframework.web.bind.annotation.RestController;
     ClockConfig.class,
     RequestIdFilter.class,
     GlobalExceptionHandler.class,
-    AdminApiSurfaceAndErrorHandlingTest.AdminTestProbeController.class
+    AdminApiSurfaceAndErrorHandlingTest.AdminTestProbeController.class,
+    AdminApiSurfaceAndErrorHandlingTest.ProbeSecurityTestConfiguration.class
 })
 class AdminApiSurfaceAndErrorHandlingTest {
 
     @Autowired private MockMvc mockMvc;
+
+    /**
+     * Test-only chain: allows reaching the probe controller under {@code /admin-api/test/**} so
+     * error handling can be exercised while the real chain stays deny-by-default.
+     */
+    @TestConfiguration
+    static class ProbeSecurityTestConfiguration {
+
+        @Bean
+        @Order(0)
+        SecurityFilterChain probeSecurityFilterChain(HttpSecurity http) throws Exception {
+            http.securityMatcher("/admin-api/test/**")
+                    .csrf(AbstractHttpConfigurer::disable)
+                    .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+            return http.build();
+        }
+    }
 
     @RestController
     static class AdminTestProbeController {
@@ -52,6 +79,16 @@ class AdminApiSurfaceAndErrorHandlingTest {
 
         @PostMapping("/admin-api/test/validation")
         public void validateInput(@Valid @RequestBody ProbeInput input) {}
+
+        @GetMapping("/admin-api/test/access-denied")
+        public void throwAccessDenied() {
+            throw new AccessDeniedException("Access is denied for the current principal.");
+        }
+
+        @GetMapping("/admin-api/test/response-status")
+        public void throwResponseStatus() {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Unprocessable");
+        }
 
         @GetMapping("/admin-api/test/internal-error")
         public void throwUnexpectedError() {
@@ -70,6 +107,18 @@ class AdminApiSurfaceAndErrorHandlingTest {
                 .andExpect(header().exists("X-Request-Id"))
                 .andExpect(jsonPath("$.items").isArray())
                 .andExpect(jsonPath("$.items").isEmpty());
+    }
+
+    @Test
+    void shouldReturn401ProblemDetail_whenCallingUnknownAdminPath() throws Exception {
+        mockMvc.perform(get("/admin-api/unknown"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(
+                        content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value("about:blank"))
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.code").value("security.unauthorized"))
+                .andExpect(jsonPath("$.instance").value("/admin-api/unknown"));
     }
 
     @Test
@@ -110,13 +159,6 @@ class AdminApiSurfaceAndErrorHandlingTest {
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.code").value("validation.invalid_request"));
 
-        mockMvc.perform(get("/admin-api/non-existent"))
-                .andExpect(status().isNotFound())
-                .andExpect(
-                        content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.code").value("system.not_found"));
-
         mockMvc.perform(post("/admin-api/system/sample-items"))
                 .andExpect(status().isMethodNotAllowed())
                 .andExpect(
@@ -144,5 +186,35 @@ class AdminApiSurfaceAndErrorHandlingTest {
                 .doesNotContain("IllegalStateException")
                 .doesNotContain("AdminTestProbeController")
                 .doesNotContain("Sensitive internal admin detail");
+    }
+
+    @Test
+    void shouldPreserveClientErrorStatuses_when415And403And422Occur() throws Exception {
+        // 415 -> system.unsupported_media_type
+        mockMvc.perform(
+                        post("/admin-api/test/validation")
+                                .contentType(MediaType.TEXT_PLAIN)
+                                .content("plain text body"))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(
+                        content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(415))
+                .andExpect(jsonPath("$.code").value("system.unsupported_media_type"));
+
+        // 403 -> security.forbidden
+        mockMvc.perform(get("/admin-api/test/access-denied"))
+                .andExpect(status().isForbidden())
+                .andExpect(
+                        content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.code").value("security.forbidden"));
+
+        // 422 -> status preserved
+        mockMvc.perform(get("/admin-api/test/response-status"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(
+                        content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(422))
+                .andExpect(jsonPath("$.code").value("system.http_422"));
     }
 }

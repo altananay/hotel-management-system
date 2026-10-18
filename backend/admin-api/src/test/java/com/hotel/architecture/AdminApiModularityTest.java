@@ -20,20 +20,35 @@ import jakarta.persistence.Entity;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.modulith.core.ApplicationModule;
 import org.springframework.modulith.core.ApplicationModules;
 
 /**
- * Architectural and modular boundary tests for {@code admin-api} (AC-5).
+ * Architectural and modular boundary tests for {@code admin-api} (AC-5, CR-8, CR-10).
  */
 class AdminApiModularityTest {
 
     private static final Set<String> EXPECTED_ADMIN_MODULES =
             Set.of("adminidentity", "adminaudit", "preferences", "gateway");
+
+    /**
+     * Closed allowlist of cross-module dependencies for admin modules (docs/architecture.md §4).
+     * The list is intentionally EMPTY: no cross-module dependency has been approved yet. Any new
+     * edge requires updating {@code docs/architecture.md} §4 first.
+     */
+    private static final Map<String, Set<String>> ALLOWED_ADMIN_MODULE_DEPENDENCIES =
+            Map.of(
+                    "adminidentity", Set.of(),
+                    "adminaudit", Set.of(),
+                    "preferences", Set.of(),
+                    "gateway", Set.of());
 
     private static JavaClasses productionClasses;
 
@@ -75,6 +90,38 @@ class AdminApiModularityTest {
                             base + ".internal.web",
                             base + ".internal.persistence");
         }
+    }
+
+    @Test
+    void shouldForbidCrossModuleDependencies_whenCheckingClosedAllowlist() {
+        for (String sourceModule : EXPECTED_ADMIN_MODULES) {
+            Set<String> allowedTargets = ALLOWED_ADMIN_MODULE_DEPENDENCIES.get(sourceModule);
+
+            for (String candidateTarget : EXPECTED_ADMIN_MODULES) {
+                if (candidateTarget.equals(sourceModule) || allowedTargets.contains(candidateTarget)) {
+                    continue;
+                }
+                noClasses()
+                        .that()
+                        .resideInAPackage("com.hotel." + sourceModule + "..")
+                        .should()
+                        .dependOnClassesThat()
+                        .resideInAPackage("com.hotel." + candidateTarget + "..")
+                        .allowEmptyShould(true)
+                        .check(productionClasses);
+            }
+        }
+
+        // Explicit negative direction example required by the review: adminaudit must not depend on
+        // adminidentity while the allowlist stays empty (docs/architecture.md §4).
+        noClasses()
+                .that()
+                .resideInAPackage("com.hotel.adminaudit..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage("com.hotel.adminidentity..")
+                .allowEmptyShould(true)
+                .check(productionClasses);
     }
 
     @Test
@@ -182,13 +229,32 @@ class AdminApiModularityTest {
     }
 
     @Test
-    void shouldNotReferenceBusinessCoreDatabase_whenInspectingAdminApiConfigAndSources()
+    void shouldNotReferenceBusinessCoreDatabase_whenScanningAllAdminApiMainSources()
             throws IOException {
-        String forbiddenDbToken = "hotel_" + "core";
-        String appYml = Files.readString(Path.of("src/main/resources/application.yml"));
-        String pomXml = Files.readString(Path.of("pom.xml"));
+        Path sourceRoot = Path.of("src/main");
+        List<Path> files;
+        try (Stream<Path> stream = Files.walk(sourceRoot)) {
+            files =
+                    stream.filter(Files::isRegularFile)
+                            .filter(
+                                    path -> {
+                                        String name = path.getFileName().toString();
+                                        return name.endsWith(".java")
+                                                || name.endsWith(".yml")
+                                                || name.endsWith(".yaml")
+                                                || name.endsWith(".properties");
+                                    })
+                            .toList();
+        }
 
-        assertThat(appYml).contains("hotel_admin").doesNotContain(forbiddenDbToken);
-        assertThat(pomXml).contains("hotel_admin").doesNotContain(forbiddenDbToken);
+        assertThat(files).isNotEmpty();
+
+        for (Path file : files) {
+            assertThat(Files.readString(file))
+                    .as(
+                            "admin-api must not reference the business core database (checked: %s)",
+                            file)
+                    .doesNotContain("hotel_core");
+        }
     }
 }
