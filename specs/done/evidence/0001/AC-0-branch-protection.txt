@@ -22,6 +22,7 @@ Kurallar:
 PR #1 doğrulaması: state=open, mergeable=true, mergeable_state=clean
   → Gerekli kontroller ve kurallar sağlanmış durumda.
 
-Ekran görüntüleri (kurulum anı, arayüz) yönetici tarafından eklenecek:
-  - specs/done/evidence/0001/AC-0-branch-protection.png
-  - specs/done/evidence/0001/AC-9-required-check.png
+Ekran görüntüleri (arayüz):
+  - AC-0-branch-protection.png — Settings → Rules → Rulesets: hedefler (master/integration/releasable),
+    kurallar ve "Require status checks to pass → CI Quality Gate"
+  - AC-9-required-check.png — PR #1 → Checks sekmesi: Backend, Frontend, E2E, CI Quality Gate (4/4 yeşil)

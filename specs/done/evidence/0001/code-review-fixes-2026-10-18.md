@@ -1,9 +1,9 @@
 # Code Review Düzeltme Raporu — Spec 0001
 
 - **Düzelten:** Developer
-- **Tarih:** 2026-10-18
+- **Tarih:** 2026-10-18 (kanıt ekleri 2026-10-19)
 - **Kaynak inceleme:** `specs/done/evidence/0001/code-review-2026-10-18.md` (CR-1…CR-14, SD-1…SD-3)
-- **Durum:** Tüm CR bulguları düzeltildi ve testlerle kanıtlandı; SD-1 düzeltildi (PR #1 CI yeşil; Rulesets ile dal koruması + "CI Quality Gate" required check aktif — kanıt: `AC-9-ci-run.txt`, `AC-0-branch-protection.txt`; arayüz ekran görüntüleri yönetici tarafından eklenecek); SD-2 inceleme onayı sonrası kapanacak.
+- **Durum:** Tüm CR bulguları düzeltildi ve testlerle kanıtlandı; SD-1 düzeltildi (PR #1 CI yeşil; Rulesets ile dal koruması + "CI Quality Gate" required check aktif; arayüz ekran görüntüleri eklendi — `AC-0-branch-protection.png`, `AC-9-required-check.png`); SD-2 inceleme onayı sonrası kapanacak.
 
 ## 1. Bulgu → Fix → Kanıt Eşlemesi
 
@@ -23,7 +23,7 @@
 | CR-12 | Düzeltildi | `Object.hasOwn(errorMap, code)` (web i18n + admin-web error-messages) | `i18n.test.ts` / `error-messages.test.ts` prototype kodu testleri |
 | CR-13 | Düzeltildi | `@types/node` `24.19.2` (web, admin-web, e2e) | lint/build/test yeşil |
 | CR-14 | Düzeltildi | `e2e/README.md` alt-kabuk `(cd … && …)` ve ayrı terminal yönergeleri | Doküman; E2E zinciri yeşil |
-| SD-1 | Düzeltildi | Push + PR #1; CI yeşil (Run #2, 4/4 job). Dal koruması: Rulesets `protect-release-branches` (active; master+integration+releasable; dal silme ve force push yasak; PR zorunlu; required check `CI Quality Gate`; bypass: 0 aktör). Arayüz ekran görüntüleri yönetici tarafından eklenecek | `AC-9-ci-run.txt` (run URL + job tablosu); `AC-0-branch-protection.txt` (Rulesets API doğrulaması; PR #1 mergeable_state=clean) |
+| SD-1 | Düzeltildi | Push + PR #1; CI yeşil (Run #2/#3/#4, 4/4 job). Dal koruması: Rulesets `protect-release-branches` (active; master+integration+releasable; dal silme ve force push yasak; PR zorunlu; required check `CI Quality Gate`; bypass: 0 aktör). Arayüz kanıtı: `AC-0-branch-protection.png`, `AC-9-required-check.png` | `AC-9-ci-run.txt` (run URL + job tablosu); `AC-0-branch-protection.txt` (Rulesets API doğrulaması; PR #1 mergeable_state=clean) |
 | SD-2 | **Beklemede** | Spec taşıma + SCORECARD + DoD kapanışı **inceleme onayından sonra** yapılır (DoD: "Kod incelemesi onaylandı" ve "Pipeline yeşil" koşulları henüz sağlanmadı) | Onay sonrası |
 | SD-3 | Düzeltildi | AC-2 kanıtı varsayılan `5432` ile yeniden üretildi; yerel `5433` override'ı ve DB URL senkronu nota işlendi; kanıt yeni iki komutlu başlatma akışıyla tazelendi | `specs/done/evidence/0001/AC-2-infra-health.txt` |
 
@@ -39,12 +39,12 @@
   - Kök `.env` (`HOTEL_API_PORT=18081`, `HOTEL_CORE_DB_URL=…:5433/…`) ile `--spring.profiles.active=local` → uygulama `18081`'de `UP` (kanıt: env değişkenleri kabukta yoktu)
   - `docker compose --env-file .env -f infra/docker-compose.yml config` → `5433` yayınlanan port doğrulandı
 - **CI e2e (compose `--wait` düzeltmesi, `[plan 0001/7]` `633d902`):** `minio-init` tek seferlik job'u "init" profiline alındı; `up --wait` exit 0; bucket init'i `--profile init run --rm minio-init` ile çalışır ve kendi exit koduyla doğrulanır. PR #1 Run #2 tüm job'larla yeşil (bkz. `AC-9-ci-run.txt`).
-- **Dal koruması (Rulesets):** `protect-release-branches` active; hedefler master/integration/releasable; deletion + non-fast-forward yasak; PR zorunlu (0 onay); required status check `CI Quality Gate`; bypass listesi boş. PR #1 `mergeable_state=clean` (bkz. `AC-0-branch-protection.txt`).
+- **Dal koruması (Rulesets):** `protect-release-branches` active; hedefler master/integration/releasable; deletion + non-fast-forward yasak; PR zorunlu (0 onay); required status check `CI Quality Gate`; bypass listesi boş. PR #1 `mergeable_state=clean`; arayüz kanıtı: `AC-0-branch-protection.png` (ruleset) + `AC-9-required-check.png` (Checks, 4/4 yeşil) — bkz. `AC-0-branch-protection.txt`.
 - **E2E:** 4 uygulama ayakta, Playwright smoke `3 passed`; kanıt ekran görüntüleri yenilendi.
 
 ## 3. Onay Bekleyen Noktalar (CR yanıtı)
 
 - **AP-07/1** (`docs/conventions.md` `V<n>` değişikliği, `chore(infra)` commit'i): Değişiklik, yöneticinin onayladığı Adım 2 dosya listesinde açıkça yer alıyordu (plan mesajı: "`docs/conventions.md` … `V<n>__<aciklama>.sql` olarak düzeltilecek"); commit mesajının kapsamı eksik kaldı. Geçmiş yazımı (rebase/amend) yasak olduğundan geriye dönük bölme yapılmadı; gerekçe burada kayıt altına alındı.
 - **AP-07/2** (Flyway property adları `hotel.flyway.*` → `HOTEL_*`): Değişiklik, `-D`/env override mekanizmasını (CR-5) mümkün kılmak için Adım 6 sırasında yapıldı ve artık `infra/README.md`'de resmi olarak belgelenmiştir.
-- **SD-1:** Push + CI koşusu tamamlandı (Run #2/#3 yeşil); dal koruması ve required check aktif (Rulesets API doğrulaması: `AC-0-branch-protection.txt`); arayüz ekran görüntüleri yönetici tarafından eklenecek.
+- **SD-1:** Push + CI koşusu tamamlandı (Run #2/#3/#4 yeşil); dal koruması ve required check aktif (Rulesets API doğrulaması: `AC-0-branch-protection.txt`); arayüz ekran görüntüleri eklendi (`AC-0-branch-protection.png`, `AC-9-required-check.png`).
 - **SD-2:** Spec kapanışı (taşıma + SCORECARD + DoD) inceleme onayından sonra yapılacaktır.

@@ -26,4 +26,5 @@ Notlar:
 "CI Quality Gate", "protect-release-branches" ruleset'i (active; hedefler: master/integration/releasable)
 üzerinden required check olarak bağlandı; PR #1 mergeable_state=clean.
 Ayrıntılı API doğrulaması: AC-0-branch-protection.txt
-Bu dosya yeşil koşunun kanıtıdır; arayüz ekran görüntüsü (AC-9-required-check.png) yönetici tarafından eklenecek.
+Bu dosya yeşil koşunun kanıtıdır; arayüz ekran görüntüsü: AC-9-required-check.png
+(PR #1 → Checks sekmesi; CI Quality Gate dahil 4/4 yeşil — 86f7586).
