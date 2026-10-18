@@ -22,5 +22,8 @@ Notlar:
   "init" profiline alındı; bucket init'i `--profile init run --rm minio-init` ile çalışır ve kendi
   exit koduyla doğrulanır.
 - Bu dosyayı ekleyen takip commit'i docs-only'dir; aynı pipeline her push/PR güncellemesinde yeniden koşar.
-- Dal korumasında "CI Quality Gate" gerekli (required) kontrolünün ekran görüntüsü yönetici tarafından
-  eklenecek (AC-0/AC-9); bu dosya yeşil koşunun kanıtıdır.
+=== Required check bağlaması (Rulesets) ===
+"CI Quality Gate", "protect-release-branches" ruleset'i (active; hedefler: master/integration/releasable)
+üzerinden required check olarak bağlandı; PR #1 mergeable_state=clean.
+Ayrıntılı API doğrulaması: AC-0-branch-protection.txt
+Bu dosya yeşil koşunun kanıtıdır; arayüz ekran görüntüsü (AC-9-required-check.png) yönetici tarafından eklenecek.

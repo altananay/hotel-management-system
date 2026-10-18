@@ -1,0 +1,27 @@
+=== AC-0: Dal koruması (Rulesets) — GitHub API doğrulaması ===
+Tarih : 2026-10-18
+Kaynak: GET /repos/altananay/hotel-management-system/rulesets (+ /25358074)
+
+Repo görünürlüğü: public
+  - Actions: standart GitHub-hosted runner'larda ücretsiz/sınırsız
+  - Free planda "protected branches" public repolarda kullanılabilir (private'da Pro gerekir)
+
+Ruleset: protect-release-branches
+  id             : 25358074
+  target         : branch
+  enforcement    : active
+  hedefler       : refs/heads/master, refs/heads/integration, refs/heads/releasable
+  bypass listesi : 0 aktör (kurallar admin dahil herkes için geçerli)
+
+Kurallar:
+  - deletion             → dal silme yasak
+  - non_fast_forward     → force push yasak
+  - pull_request         → doğrudan commit yasak (required_approving_review_count=0)
+  - required_status_checks → context "CI Quality Gate" (GitHub Actions), strict=false
+
+PR #1 doğrulaması: state=open, mergeable=true, mergeable_state=clean
+  → Gerekli kontroller ve kurallar sağlanmış durumda.
+
+Ekran görüntüleri (kurulum anı, arayüz) yönetici tarafından eklenecek:
+  - specs/done/evidence/0001/AC-0-branch-protection.png
+  - specs/done/evidence/0001/AC-9-required-check.png
