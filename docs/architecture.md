@@ -86,7 +86,7 @@ Etkin bağımlılık = senkron çağrı **+** event aboneliği (abone, yayıncı
 | notification ← booking/payment | event | voucher, makbuz |
 | reporting → booking/catalog/payment/pricing | senkron (read) | doluluk, ciro |
 
-Yaprak modüller: `catalog`, `pricing`, `payment`. `catalog` asla `booking`'e bağımlı olamaz. Zorlama: **Spring Modulith doğrulaması + ArchUnit testleri CI'da zorunlu** — ihlal, kırmızı build'dir.
+Yaprak modüller: `catalog`, `pricing`, `payment`. `catalog` asla `booking`'e bağımlı olamaz. İzin listesi **kapalıdır**: listede olmayan her çapraz bağımlılık ihlaldir; tüm modüller `sharedkernel`'e bağımlı olabilir, `sharedkernel` hiçbir modüle bağımlı olamaz. Zorlama: **Spring Modulith doğrulaması + ArchUnit testleri CI'da zorunlu** — ihlal, kırmızı build'dir.
 
 ### R4 — Transaction sınırı
 **1 transaction = 1 modül.** Cross-module tutarlılık senkron çağrı + kompanzasyonla sağlanır (hold süresi dolunca `ReservationExpired`; ödeme alınamazsa hold düşer). "Booking + payment tek transaction" yasaktır.
@@ -100,6 +100,7 @@ Yaprak modüller: `catalog`, `pricing`, `payment`. `catalog` asla `booking`'e ba
 
 ### R6 — REST yüzeyleri ve frontend kuralları
 - İki API yüzeyi: **public API** (`/api/**`) ve **admin API** (`/admin-api/**`); ayrı Spring Security zinciri, ayrı kimlik profili.
+- **Sağlık ucu:** her iki uygulamada Actuator `/actuator/health` (detay kapalı, kimliksiz; yalnız bu uç açık, diğer Actuator uçları kapalı).
 - admin-web → yalnız admin-api; web → yalnız hotel-api public API. İki frontend arasında kod paylaşımı yok.
 - Oda panosu gibi birleşik okuma ekranları tek read API olarak sunulur (V1: `reporting.RoomBoard(date)`); frontend iş mantığı birleştirmez.
 
@@ -123,6 +124,7 @@ Yaprak modüller: `catalog`, `pricing`, `payment`. `catalog` asla `booking`'e ba
 
 - **Tek PostgreSQL sunucusu, iki veritabanı:** `hotel_core`, `hotel_admin`. `hotel_core` içinde şema/modül. Cross-schema erişim yasaktır.
 - **Flyway:** modül başına migration klasörü (`db/migration/<modül>/`); bir modülün migration'ı başka şemaya dokunamaz. admin-api, `hotel_admin`'i kendi Flyway'ıyla yönetir.
+- **Flyway çalıştırma modeli:** migration'lar ayrı adımda `migrator` kimliğiyle koşar (`./mvnw flyway:migrate`); uygulama süreçleri `app` kimliğiyle çalışır ve `spring.flyway.enabled=false`'tur. Local quickstart ve CI bu adımı içerir; IT'lerde migration test profilinde migrator kimliğiyle koşar.
 - **ID:** UUIDv7. **Zaman:** DB'de UTC (`timestamptz`); iş günü Europe/Istanbul (`HotelDate`); konaklama tarihleri `LocalDate`.
 - **Para:** her zaman `BigDecimal` + para birimi (`Money` value object). Ayrıntı: `docs/conventions.md`.
 - **Event altyapısı aşamaları:**
@@ -178,7 +180,7 @@ Yaprak modüller: `catalog`, `pricing`, `payment`. `catalog` asla `booking`'e ba
 | D11 | Hero/animasyon | Hero video döngüsü + scroll hikâyesi (pinli bölümler + parallax) + mikro etkileşimler |
 | D12 | Housekeeping | V1 manuel oda durumu; otomasyon V2 |
 | D13 | e-Fatura | V1 kapsam dışı |
-| D14 | Repo yapısı | Monorepo (backend/, web/, admin-web/, contracts/, docs/, specs/, infra/) |
+| D14 | Repo yapısı | Monorepo (backend/, web/, admin-web/, contracts/, docs/, specs/, infra/, e2e/) |
 | D15 | Fiyat/kur modeli | TRY baz + TCMB kuru + buffer/yuvarlama + manuel override (öncelik: elle fiyat > elle kur > TCMB) |
 | D16 | Event altyapısı | Aşama 1: in-process; Aşama 2: Kafka uyumlu broker; Aşama 3 opsiyonel broker tüketimi |
 | D17 | Broker + arayüz | **Redpanda** (KRaft Kafka yerine; Java ekip öğrenme tercihi) + **kafbat-ui** |
@@ -212,7 +214,7 @@ Yaprak modüller: `catalog`, `pricing`, `payment`. `catalog` asla `booking`'e ba
 
 ```
 backend/hotel-api/    backend/admin-api/    web/    admin-web/
-contracts/            docs/                 specs/  infra/
+contracts/            docs/                 specs/  infra/  e2e/
 ```
 
-**Çalıştırma (V1):** altyapı `infra/docker-compose.yml` ile ayağa kalkar; uygulamalar geliştirme sırasında IDE / `npm run dev` ile çalıştırılır.
+**Çalıştırma (V1):** altyapı `infra/docker-compose.yml` ile ayağa kalkar; uygulamalar geliştirme sırasında IDE / `npm run dev` ile çalıştırılır. E2E smoke, kök `e2e/` Playwright projesiyle koşar (CI: compose → migrate + jar → frontend build + start → test).
