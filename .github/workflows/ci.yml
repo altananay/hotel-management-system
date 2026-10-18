@@ -29,6 +29,14 @@ jobs:
         working-directory: backend/admin-api
         run: ./mvnw -B verify
 
+      - name: Guard admin-api isolation (no business core references outside tests)
+        run: |
+          if git grep -n -i "hotel_core" -- backend/admin-api ':!backend/admin-api/src/test' ':!backend/admin-api/target'; then
+            echo "Found forbidden hotel_core reference in admin-api (CR-8)"
+            exit 1
+          fi
+          echo "OK: admin-api has no hotel_core references outside tests"
+
   frontend:
     name: Frontend (web & admin-web)
     runs-on: ubuntu-latest
