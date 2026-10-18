@@ -75,4 +75,29 @@ describe("AdminSystemStatusCard (AC-8, AC-11)", () => {
     expect(screen.queryByText(/PSQLException/i)).not.toBeInTheDocument();
     expect(screen.getByTestId("admin-status-retry")).toBeInTheDocument();
   });
+
+  it("shouldFallBackToGenericMessage_whenProblemJsonIsMissingRequiredFields", async () => {
+    server.use(
+      http.get("/admin-api/system/sample-items", () => {
+        return HttpResponse.json(
+          { title: "Bozuk zarf" },
+          {
+            status: 500,
+            headers: { "Content-Type": "application/problem+json" },
+          },
+        );
+      }),
+    );
+
+    renderAdminCard();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("admin-status-error")).toBeInTheDocument();
+    });
+
+    // Zarf eksik olduğunda makine kodu okunamaz; kullanıcı dostu genel mesaja düşülür (CR-9).
+    expect(screen.getByTestId("admin-status-error-message")).toHaveTextContent(
+      "İşlem sırasında beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.",
+    );
+  });
 });

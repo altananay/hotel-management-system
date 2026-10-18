@@ -23,7 +23,7 @@ export function getDictionary(locale: Locale): Dictionary {
 export function resolveErrorMessage(locale: Locale, code?: string): string {
   const dict = getDictionary(locale);
   const errorMap = dict.errors as Record<string, string>;
-  if (code && code in errorMap) {
+  if (code && Object.hasOwn(errorMap, code)) {
     return errorMap[code];
   }
   return dict.errors.default;

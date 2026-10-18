@@ -9,7 +9,7 @@ const DEFAULT_ERROR_MESSAGE =
   "İşlem sırasında beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.";
 
 export function resolveAdminErrorMessage(code?: string): string {
-  if (code && code in ADMIN_ERROR_MESSAGES) {
+  if (code && Object.hasOwn(ADMIN_ERROR_MESSAGES, code)) {
     return ADMIN_ERROR_MESSAGES[code];
   }
   return DEFAULT_ERROR_MESSAGE;

@@ -92,4 +92,62 @@ describe("SystemStatusCard (AC-7, AC-11)", () => {
     expect(screen.queryByText(/SQLException/i)).not.toBeInTheDocument();
     expect(screen.getByTestId("web-status-retry")).toBeInTheDocument();
   });
+
+  it("shouldFallBackToGenericMessage_whenProblemJsonIsMissingRequiredFields", async () => {
+    server.use(
+      http.get("http://localhost:8081/api/system/sample-items", () => {
+        return HttpResponse.json(
+          { title: "Bozuk zarf" },
+          {
+            status: 500,
+            headers: { "Content-Type": "application/problem+json" },
+          },
+        );
+      }),
+    );
+
+    renderWithQuery("tr");
+
+    await waitFor(() => {
+      expect(screen.getByTestId("web-status-error")).toBeInTheDocument();
+    });
+
+    // Zarf eksik olduğunda makine kodu okunamaz; kullanıcı dostu genel mesaja düşülür (CR-9).
+    expect(screen.getByTestId("web-status-error-message")).toHaveTextContent(
+      "Bağlantı sırasında beklenmeyen bir sorun oluştu. Lütfen tekrar deneyin.",
+    );
+  });
+
+  it("shouldStillParseProblemJson_whenBackendAddsUnknownExtensionFields", async () => {
+    server.use(
+      http.get("http://localhost:8081/api/system/sample-items", () => {
+        return HttpResponse.json(
+          {
+            type: "about:blank",
+            title: "Internal Server Error",
+            status: 500,
+            detail: "Service unavailable",
+            instance: "/api/system/sample-items",
+            code: "system.internal_error",
+            requestId: "0199f2c0-0000-7000-8000-000000000002",
+            traceId: "extension-field",
+          },
+          {
+            status: 500,
+            headers: { "Content-Type": "application/problem+json" },
+          },
+        );
+      }),
+    );
+
+    renderWithQuery("tr");
+
+    await waitFor(() => {
+      expect(screen.getByTestId("web-status-error")).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId("web-status-error-message")).toHaveTextContent(
+      "Sistemde geçici bir sorun oluştu. Lütfen kısa süre sonra tekrar deneyin.",
+    );
+  });
 });

@@ -1,23 +1,27 @@
 import { z } from "zod";
 import { appConfig } from "./config";
 
-export const ProblemDetailSchema = z.object({
-  type: z.string().optional(),
-  title: z.string().optional(),
-  status: z.number().optional(),
-  detail: z.string().optional(),
-  instance: z.string().optional(),
-  code: z.string().optional(),
-  requestId: z.string().optional(),
-});
+// Bilinçli olarak `.passthrough()`: zorunlu alanlar katı şekilde doğrulanır, ileriye dönük
+// ek alanlar (RFC 7807 uzantıları) yanıtı bozmaz (CR-9).
+export const ProblemDetailSchema = z
+  .object({
+    type: z.string(),
+    title: z.string(),
+    status: z.number(),
+    detail: z.string(),
+    instance: z.string(),
+    code: z.string(),
+    requestId: z.string(),
+  })
+  .passthrough();
 
 export class ApiClientError extends Error {
   readonly status: number;
-  readonly code: string;
+  readonly code?: string;
   readonly requestId?: string;
 
-  constructor(status: number, code: string, requestId?: string) {
-    super(`API error (${status}): ${code}`);
+  constructor(status: number, code?: string, requestId?: string) {
+    super(`API error (${status})`);
     this.name = "ApiClientError";
     this.status = status;
     this.code = code;
@@ -42,17 +46,17 @@ export async function apiGet<T>(path: string, schema: z.ZodType<T>): Promise<T> 
   const headerRequestId = response.headers.get("X-Request-Id") ?? undefined;
 
   if (!response.ok) {
-    let code = "system.internal_error";
+    let code: string | undefined;
     let requestId = headerRequestId;
     try {
       const rawError: unknown = await response.json();
       const parsedProblem = ProblemDetailSchema.safeParse(rawError);
       if (parsedProblem.success) {
-        code = parsedProblem.data.code ?? code;
-        requestId = parsedProblem.data.requestId ?? requestId;
+        code = parsedProblem.data.code;
+        requestId = parsedProblem.data.requestId;
       }
     } catch {
-      // Fall back to default machine code without leaking raw body
+      // Bozuk/eksik zarf: makine kodu okunamaz; kullanıcı dostu genel mesaja düşülür (CR-9).
     }
     throw new ApiClientError(response.status, code, requestId);
   }
