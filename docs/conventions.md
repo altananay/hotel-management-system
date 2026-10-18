@@ -51,7 +51,7 @@
 
 ## 4. Veritabanı ve Flyway
 
-- `hotel_core` içinde modül başına şema: `catalog`, `pricing`, `booking`, `payment`, `media`, `notification`, `reporting`. `hotel_admin` ayrı veritabanıdır (admin-api yönetir).
+- `hotel_core` içinde modül başına şema: `catalog`, `pricing`, `booking`, `payment`, `media`, `notification` (6 şema). `sharedkernel` ve V1'de veri sahibi olmayan `reporting` şemasızdır. `hotel_admin` ayrı veritabanıdır (admin-api yönetir).
 - Migration yolu: `db/migration/<modül>/V<yyyyMMddHHmm>__<aciklama>.sql`. **Bir modülün migration'ı başka şemaya dokunamaz.**
 - İsimlendirme: tablolar çoğul `snake_case`; kolonlar `snake_case`; index `ix_<tablo>_<kolon>`; FK yalnızca modül içinde mümkündür (`fk_<tablo>_<hedef>`).
 - DB kullanıcıları: `migrator` (DDL) ve `app` (yalnız DML) ayrıdır.
