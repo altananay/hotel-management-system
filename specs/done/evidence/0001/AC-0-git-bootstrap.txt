@@ -1,0 +1,11 @@
+﻿=== git branch -a ===
+* feature/0001-project-architecture
+  integration
+  master
+  releasable
+  remotes/origin/feature/0001-project-architecture
+  remotes/origin/integration
+  remotes/origin/master
+  remotes/origin/releasable
+=== git merge-base --is-ancestor releasable feature/0001-project-architecture ===
+ExitCode: 0 (0 = true, feature/0001-project-architecture is descendant of releasable)

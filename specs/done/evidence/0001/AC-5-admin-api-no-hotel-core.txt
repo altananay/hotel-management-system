@@ -1,0 +1,3 @@
+﻿=== git grep -n -i 'hotel_core' -- backend/admin-api ===
+ExitCode: 1 (1 = no matches found)
+Matches: 0

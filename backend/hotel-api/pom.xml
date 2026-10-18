@@ -27,9 +27,9 @@
         <spotless.version>3.10.4</spotless.version>
 
         <!-- Local dev defaults for Flyway CLI (migrator role — not a secret) -->
-        <hotel.flyway.url>jdbc:postgresql://localhost:5432/hotel_core</hotel.flyway.url>
-        <hotel.flyway.user>migrator</hotel.flyway.user>
-        <hotel.flyway.password>migrator_local_dev</hotel.flyway.password>
+        <HOTEL_CORE_DB_URL>jdbc:postgresql://localhost:5432/hotel_core</HOTEL_CORE_DB_URL>
+        <HOTEL_CORE_MIGRATOR_USER>migrator</HOTEL_CORE_MIGRATOR_USER>
+        <HOTEL_CORE_MIGRATOR_PASSWORD>migrator_local_dev</HOTEL_CORE_MIGRATOR_PASSWORD>
     </properties>
 
     <dependencyManagement>
@@ -202,9 +202,9 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <url>${hotel.flyway.url}</url>
-                    <user>${hotel.flyway.user}</user>
-                    <password>${hotel.flyway.password}</password>
+                    <url>${HOTEL_CORE_DB_URL}</url>
+                    <user>${HOTEL_CORE_MIGRATOR_USER}</user>
+                    <password>${HOTEL_CORE_MIGRATOR_PASSWORD}</password>
                     <locations>
                         <location>filesystem:src/main/resources/db/migration/catalog</location>
                         <location>filesystem:src/main/resources/db/migration/pricing</location>
