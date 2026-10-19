@@ -3,7 +3,7 @@
 Definition of Done'ı karşılanan spec dosyaları buraya taşınır.
 
 - **Spec dosyası:** `specs/done/<####>-<english-name>.md`
-- **Görsel kanıtlar:** `specs/done/evidence/<####>/AC-n-<english-name>.png`
+- **Görsel kanıtlar:** `specs/done/evidence/<####>/AC-n-<english-name>.png`; çoklu uygulama/durum gerektiğinde `AC-n-<app>-<state>.png` (ör. `AC-11-web-loading.png`, `AC-11-admin-web-error.png`).
 - **İsimlendirme:** İngilizce kebab-case (bkz. `docs/conventions.md` §1); spec içerikleri Türkçe.
 - Taşımadan önce SCORECARD alanı doldurulmuş olmalıdır (bkz. `specs/TEMPLATE.md`).
 

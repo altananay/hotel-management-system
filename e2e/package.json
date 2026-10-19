@@ -1,0 +1,15 @@
+{
+  "name": "hotel-e2e",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=24.0.0 <25.0.0"
+  },
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.51.0",
+    "@types/node": "24.19.2"
+  }
+}

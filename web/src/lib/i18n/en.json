@@ -1,0 +1,19 @@
+{
+  "siteTitle": "Cappadocia Stone Mansion Hotel",
+  "siteSubtitle": "Nevşehir / Cappadocia Booking and Guest Experience",
+  "languageLabel": "Language",
+  "switchTr": "TR",
+  "switchEn": "EN",
+  "statusSectionTitle": "Room Showcase Status",
+  "loadingTitle": "Loading room showcase...",
+  "loadingDescription": "Preparing current room and availability information.",
+  "emptyTitle": "No published rooms available yet",
+  "emptyDescription": "Accommodation options will appear here once the room catalog is published.",
+  "errorTitle": "Unable to load information right now",
+  "errorRetry": "Try Again",
+  "errors": {
+    "system.internal_error": "A temporary system issue occurred. Please try again shortly.",
+    "system.not_found": "The requested information was not found.",
+    "default": "An unexpected connection problem occurred. Please try again."
+  }
+}

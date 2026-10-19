@@ -1,0 +1,8 @@
+# Yerel geliştirme profili: kök .env dosyasındaki override'ları yükler (opsiyoneldir).
+# Prod/CI bu profili kullanmaz; varsayılanlar application.yml içindedir.
+# Not: .env dosyası ayrıca docker compose için de kullanılır (--env-file .env).
+spring:
+  config:
+    import:
+      - "optional:file:.env[.properties]"
+      - "optional:file:../../.env[.properties]"
