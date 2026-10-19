@@ -1,0 +1,51 @@
+server:
+  port: ${ADMIN_API_PORT:8082}
+  error:
+    whitelabel:
+      enabled: false
+
+spring:
+  application:
+    name: admin-api
+  modulith:
+    detection-strategy: explicitly-annotated
+    events:
+      jdbc:
+        schema-initialization:
+          enabled: false
+  datasource:
+    url: ${HOTEL_ADMIN_DB_URL:jdbc:postgresql://localhost:5432/hotel_admin}
+    username: ${HOTEL_ADMIN_DB_USER:app}
+    # LOCAL DEV DEFAULT — NOT A SECRET
+    password: ${HOTEL_ADMIN_DB_PASSWORD:app_local_dev}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: false
+
+admin:
+  gateway:
+    upstream-hotel-api-url: ${ADMIN_API_UPSTREAM_HOTEL_API_URL:http://localhost:8081}
+
+management:
+  endpoints:
+    access:
+      default: none
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      access: read_only
+      show-details: never
+
+logging:
+  pattern:
+    level: "%5p [requestId=%X{requestId:-}]"

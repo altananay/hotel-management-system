@@ -1,0 +1,36 @@
+=== SD-1 / AC-9: GitHub Actions CI kanıtı ===
+
+Repo    : altananay/hotel-management-system
+PR      : #1 — feature/0001-project-architecture → integration
+PR URL  : https://github.com/altananay/hotel-management-system/pull/1
+
+Kanıtlanan head: 23cf0a6 — "docs(evidence): record vr-1 resolution [plan 0001/7]"
+  (CR fix turu + VR-2/VR-3/VR-4 düzeltmeleri + VR-1 kararı bu head'de tamamdır)
+
+Run #9 — sonuç: SUCCESS
+URL     : https://github.com/altananay/hotel-management-system/actions/runs/39209335358
+Event   : pull_request | Tarih: 2026-10-19
+
+Workflow job sonuçları (4/4):
+- Backend (hotel-api & admin-api) : success
+- Frontend (web & admin-web)      : success
+- E2E Smoke (Playwright Chromium) : success
+- CI Quality Gate                 : success
+
+Diğer kontroller:
+- GitGuardian Security Checks: success (required değil; 3 incident "not a secret" olarak
+  sınıflandırıldı — yönetici, 2026-10-19)
+
+=== Required check bağlaması (Rulesets) ===
+"CI Quality Gate", "protect-release-branches" ruleset'i (active; hedefler: master/integration/releasable;
+allowed_merge_methods = squash) üzerinden required check olarak bağlandı.
+Ayrıntılı API doğrulaması: AC-0-branch-protection.txt
+Arayüz ekran görüntüsü: AC-9-required-check.png (head 23cf0a6; GitGuardian Security Checks ve
+Backend/Frontend/E2E/CI Quality Gate — tümü yeşil).
+
+=== Geçmiş / bağlam ===
+- Run #1 (bd6f5db): E2E "Start local infrastructure" adımında kırmızıydı — `docker compose up -d --wait`,
+  tek seferlik `minio-init` çıkışını hata sayıyordu (docker/compose#10596). Düzeltme commit'i: 633d902.
+- Run #2–#8: düzeltme, doğrulama ve kanıt commit'leriyle yeşil; Run #9 yukarıdaki head'i doğrular.
+- Not: Bir kanıt dosyası kendi commit'inin koşusunu işaret edemez; bu dosyayı içeren SD-2/VR-2
+  commit'i yeni bir run tetikler ve PR'ın anlık durumu her zaman Checks sekmesinde görünür.
