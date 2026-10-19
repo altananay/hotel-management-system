@@ -124,3 +124,25 @@ Not: PR’ı açan hesap aynı zamanda reviewer olamıyorsa, ikinci bir yönetic
 - **AP-07:** Developer’ın `docs/conventions.md` ve Flyway property rename açıklamaları kabul edilebilir; geçmiş yazımı değiştirilmeden gerekçe kayda geçmiş durumda.
 
 **İmza ilkesi:** “Bulur, gösterir, önerir; kodu eline almaz.”
+
+---
+
+## 6. Ek Doğrulama — 2026-10-19 (VR turu sonrası)
+
+İncelenen ek commit’ler: `b2c980e`, `e2e3a63`, `a30b47c`, `44d73df`, `48b3910`, `23cf0a6`.  
+İncelenen final head: `23cf0a6`.
+
+| ID | Durum | Not |
+|---|---|---|
+| VR-1 | **Kapandı** | `docs/git.md` §5 solo-maintainer istisnası eklendi (required check yeşil + Code Reviewer doğrulama raporu + squash-merge). Ruleset API artık `allowed_merge_methods=["squash"]` (güncelleme: 2026-10-19 06:19:43Z). `required_approving_review_count=0` bu istisna kapsamında kabul edildi. |
+| VR-2 | **Kanıt güncellemesi kaldı** | Final head `23cf0a6` için Run #9 (`39209335358`) success: Backend, Frontend, E2E, CI Quality Gate ve GitGuardian (30 commit, sır yok). Ancak `AC-9-ci-run.txt` hâlâ Run #7 / `a30b47c` ve “GitGuardian skipped” diyor; PR body ve fix raporu da Run #7’de. Final run #9’a senkronlanmalı. |
+| VR-3 | **Kapandı** | `AdminApiModularityTest` üretim yüzeyi taramasına `pom.xml` eklendi; Run #9 backend success. |
+| VR-4 | **Kapandı** | `docs/conventions.md` §2.3 allowlist dışı 401 kuralını belgeliyor; `ApiSurfaceAndErrorHandlingTest` javadoc güncel; Run #9 success. |
+
+**Kalan tek aksiyon:** VR-2 kanıt senkronu:
+- `AC-9-ci-run.txt` → Run #9 / `39209335358` / head `23cf0a6`, GitGuardian `success`.
+- `AC-0-branch-protection.txt` → “squash-only uygulanacak” notu “uygulandı” olarak güncellenmeli.
+- PR body ve `code-review-fixes-2026-10-18.md` içindeki Run #7 referansı #9’a çekilmeli.
+- `AC-9-required-check.png` final head’e ait değilse yenilenmeli.
+
+**Kod sonucu:** Yeni bloklayıcı bulgu yok; CR-1 … CR-14 ve VR-1/VR-3/VR-4 kapandı. VR-2 kanıt senkronu sonrası PR, solo-maintainer istisnası kapsamında squash-merge’e hazırdır; SD-2 merge sonrası kapanacak.
