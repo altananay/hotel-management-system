@@ -27,10 +27,9 @@ Ekran görüntüleri (arayüz):
     kurallar ve "Require status checks to pass → CI Quality Gate"
   - AC-9-required-check.png — PR #1 → Checks sekmesi: Backend, Frontend, E2E, CI Quality Gate (4/4 yeşil)
 
-=== VR-1 (2026-10-19 doğrulama turu) — kalan süreç eksiği ===
-GitHub Rulesets API: required_approving_review_count=0; allowed_merge_methods = merge, squash, rebase.
-docs/git.md §5 ise en az 1 onay + squash-merge istiyor. Takım Yöneticisi kararı bekleniyor:
-  (a) ruleset'te required approvals=1 + yalnız squash,
-  (b) solo-maintainer istisnasının docs/git.md'de açıkça tanımlanması, veya
-  (c) ikinci bir reviewer hesabı eklenmesi.
-Uygulama sonrası bu dosya güncellenecektir.
+=== VR-1 çözümü (2026-10-19) — yönetici kararı ===
+Seçilen yol: (b) solo-maintainer istisnası.
+- docs/git.md §5'e istisna maddesi eklendi (required check yeşil + Code Reviewer doğrulama
+  raporu + yalnız squash-merge).
+- Ruleset'te "yalnız squash" (allowed_merge_methods) ayarı yönetici tarafından yapılacak;
+  bu commit itibarıyla durum: merge, squash, rebase.

@@ -3,7 +3,7 @@
 - **Düzelten:** Developer
 - **Tarih:** 2026-10-18 (kanıt ekleri ve doğrulama turu: 2026-10-19)
 - **Kaynak incelemeler:** `specs/done/evidence/0001/code-review-2026-10-18.md` (CR-1…CR-14, SD-1…SD-3) ve `code-review-verification-2026-10-19.md` (VR-1…VR-4)
-- **Durum:** Tüm CR bulguları düzeltildi. Doğrulama turunda CR-1…CR-14 **doğrulandı**; VR-2/VR-3/VR-4 **kapatıldı**; **VR-1** (ruleset onay/squash ayarı) **Takım Yöneticisi kararında**. SD-2 (spec taşıma + SCORECARD + DoD) inceleme onayı ve merge sonrası kapanacak.
+- **Durum:** Tüm CR bulguları düzeltildi. Doğrulama turunda CR-1…CR-14 **doğrulandı**; VR-2/VR-3/VR-4 **kapatıldı**; **VR-1** yönetici kararıyla **(b) solo-maintainer istisnası** olarak çözüldü (`docs/git.md` §5) — ruleset "yalnız squash" ayarı yönetici tarafından yapılacak. SD-2 (spec taşıma + SCORECARD + DoD) inceleme onayı ve merge sonrası kapanacak.
 
 ## 1. Bulgu → Fix → Kanıt Eşlemesi
 
@@ -48,7 +48,7 @@ Kaynak: `specs/done/evidence/0001/code-review-verification-2026-10-19.md` (incel
 
 | ID | Durum | Fix / Aksiyon | Kanıt |
 |---|---|---|---|
-| VR-1 | **Yönetici kararı bekliyor (AP-10)** | Ruleset'te `required_approving_review_count=0` ve `allowed_merge_methods` tümü açık; `docs/git.md` §5 en az 1 onay + squash-merge istiyor. Öneri: approvals=1 + yalnız squash; solo-maintainer istisnası (`docs/git.md`) veya ikinci reviewer hesabı kararı yöneticide | GitHub Rulesets API; `docs/git.md` §5; `AC-0-branch-protection.txt` |
+| VR-1 | **Çözüldü (yönetici kararı: b)** | Solo-maintainer istisnası seçildi; `docs/git.md` §5'e işlendi (required check + Code Reviewer doğrulama raporu + yalnız squash-merge). Ruleset'te "yalnız squash" ayarı yönetici tarafından yapılacak | `docs/git.md` §5; `AC-0-branch-protection.txt` |
 | VR-2 | Düzeltildi | AC-9 kanıtı güncel koda (`a30b47c`) ve Run #7'ye çekildi; PR body + fix raporu senkronlandı; Checks ekran görüntüsü final head ile yenilendi | `AC-9-ci-run.txt`; `AC-9-required-check.png` |
 | VR-3 | Düzeltildi | `AdminApiModularityTest` üretim yüzeyi taramasına `pom.xml` eklendi (CI guard kapsamıyla eşitlendi) | `AdminApiModularityTest.shouldNotReferenceBusinessCoreDatabase_…` (6/6 yeşil); Run #7 |
 | VR-4 | Düzeltildi (doküman) | Bilinçli default-deny davranışı (`allowlist dışı → 401`) `docs/conventions.md` durum matrisine işlendi; `ApiSurfaceAndErrorHandlingTest` testine javadoc eklendi | `docs/conventions.md` §2.3; Run #7 |
