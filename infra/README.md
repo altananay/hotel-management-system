@@ -10,6 +10,8 @@ Bu dizin, geliştirme ortamı için gerekli altyapı servislerini (`PostgreSQL`,
 | `minio` | `9000` (API) / `9001` (Konsol) | S3 uyumlu medya deposu; `hotel-media` bucket'ı tek seferlik `minio-init` init job'u ile açılır |
 | `mailpit` | `1025` (SMTP) / `8025` (Web UI) | Yerel e-posta yakalama ve test servisi |
 
+> **Bucket init ayrı adımdır:** `docker compose up -d --wait` yalnız üç servisi healthy duruma getirir. `hotel-media` bucket'ı tek seferlik init job'uyla oluşturulur: `docker compose --env-file .env -f infra/docker-compose.yml --profile init run --rm minio-init`. Gerekçe: `up --wait`, exit eden tek seferlik job'u hata sayar (docker/compose#10596). Bu nedenle init, `--profile init` altında tutulur ve kendi exit koduyla doğrulanır.
+
 ## Ortam Değişkenleri: Her Katman Nereden Okur?
 
 | Katman | Okuduğu yer | Not |
