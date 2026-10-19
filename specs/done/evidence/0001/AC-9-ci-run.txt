@@ -4,27 +4,30 @@ Repo    : altananay/hotel-management-system
 PR      : #1 — feature/0001-project-architecture → integration
 PR URL  : https://github.com/altananay/hotel-management-system/pull/1
 
-Run #2 — sonuç: SUCCESS
-URL     : https://github.com/altananay/hotel-management-system/actions/runs/39098813770
-Event   : pull_request | Head: 633d902 (fix(infra): run one-shot minio-init outside compose --wait)
-Tarih   : 2026-10-18 04:56:15Z → 05:00:01Z (≈3 dk 45 sn)
+Güncel kod head'i: a30b47c — "docs(evidence): add code review verification report [plan 0001/7]"
+  (VR-3 test kapsamı + VR-4 doküman düzeltmelerini içerir)
 
-Job sonuçları:
-- Backend (hotel-api & admin-api) : success (04:56:18Z → 04:57:41Z)
-- Frontend (web & admin-web)      : success (04:56:18Z → 04:57:53Z)
-- E2E Smoke (Playwright Chromium) : success (04:56:18Z → 04:59:54Z)
-- CI Quality Gate                 : success (04:59:57Z → 05:00:00Z)
+Run #7 — sonuç: SUCCESS
+URL     : https://github.com/altananay/hotel-management-system/actions/runs/39207533057
+Event   : pull_request | Tarih: 2026-10-19
 
-Notlar:
-- İlk koşu (Run #1, head bd6f5db) E2E job'ının "Start local infrastructure" adımında kırmızıydı:
-  `docker compose up -d --wait`, tek seferlik `minio-init` container'ının beklenen çıkışını (exit 0)
-  hata sayıyordu (bilinen davranış: docker/compose#10596). Düzeltme commit'i 633d902: `minio-init`
-  "init" profiline alındı; bucket init'i `--profile init run --rm minio-init` ile çalışır ve kendi
-  exit koduyla doğrulanır.
-- Bu dosyayı ekleyen takip commit'i docs-only'dir; aynı pipeline her push/PR güncellemesinde yeniden koşar.
+Job sonuçları (4/4):
+- Backend (hotel-api & admin-api) : success
+- Frontend (web & admin-web)      : success
+- E2E Smoke (Playwright Chromium) : success
+- CI Quality Gate                 : success
+
+GitGuardian Security Checks: skipped (3 incident "test credential" olarak sınıflandırıldı;
+required check değildir).
+
 === Required check bağlaması (Rulesets) ===
 "CI Quality Gate", "protect-release-branches" ruleset'i (active; hedefler: master/integration/releasable)
-üzerinden required check olarak bağlandı; PR #1 mergeable_state=clean.
-Ayrıntılı API doğrulaması: AC-0-branch-protection.txt
-Bu dosya yeşil koşunun kanıtıdır; arayüz ekran görüntüsü: AC-9-required-check.png
-(PR #1 → Checks sekmesi; CI Quality Gate dahil 4/4 yeşil — 86f7586).
+üzerinden required check olarak bağlandı. Ayrıntılı API doğrulaması: AC-0-branch-protection.txt
+Arayüz ekran görüntüsü: AC-9-required-check.png (run #7 head'i a30b47c; 4/4 yeşil).
+
+=== Geçmiş / bağlam ===
+- Run #1 (bd6f5db): E2E "Start local infrastructure" adımında kırmızıydı — `docker compose up -d --wait`,
+  tek seferlik `minio-init` çıkışını hata sayıyordu (docker/compose#10596). Düzeltme commit'i: 633d902.
+- Run #2–#6: düzeltme ve kanıt commit'leriyle yeşil.
+- Not: Bu dosyayı değiştiren docs-only commit yeni bir run tetikler (run #8); PR'ın güncel
+  required-check durumu her zaman Checks sekmesinde görünür.
