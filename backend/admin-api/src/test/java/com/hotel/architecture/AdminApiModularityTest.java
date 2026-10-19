@@ -247,9 +247,13 @@ class AdminApiModularityTest {
                             .toList();
         }
 
-        assertThat(files).isNotEmpty();
+        // pom.xml de üretim yüzeyidir (Flyway/datasource property'leri); taramaya dahildir.
+        List<Path> filesToScan =
+                Stream.concat(files.stream(), Stream.of(Path.of("pom.xml"))).toList();
 
-        for (Path file : files) {
+        assertThat(filesToScan).isNotEmpty();
+
+        for (Path file : filesToScan) {
             assertThat(Files.readString(file))
                     .as(
                             "admin-api must not reference the business core database (checked: %s)",
