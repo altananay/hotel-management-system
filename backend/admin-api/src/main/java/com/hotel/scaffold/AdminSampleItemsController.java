@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Temporary scaffold read endpoint for Spec 0001 ({@code specs/0001-project-architecture.md},
+ * Temporary scaffold read endpoint for Spec 0001 ({@code specs/done/0001-project-architecture.md},
  * REQ-11 / AC-11) to verify the three mandatory UI states (loading, empty, error) in {@code
  * admin-web} via TanStack Query and Zod validation.
  *

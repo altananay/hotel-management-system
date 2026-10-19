@@ -10,7 +10,7 @@
 
 - **Spec No:** `0001`
 - **Başlık:** Proje Kurulumu ve Mimari İskelet (`project-architecture`)
-- **Durum:** Onaylandı
+- **Durum:** Tamamlandı
 - **Branch:** `feature/0001-project-architecture`
 - **İlgili doküman/kararlar:** `docs/architecture.md` (§1–§11, D1–D19 ve Toolchain kararı), `docs/domain.md` (§1), `docs/conventions.md` (§1–§7), `docs/frontend.md`, `docs/testing.md`, `docs/git.md` (§1, §6); Onaylı kararlar: `CLARIFY-1A`, `CLARIFY-2A`, `CLARIFY-3A`, `CLARIFY-4A` ve `F1–F12`; rev.2: onaylı QA düzeltmeleri (QA-1…QA-19, 2026-10-18) işlendi
 - **Tarih:** 2026-10-18 *(Son revizyon: 2026-10-18, rev.2)*
@@ -94,17 +94,17 @@ Geliştirme ekibi ve Takım Yöneticisi, Nevşehir/Kapadokya otel rezervasyon ve
 
 ## 6. Definition of Done
 
-- [ ] Tüm AC'ler doğrulandı (test ve/veya görsel kanıt)
-- [ ] Pipeline yeşil (lint + build + test + kritik akış smoke)
-- [ ] Kod incelemesi onaylandı (Takım Yöneticisi)
-- [ ] Davranış değiştiyse dokümanlar güncellendi
-- [ ] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi
-- [ ] SCORECARD dolduruldu
+- [x] Tüm AC'ler doğrulandı (test ve/veya görsel kanıt)
+- [x] Pipeline yeşil (lint + build + test + kritik akış smoke)
+- [x] Kod incelemesi onaylandı (Takım Yöneticisi)
+- [x] Davranış değiştiyse dokümanlar güncellendi
+- [x] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi
+- [x] SCORECARD dolduruldu
 
 ## 7. SCORECARD
 
 - **Spec revizyon sayısı:** 2
-- **Düzeltme turu sayısı:** 
-- **Bulgu gerçek/gürültü oranı:** 
-- **Regresyon sayısı:** 
-- **Kaçan hata (escaped bug):** 
+- **Düzeltme turu sayısı:** 2 (CR-1…CR-14 fix turu; VR-1…VR-4 verifikasyon turu)
+- **Bulgu gerçek/gürültü oranı:** 18/18 gerçek bulgu (CR-1…CR-14, VR-1…VR-4); gürültü 0
+- **Regresyon sayısı:** 0
+- **Kaçan hata (escaped bug):** 0 (compose `--wait` sorunu ilk CI koşusunda yakalandı ve merge öncesi kapatıldı)
