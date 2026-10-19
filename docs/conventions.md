@@ -59,7 +59,7 @@
 ## 4. Veritabanı ve Flyway
 
 - `hotel_core` içinde modül başına şema: `catalog`, `pricing`, `booking`, `payment`, `media`, `notification` (6 şema). `sharedkernel` ve V1'de veri sahibi olmayan `reporting` şemasızdır. `hotel_admin` ayrı veritabanıdır (admin-api yönetir).
-- Migration yolu: `db/migration/<modül>/V<n>__<aciklama>.sql` (ör. `V1__init_catalog_schema.sql`). **Bir modülün migration'ı başka şemaya dokunamaz.**
+- Migration yolu: `db/migration/<modül>/V<n>__<aciklama>.sql` (ör. `V1__init_catalog_schema.sql`). Numara tahsisi: `hotel_core` tek Flyway history kullandığından `V<n>` **global benzersizdir**; yeni numara tüm modül klasörlerindeki en büyük numaranın +1'idir (çakışma CI'da kırmızı build'dir). **Bir modülün migration'ı başka şemaya dokunamaz.**
 - İsimlendirme: tablolar çoğul `snake_case`; kolonlar `snake_case`; index `ix_<tablo>_<kolon>`; FK yalnızca modül içinde mümkündür (`fk_<tablo>_<hedef>`).
 - DB kullanıcıları: `migrator` (DDL) ve `app` (yalnız DML) ayrıdır.
 - `public` şeması uygulama akışının dışındadır: yalnız `migrator` (`USAGE`+`CREATE`) kullanır; `app` rolüne `public` üzerinde hiçbir yetki verilmez (`public.flyway_schema_history` dahil). DML yetkileri yalnız modül şemalarında (`IN SCHEMA <modül>` default privilege'ları) tanımlanır.
