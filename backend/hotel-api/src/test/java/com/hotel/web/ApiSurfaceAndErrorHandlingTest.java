@@ -131,6 +131,11 @@ class ApiSurfaceAndErrorHandlingTest {
                 .andExpect(jsonPath("$.requestId").value("req-admin-check-01"));
     }
 
+    /**
+     * Bilinçli default-deny: allowlist dışındaki yollar routing'e ulaşmadan güvenlik katmanında
+     * reddedilir; bu nedenle bilinmeyen bir public path 404 değil 401 döner (bkz.
+     * docs/conventions.md §2.3 durum matrisi).
+     */
     @Test
     void shouldReturn401ProblemDetail_whenCallingUnknownPublicPathOutsideAllowlist()
             throws Exception {
