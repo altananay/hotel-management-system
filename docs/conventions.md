@@ -38,7 +38,7 @@
 - **Kod uzayı:** `security.*`, `validation.*`, `system.*` rezerve öneklerdir (`security.unauthorized`, `security.forbidden`, `system.not_found`, `system.method_not_allowed`, `system.not_acceptable`, `system.unsupported_media_type`, `system.conflict`, `system.internal_error`); iş kodları `<modül>.<snake_case>` (ör. `booking.room_not_available`).
 - **Domain hata kategorileri:** `DomainError` semantik kategori taşır (`DomainErrorCategory`: `validation`, `not_found`, `conflict`, `forbidden`, `internal`); HTTP statü eşlemesi **yalnız web katmanında** yapılır — `sharedkernel`'e HTTP/Spring web bilgisi girmez.
 - **Durum matrisi:** `400 → validation.*` ve kategori `validation` olan `<modül>.*` · `401 → security.unauthorized` · `403 → security.forbidden` ve kategori `forbidden` olan `<modül>.*` · `404 → system.not_found` ve kategori `not_found` olan `<modül>.*` · `405 → system.method_not_allowed` · `406 → system.not_acceptable` · `409 → system.conflict` ve kategori `conflict` olan `<modül>.*` (ör. `booking.room_not_available`) · `415 → system.unsupported_media_type` · `500 → system.internal_error` ve kategori `internal` olan `<modül>.*` (genel mesaj; en az bir otomatik testle kanıtlanır). Matriste bulunmayan durumlar `system.http_<durum>` kodunu taşır (ör. `system.http_422`). Allowlist dışındaki yollar routing'e ulaşmadan güvenlik katmanında reddedilir ve varlığından bağımsız olarak `401 security.unauthorized` döner (bilinçli default-deny; `404` yalnız allowlist içindeki API yüzeyinde değerlendirilir).
-- **CORS:** yalnızca `docs/architecture.md` §11'deki origin'ler; izin verilmeyen origin'e `Access-Control-Allow-Origin` dönmez (negatif test edilir).
+- **CORS:** yalnızca `docs/architecture.md` §11'deki origin'ler; izin verilmeyen origin'e `Access-Control-Allow-Origin` dönmez (negatif test edilir). **CORS kapsamı:** Yalnız `hotel-api` public yüzeyi CORS sunar (allowlist: `docs/architecture.md` §11). `admin-api`'de CORS yapılandırması yoktur; `admin-web` erişimi aynı origin üzerinden Next.js rewrites ile yapılır. `admin-api`'ye farklı origin'den tarayıcı erişimi desteklenmez.
 
 ### 2.4 Zaman, kimlik, log, config
 
@@ -59,7 +59,7 @@
 ## 4. Veritabanı ve Flyway
 
 - `hotel_core` içinde modül başına şema: `catalog`, `pricing`, `booking`, `payment`, `media`, `notification` (6 şema). `sharedkernel` ve V1'de veri sahibi olmayan `reporting` şemasızdır. `hotel_admin` ayrı veritabanıdır (admin-api yönetir).
-- Migration yolu: `db/migration/<modül>/V<n>__<aciklama>.sql` (ör. `V1__init_catalog_schema.sql`). **Bir modülün migration'ı başka şemaya dokunamaz.**
+- Migration yolu: `db/migration/<modül>/V<n>__<aciklama>.sql` (ör. `V1__init_catalog_schema.sql`). Numara tahsisi: `hotel_core` tek Flyway history kullandığından `V<n>` **global benzersizdir**; yeni numara tüm modül klasörlerindeki en büyük numaranın +1'idir (çakışma CI'da kırmızı build'dir). **Bir modülün migration'ı başka şemaya dokunamaz.**
 - İsimlendirme: tablolar çoğul `snake_case`; kolonlar `snake_case`; index `ix_<tablo>_<kolon>`; FK yalnızca modül içinde mümkündür (`fk_<tablo>_<hedef>`).
 - DB kullanıcıları: `migrator` (DDL) ve `app` (yalnız DML) ayrıdır.
 - `public` şeması uygulama akışının dışındadır: yalnız `migrator` (`USAGE`+`CREATE`) kullanır; `app` rolüne `public` üzerinde hiçbir yetki verilmez (`public.flyway_schema_history` dahil). DML yetkileri yalnız modül şemalarında (`IN SCHEMA <modül>` default privilege'ları) tanımlanır.

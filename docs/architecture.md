@@ -219,4 +219,4 @@ backend/hotel-api/    backend/admin-api/    web/    admin-web/
 contracts/            docs/                 specs/  infra/  e2e/
 ```
 
-**Çalıştırma (V1):** altyapı `infra/docker-compose.yml` ile ayağa kalkar; uygulamalar geliştirme sırasında IDE / `npm run dev` ile çalıştırılır. E2E smoke, kök `e2e/` Playwright projesiyle koşar (CI: compose → migrate + jar → frontend build + start → test).
+**Çalıştırma (V1):** altyapı `infra/docker-compose.yml` ile ayağa kalkar; yerel altyapı iki adımda ayağa kalkar: (1) `up -d --wait` ile servisler, (2) `--profile init run --rm minio-init` ile `hotel-media` bucket'ı. Uygulamalar geliştirme sırasında IDE / `npm run dev` ile çalıştırılır. E2E smoke, kök `e2e/` Playwright projesiyle koşar (CI: compose → migrate + jar → frontend build + start → test).
