@@ -53,6 +53,8 @@ feature/<spec-no>-<english-name>  ──PR (squash)──►  integration (TEST)
 1. **Şablon doldurulmuş olmalı:** bağlı spec, özet, kabul kriteri kontrol listesi, test/kanıt, riskler.
 2. **Pipeline yeşil olmalı:** lint + build + testler (+ kritik akış smoke).
 3. **En az bir onay:** Takım Yöneticisi (insan). Ajan gözden geçirme yorumları öneri niteliğindedir (Altın Kural 4).
+
+   > **Tek kişilik depo istisnası (solo maintainer):** Depoda tek bir insan erişimi varsa GitHub kendi PR'ını onaylamayı engellediğinden "en az bir onay" koşulu şu şekilde karşılanır: (1) `CI Quality Gate` required check yeşil, (2) Code Reviewer'ın doğrulama raporu `specs/done/evidence/` altında kayıtlı, (3) merge **squash-merge** ile yalnız Takım Yöneticisi tarafından yapılır. Bu istisna modunda GitHub ruleset'i yalnız squash-merge'e izin verir. İkinci bir insan erişimi eklendiğinde onay zorunluluğu yeniden devreye alınır.
 4. **Squash-merge** ile `integration`'a birleştirilir; birleşen commit mesajı **PR başlığıdır**; PR başlığı da Conventional formatına ve İngilizce kuralına (§3) uyar.
 
 PR şablonu taslağı (`.github/pull_request_template.md` olarak ilk dilimde oluşturulacak):
