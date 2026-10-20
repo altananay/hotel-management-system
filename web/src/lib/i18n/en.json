@@ -4,13 +4,35 @@
   "languageLabel": "Language",
   "switchTr": "TR",
   "switchEn": "EN",
-  "statusSectionTitle": "Room Showcase Status",
-  "loadingTitle": "Loading room showcase...",
-  "loadingDescription": "Preparing current room and availability information.",
-  "emptyTitle": "No published rooms available yet",
-  "emptyDescription": "Accommodation options will appear here once the room catalog is published.",
-  "errorTitle": "Unable to load information right now",
-  "errorRetry": "Try Again",
+  "home": {
+    "badge": "NEVŞEHİR · CAPPADOCIA HERITAGE STAY",
+    "heroTitle": "A Timeless Cappadocia Sanctuary Carved Into Ancient Tuff Stone",
+    "heroDescription": "Discover the enchanting spirit of Cappadocia in our vaulted cave suites and handcrafted stone rooms overlooking millennia-old valleys at sunrise.",
+    "exploreRoomsCta": "Explore Room Collection",
+    "highlights": {
+      "architectureTitle": "Authentic Cave & Stone Craft",
+      "architectureDesc": "Restored with traditional Cappadocian masonry, offering living spaces with distinct historical character.",
+      "terraceTitle": "Panoramic Valley & Balloon Views",
+      "terraceDesc": "Watch sunrise hot-air balloons drift across the horizon from tranquil private terraces.",
+      "hospitalityTitle": "Refined Comfort & Serenity",
+      "hospitalityDesc": "Thoughtfully appointed with stone fireplaces, carved jacuzzis, and hand-woven Anatolian rugs."
+    }
+  },
+  "rooms": {
+    "backToHome": "Back to Home",
+    "collectionBadge": "ROOM CATEGORIES & AMENITIES",
+    "pageTitle": "Our Room & Suite Collection",
+    "pageSubtitle": "Explore our accommodation categories blending seamlessly with Cappadocia's natural rock formations and historic stone architecture.",
+    "loadingText": "Preparing our room collection...",
+    "emptyTitle": "No published rooms are available yet.",
+    "emptySubtitle": "Our room and suite categories will appear here as soon as they are published.",
+    "errorMessage": "Room information could not be loaded right now. Please try again.",
+    "retryButton": "Try Again",
+    "capacityBadge": "Up to {count} guests",
+    "amenitiesHeading": "Room Amenities",
+    "placeholderBadge": "Cappadocia Stone Architecture Collection",
+    "placeholderCaption": "Photo gallery and 360° virtual tour coming soon"
+  },
   "errors": {
     "system.internal_error": "A temporary system issue occurred. Please try again shortly.",
     "system.not_found": "The requested information was not found.",

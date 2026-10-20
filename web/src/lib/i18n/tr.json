@@ -4,13 +4,35 @@
   "languageLabel": "Dil",
   "switchTr": "TR",
   "switchEn": "EN",
-  "statusSectionTitle": "Oda Vitrini Durumu",
-  "loadingTitle": "Oda vitrini yükleniyor...",
-  "loadingDescription": "Güncel oda ve müsaitlik bilgileri hazırlanıyor.",
-  "emptyTitle": "Henüz yayınlanmış oda bulunmuyor",
-  "emptyDescription": "Oda kataloğu hazırlandığında konaklama seçenekleri burada listelenecektir.",
-  "errorTitle": "Bilgiler şu anda yüklenemedi",
-  "errorRetry": "Tekrar Dene",
+  "home": {
+    "badge": "NEVŞEHİR · KAPADOKYA MİRAS KONAKLAMA",
+    "heroTitle": "Tarihi Tüf Kayalara Oyulmuş Zamansız Bir Kapadokya Deneyimi",
+    "heroDescription": "Binlerce yıllık vadi manzarasına uyanacağınız kemerli mağara süitlerimiz ve doğal taş odalarımızla Kapadokya'nın büyüleyici ruhunu keşfedin.",
+    "exploreRoomsCta": "Oda Koleksiyonunu Keşfet",
+    "highlights": {
+      "architectureTitle": "Özgün Taş ve Mağara Mimarisi",
+      "architectureDesc": "Geleneksel Kapadokya taş işçiliğiyle restore edilmiş, her biri kendine özgü dokuya sahip yaşam alanları.",
+      "terraceTitle": "Panoramik Vadi ve Balon Manzarası",
+      "terraceDesc": "Gün doğumunda gökyüzünü süsleyen sıcak hava balonlarını özel terasınızdan izleme ayrıcalığı.",
+      "hospitalityTitle": "Seçkin Konfor ve Dinginlik",
+      "hospitalityDesc": "Taş şömine, oyma jakuzi ve el dokuması halılarla tamamlanan huzurlu konaklama deneyimi."
+    }
+  },
+  "rooms": {
+    "backToHome": "Ana Sayfaya Dön",
+    "collectionBadge": "ODA KATEGORİLERİ VE OLANAKLAR",
+    "pageTitle": "Oda ve Süit Koleksiyonumuz",
+    "pageSubtitle": "Kapadokya'nın doğal kaya oluşumları ve tarihi taş mimarisiyle bütünleşen konaklama seçeneklerimizi inceleyin.",
+    "loadingText": "Oda koleksiyonumuz hazırlanıyor...",
+    "emptyTitle": "Henüz yayınlanmış oda bulunmuyor.",
+    "emptySubtitle": "Yeni oda ve süit kategorilerimiz yayına alındığında bu vitrinde yer alacaktır.",
+    "errorMessage": "Oda bilgileri şu anda yüklenemedi. Lütfen tekrar deneyin.",
+    "retryButton": "Tekrar Dene",
+    "capacityBadge": "En fazla {count} misafir",
+    "amenitiesHeading": "Oda Olanakları",
+    "placeholderBadge": "Kapadokya Taş Mimari Koleksiyonu",
+    "placeholderCaption": "Fotoğraf galerisi ve 360° sanal tur yakında eklenecektir"
+  },
   "errors": {
     "system.internal_error": "Sistemde geçici bir sorun oluştu. Lütfen kısa süre sonra tekrar deneyin.",
     "system.not_found": "İstenen bilgi bulunamadı.",
