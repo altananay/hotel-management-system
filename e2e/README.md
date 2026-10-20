@@ -22,6 +22,13 @@ Tüm komutlar **depo kökünden** çalıştırılır. `(cd <dizin> && <komut>)` 
    (cd backend/admin-api && ./mvnw flyway:migrate)
    ```
 
+   > **Özel Postgres portu:** `.env` içinde `POSTGRES_PORT=5433` gibi 5432 dışı bir değer varsa Maven `.env`'i okumaz. Bu durumda komutları şu override'larla çalıştırın:
+   >
+   > ```bash
+   > (cd backend/hotel-api && ./mvnw flyway:migrate "-DHOTEL_CORE_DB_URL=jdbc:postgresql://localhost:5433/hotel_core")
+   > (cd backend/admin-api && ./mvnw flyway:migrate "-DHOTEL_ADMIN_DB_URL=jdbc:postgresql://localhost:5433/hotel_admin")
+   > ```
+
 3. **Backend uygulamalarını başlatın (ayrı terminaller; yerel `.env` override'ları için `local` profili):**
 
    ```bash
@@ -47,6 +54,13 @@ Tüm komutlar **depo kökünden** çalıştırılır. `(cd <dizin> && <komut>)` 
    ```bash
    (cd backend/hotel-api && ./mvnw flyway:migrate -Pseed -Dseed.env=local)
    ```
+
+   > **Özel Postgres portu:** `.env` içinde `POSTGRES_PORT=5433` varsa seed komutuna şu override'ı ekleyin:
+   >
+   > ```bash
+   > (cd backend/hotel-api && ./mvnw flyway:migrate -Pseed -Dseed.env=local \
+   >   "-DHOTEL_CORE_DB_URL=jdbc:postgresql://localhost:5433/hotel_core")
+   > ```
 
    > `seed` profili ortam guard'ı taşır: `-Dseed.env=local|ci` ve `localhost`/`127.0.0.1` JDBC host'u zorunludur; aksi halde fail-fast eder. Seed SQL ayrıca hedef veritabanında `local-ci-seed` local/CI database comment marker'ını arar (bkz. `infra/README.md`).
 

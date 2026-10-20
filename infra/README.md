@@ -71,6 +71,8 @@ Override örneği:
   "-DHOTEL_CORE_MIGRATOR_PASSWORD=migrator_local_dev")
 ```
 
+> `.env` içinde `POSTGRES_PORT=5433` gibi 5432 dışı bir değer varsa Maven `.env`'i okumaz. Yukarıdaki komutta `5432` yerine `5433` kullanın; `admin-api` için `HOTEL_ADMIN_DB_URL` override'ını ekleyin.
+
 ## Geliştirme ve CI Örnek Verisi (Repeatable Seed — `migrator` Kimliğiyle)
 
 Katalog örnek verisi (`backend/hotel-api/src/main/resources/db/seed/catalog/R__seed_catalog_dev.sql`), canlı (prod) ortama örnek veri sızmaması için varsayılan Flyway konumlarında **yer almaz** (`docs/conventions.md` §4).
@@ -81,8 +83,12 @@ Katalog örnek verisi (`backend/hotel-api/src/main/resources/db/seed/catalog/R__
 - **Efektif bağlantı guard'ı (CR-1 residual):** Seed SQL'i hedef veritabanında `local-ci-seed` database comment marker'ını arar. Bu comment yalnız `infra/postgres/init` ile boş local/CI hacminde `COMMENT ON DATABASE` üzerinden tanımlanır; prod'da yoktur. `-Dflyway.url`, `FLYWAY_URL`, config dosyası veya `-Dflyway.initSql` ile profil guard'ı aşılmaya çalışılsa bile seed hedef DB'de fail-fast eder.
 
 ```bash
-# Yerel geliştirme
+# Yerel geliştirme (varsayılan 5432)
 (cd backend/hotel-api && ./mvnw flyway:migrate -Pseed -Dseed.env=local)
+
+# Yerel geliştirme — .env'de POSTGRES_PORT=5433 ise
+(cd backend/hotel-api && ./mvnw flyway:migrate -Pseed -Dseed.env=local \
+  "-DHOTEL_CORE_DB_URL=jdbc:postgresql://localhost:5433/hotel_core")
 
 # CI
 (cd backend/hotel-api && ./mvnw flyway:migrate -Pseed -Dseed.env=ci)
