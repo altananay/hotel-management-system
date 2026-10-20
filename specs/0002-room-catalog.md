@@ -125,7 +125,7 @@ Potansiyel otel misafirleri ve otel yönetimi, Nevşehir/Kapadokya otelinin sund
 ## 7. SCORECARD
 
 - **Spec revizyon sayısı:** 2
-- **Düzeltme turu sayısı:** 
-- **Bulgu gerçek/gürültü oranı:** 
-- **Regresyon sayısı:** 
-- **Kaçan hata (escaped bug):** 
+- **Düzeltme turu sayısı:**
+- **Bulgu gerçek/gürültü oranı:**
+- **Regresyon sayısı:**
+- **Kaçan hata (escaped bug):**
