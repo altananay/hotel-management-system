@@ -78,6 +78,7 @@ Katalog örnek verisi (`backend/hotel-api/src/main/resources/db/seed/catalog/R__
 - **Önemli Not:** Uygulama runtime'ında `spring.flyway.enabled=false` olduğundan uygulama açılışında seed koşmaz. Ayrıca Maven Flyway plugin'i Spring Boot'a ait `spring.flyway.locations` özelliğini **okumaz**.
 - Bu nedenle örnek veri, standart `./mvnw flyway:migrate` adımından **sonra** ayrı bir adımda ve `app` değil `migrator` kimliğiyle çalıştırılır.
 - **Ortam guard'ı (CR-1):** `seed` profili yalnız `-Dseed.env=local` veya `-Dseed.env=ci` ile çalışır ve JDBC host'unun `localhost`/`127.0.0.1` olmasını zorunlu kılar. Değer yoksa veya URL prod'a işaret ediyorsa komut **fail-fast** ile durur; örnek veri canlı ortama yazılamaz.
+- **Efektif bağlantı guard'ı (CR-1 residual):** Seed SQL'i hedef veritabanında `local-ci-seed` database comment marker'ını arar. Bu comment yalnız `infra/postgres/init` ile boş local/CI hacminde `COMMENT ON DATABASE` üzerinden tanımlanır; prod'da yoktur. `-Dflyway.url`, `FLYWAY_URL`, config dosyası veya `-Dflyway.initSql` ile profil guard'ı aşılmaya çalışılsa bile seed hedef DB'de fail-fast eder.
 
 ```bash
 # Yerel geliştirme
@@ -88,6 +89,8 @@ Katalog örnek verisi (`backend/hotel-api/src/main/resources/db/seed/catalog/R__
 ```
 
 > `-Pseed` profili olmadan çalıştırılan standart `flyway:migrate` komutu yalnız şema geçişlerini uygular; seed içermez.
+>
+> Mevcut `postgres_data` hacmiyle geliyorsanız `infra/postgres/init` yeniden çalışmaz; `docker compose --env-file .env -f infra/docker-compose.yml down -v` ile temiz başlayın. Aksi halde seed, `local-ci-seed` database comment marker'ı bulunmadığı için fail-fast eder.
 
 ## Veritabanı Yetkileri
 

@@ -48,7 +48,7 @@ Tüm komutlar **depo kökünden** çalıştırılır. `(cd <dizin> && <komut>)` 
    (cd backend/hotel-api && ./mvnw flyway:migrate -Pseed -Dseed.env=local)
    ```
 
-   > `seed` profili ortam guard'ı taşır: `-Dseed.env=local|ci` ve `localhost`/`127.0.0.1` JDBC host'u zorunludur; aksi halde fail-fast eder (bkz. `infra/README.md`).
+   > `seed` profili ortam guard'ı taşır: `-Dseed.env=local|ci` ve `localhost`/`127.0.0.1` JDBC host'u zorunludur; aksi halde fail-fast eder. Seed SQL ayrıca hedef veritabanında `local-ci-seed` local/CI database comment marker'ını arar (bkz. `infra/README.md`).
 
 7. **Aşama 2 (`@seeded`): Dolu vitrin (TR/EN + dil geçişi), yükleme/hata ve `admin-web` smoke testlerini çalıştırın:**
 

@@ -28,8 +28,8 @@ AC-1 … AC-6 işlevsel olarak karşılanmış görünüyor. PR #8 head `79cd4cc
 
 ### [CR-1] Seed profili prod’a karşı çalıştırılabilir — Orta
 
-**Dosya:** `backend/hotel-api/pom.xml:153-178`  
-**Dosya:** `infra/README.md:74-92`  
+**Dosya:** `backend/hotel-api/pom.xml:153-178`<br>
+**Dosya:** `infra/README.md:74-92`<br>
 **Dosya:** `backend/hotel-api/src/main/resources/db/seed/catalog/R__seed_catalog_dev.sql`
 
 ```xml
@@ -57,9 +57,9 @@ AC-1 … AC-6 işlevsel olarak karşılanmış görünüyor. PR #8 head `79cd4cc
 
 ### [CR-2] Query service içinde kullanılmayan write path ve ölü bağımlılıklar — Orta
 
-**Dosya:** `backend/hotel-api/src/main/java/com/hotel/catalog/internal/application/RoomCatalogQueryService.java:25-27,31-37,73-84`  
-**Dosya:** `backend/hotel-api/src/main/java/com/hotel/catalog/internal/persistence/AmenityJpaRepository.java:9-11`  
-**Dosya:** `backend/hotel-api/src/main/java/com/hotel/catalog/internal/persistence/AmenityEntity.java:53-61`  
+**Dosya:** `backend/hotel-api/src/main/java/com/hotel/catalog/internal/application/RoomCatalogQueryService.java:25-27,31-37,73-84`<br>
+**Dosya:** `backend/hotel-api/src/main/java/com/hotel/catalog/internal/persistence/AmenityJpaRepository.java:9-11`<br>
+**Dosya:** `backend/hotel-api/src/main/java/com/hotel/catalog/internal/persistence/AmenityEntity.java:53-61`<br>
 **Dosya:** `backend/hotel-api/src/test/java/com/hotel/catalog/internal/application/RoomCatalogQueryServiceTest.java:144-159`
 
 ```java
@@ -115,8 +115,8 @@ if (page < 0 || size < 1 || size > 100) {
 
 ### [CR-5] Seed profili dokümanı ile uygulama arasında ad uyuşmazlığı — Düşük
 
-**Dosya:** `docs/conventions.md:67`  
-**Dosya:** `backend/hotel-api/pom.xml:153-178`  
+**Dosya:** `docs/conventions.md:67`<br>
+**Dosya:** `backend/hotel-api/pom.xml:153-178`<br>
 **Dosya:** `infra/README.md:74-92`
 
 ```text
