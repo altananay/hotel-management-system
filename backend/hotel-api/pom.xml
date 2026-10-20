@@ -20,6 +20,7 @@
         <HOTEL_CORE_DB_URL>jdbc:postgresql://localhost:5432/hotel_core</HOTEL_CORE_DB_URL>
         <HOTEL_CORE_MIGRATOR_USER>migrator</HOTEL_CORE_MIGRATOR_USER>
         <HOTEL_CORE_MIGRATOR_PASSWORD>migrator_local_dev</HOTEL_CORE_MIGRATOR_PASSWORD>
+        <seed.env>disabled</seed.env>
     </properties>
 
     <dependencies>
@@ -162,6 +163,17 @@
                             <url>${HOTEL_CORE_DB_URL}</url>
                             <user>${HOTEL_CORE_MIGRATOR_USER}</user>
                             <password>${HOTEL_CORE_MIGRATOR_PASSWORD}</password>
+                            <!-- Fail-fast guard (CR-1): requires -Dseed.env=local or -Dseed.env=ci
+                                 and refuses non-local JDBC hosts so seed can never run against prod. -->
+                            <initSql>
+                                SELECT CASE
+                                    WHEN '${seed.env}' IN ('local', 'ci')
+                                     AND ('${HOTEL_CORE_DB_URL}' LIKE 'jdbc:postgresql://localhost:%/hotel_core%'
+                                          OR '${HOTEL_CORE_DB_URL}' LIKE 'jdbc:postgresql://127.0.0.1:%/hotel_core%')
+                                    THEN 1
+                                    ELSE 1 / 0
+                                END;
+                            </initSql>
                             <locations>
                                 <location>filesystem:src/main/resources/db/migration/catalog</location>
                                 <location>filesystem:src/main/resources/db/migration/pricing</location>

@@ -64,7 +64,7 @@
 - DB kullanıcıları: `migrator` (DDL) ve `app` (yalnız DML) ayrıdır.
 - `public` şeması uygulama akışının dışındadır: yalnız `migrator` (`USAGE`+`CREATE`) kullanır; `app` rolüne `public` üzerinde hiçbir yetki verilmez (`public.flyway_schema_history` dahil). DML yetkileri yalnız modül şemalarında (`IN SCHEMA <modül>` default privilege'ları) tanımlanır.
 - Entity'ler şema adını açıkça taşır (`@Table(schema = "<modül>")`); varsayılan `public` şemasına dayanılmaz.
-- **Seed konvansiyonu:** Yerel/CI örnek verisi `db/seed/<modül>/R__*.sql` repeatable migration'ıdır; yalnız `local`/`ci` profilinde `flyway.locations` ile devreye alınır ve prod varsayılan konumlarında yer almaz. Seed, standart `flyway:migrate` adımından ayrı ve `migrator` kimliğiyle koşar. Maven Flyway plugin'i `spring.flyway.locations`'ı okumaz; CLI'da `-Dflyway.locations` veya plugin profili kullanılır.
+- **Seed konvansiyonu:** Yerel/CI örnek verisi `db/seed/<modül>/R__*.sql` repeatable migration'ıdır; yalnız `seed` Maven profili (`-Pseed -Dseed.env=local|ci`) ile devreye alınır ve prod varsayılan konumlarında yer almaz. Profil, `seed.env` değerini ve JDBC host'unun `localhost`/`127.0.0.1` olmasını doğrular; prod URL'sinde fail-fast eder. Seed, standart `flyway:migrate` adımından ayrı ve `migrator` kimliğiyle koşar. Maven Flyway plugin'i `spring.flyway.locations`'ı okumaz.
 
 ## 5. Frontend
 

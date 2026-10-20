@@ -76,20 +76,18 @@ Override örneği:
 Katalog örnek verisi (`backend/hotel-api/src/main/resources/db/seed/catalog/R__seed_catalog_dev.sql`), canlı (prod) ortama örnek veri sızmaması için varsayılan Flyway konumlarında **yer almaz** (`docs/conventions.md` §4).
 
 - **Önemli Not:** Uygulama runtime'ında `spring.flyway.enabled=false` olduğundan uygulama açılışında seed koşmaz. Ayrıca Maven Flyway plugin'i Spring Boot'a ait `spring.flyway.locations` özelliğini **okumaz**.
-- Bu nedenle örnek veri, standart `./mvnw flyway:migrate` adımından **sonra** ayrı bir adımda ve `app` değil `migrator` kimliğiyle çalıştırılır:
-
-**Yöntem 1 (`seed` Maven profili ile):**
-
-```bash
-(cd backend/hotel-api && ./mvnw flyway:migrate -Pseed)
-```
-
-**Yöntem 2 (`-Dflyway.locations` CLI parametresi ile):**
+- Bu nedenle örnek veri, standart `./mvnw flyway:migrate` adımından **sonra** ayrı bir adımda ve `app` değil `migrator` kimliğiyle çalıştırılır.
+- **Ortam guard'ı (CR-1):** `seed` profili yalnız `-Dseed.env=local` veya `-Dseed.env=ci` ile çalışır ve JDBC host'unun `localhost`/`127.0.0.1` olmasını zorunlu kılar. Değer yoksa veya URL prod'a işaret ediyorsa komut **fail-fast** ile durur; örnek veri canlı ortama yazılamaz.
 
 ```bash
-(cd backend/hotel-api && ./mvnw flyway:migrate \
-  "-Dflyway.locations=filesystem:src/main/resources/db/migration/catalog,filesystem:src/main/resources/db/migration/pricing,filesystem:src/main/resources/db/migration/booking,filesystem:src/main/resources/db/migration/payment,filesystem:src/main/resources/db/migration/media,filesystem:src/main/resources/db/migration/notification,filesystem:src/main/resources/db/seed/catalog")
+# Yerel geliştirme
+(cd backend/hotel-api && ./mvnw flyway:migrate -Pseed -Dseed.env=local)
+
+# CI
+(cd backend/hotel-api && ./mvnw flyway:migrate -Pseed -Dseed.env=ci)
 ```
+
+> `-Pseed` profili olmadan çalıştırılan standart `flyway:migrate` komutu yalnız şema geçişlerini uygular; seed içermez.
 
 ## Veritabanı Yetkileri
 

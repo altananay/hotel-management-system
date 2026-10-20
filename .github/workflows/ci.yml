@@ -143,7 +143,7 @@ jobs:
 
       - name: Run repeatable catalog seed migration as migrator
         working-directory: backend/hotel-api
-        run: ./mvnw -B flyway:migrate -Pseed
+        run: ./mvnw -B flyway:migrate -Pseed -Dseed.env=ci
 
       - name: Run @seeded smoke tests
         working-directory: e2e

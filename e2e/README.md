@@ -45,10 +45,10 @@ Tüm komutlar **depo kökünden** çalıştırılır. `(cd <dizin> && <komut>)` 
 6. **Örnek katalog verisini (`migrator` kimliğiyle) yükleyin:**
 
    ```bash
-   (cd backend/hotel-api && ./mvnw flyway:migrate -Pseed)
+   (cd backend/hotel-api && ./mvnw flyway:migrate -Pseed -Dseed.env=local)
    ```
 
-   *(Alternatif açık konum komutu için bkz. `infra/README.md`.)*
+   > `seed` profili ortam guard'ı taşır: `-Dseed.env=local|ci` ve `localhost`/`127.0.0.1` JDBC host'u zorunludur; aksi halde fail-fast eder (bkz. `infra/README.md`).
 
 7. **Aşama 2 (`@seeded`): Dolu vitrin (TR/EN + dil geçişi), yükleme/hata ve `admin-web` smoke testlerini çalıştırın:**
 
