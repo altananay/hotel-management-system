@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertCircle, Compass, RefreshCw, Sparkles, Users } from "lucide-react";
+import { useId } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,6 +25,8 @@ function RoomVisualPlaceholder({
   badge: string;
   caption: string;
 }) {
+  const gradientId = `sun-glow-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+
   return (
     <div
       data-testid="room-card-placeholder"
@@ -36,12 +39,12 @@ function RoomVisualPlaceholder({
         className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-25"
       >
         <defs>
-          <radialGradient id="sunGlow" cx="75%" cy="25%" r="55%">
+          <radialGradient id={gradientId} cx="75%" cy="25%" r="55%">
             <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.65" />
             <stop offset="100%" stopColor="#1c1917" stopOpacity="0" />
           </radialGradient>
         </defs>
-        <rect width="400" height="240" fill="url(#sunGlow)" />
+        <rect width="400" height="240" fill={`url(#${gradientId})`} />
         {/* Archway silhouette */}
         <path
           d="M0,240 L0,0 L400,0 L400,240 L330,240 L330,115 C330,45 70,45 70,115 L70,240 Z"
@@ -190,10 +193,16 @@ export function RoomShowcase({ locale }: RoomShowcaseProps) {
   }
 
   if (isError) {
-    const detailedHint = resolveErrorMessage(
-      locale,
-      error instanceof ApiClientError ? error.code : undefined,
-    );
+    const errorCode = error instanceof ApiClientError ? error.code : undefined;
+    const mappedMessage = errorCode ? resolveErrorMessage(locale, errorCode) : undefined;
+    // Keep the mandated rooms error text as the single primary message; only show the
+    // error-map hint when the backend supplied a known, distinct code (CR-6).
+    const detailedHint =
+      mappedMessage &&
+      mappedMessage !== dict.errors.default &&
+      mappedMessage !== dict.rooms.errorMessage
+        ? mappedMessage
+        : undefined;
 
     return (
       <Card
@@ -210,7 +219,9 @@ export function RoomShowcase({ locale }: RoomShowcaseProps) {
         >
           {dict.rooms.errorMessage}
         </p>
-        <p className="mt-2 text-sm text-red-800/90">{detailedHint}</p>
+        {detailedHint ? (
+          <p className="mt-2 text-sm text-red-800/90">{detailedHint}</p>
+        ) : null}
         <div className="mt-6">
           <Button
             data-testid="rooms-retry"
