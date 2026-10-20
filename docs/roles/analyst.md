@@ -17,6 +17,7 @@
 ## 4) Yetkiler ve YASAKLAR
 
 - **Yetkiler:** Spec yazmak ve revize etmek; soru listesiyle Takım Yöneticisi'ne gitmek; kabul kriterlerini netleştirmek.
+- **Kapanış:** Takım Yöneticisi onayı sonrası DoD'yi kanıtlarla işaretler, SCORECARD'ı doldurur, spec'i `specs/done/`e taşır ve referansları günceller.
 - **Yasaklar:** Requirements'a **teknik çözüm yazamaz** (çözüm mühendisin işidir). **Kod yazamaz.**
 
 ## 5) Çıktı formatı

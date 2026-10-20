@@ -55,7 +55,7 @@ docker compose --env-file .env -f infra/docker-compose.yml ps
 
 ## Veritabanı Şema Geçişleri (Flyway — `migrator` Kimliğiyle)
 
-Uygulama süreçleri `app` (yalnız DML) kullanıcısıyla ve `spring.flyway.enabled=false` ile çalışır. Şema geçişleri ayrı adımda `migrator` kullanıcısıyla çalıştırılır (`docs/architecture.md` §7). Maven `.env` okumaz; farklı adres/kimlik için `-D` kullanın:
+Uygulama süreçleri `app` (yalnız DML) kullanıcısıyla ve `spring.flyway.enabled=false` ile çalışır. Şema geçişleri ayrı adımda `migrator` kullanıcısıyla çalıştırılır (`docs/architecture.md` §7). Standart `flyway:migrate` komutu yalnızca şema geçişlerini (`db/migration/<modül>`) çalıştırır ve **örnek veri (seed) yüklemez**. Maven `.env` okumaz; farklı adres/kimlik için `-D` kullanın:
 
 ```bash
 (cd backend/hotel-api && ./mvnw flyway:migrate)
@@ -70,6 +70,33 @@ Override örneği:
   "-DHOTEL_CORE_MIGRATOR_USER=migrator" \
   "-DHOTEL_CORE_MIGRATOR_PASSWORD=migrator_local_dev")
 ```
+
+> `.env` içinde `POSTGRES_PORT=5433` gibi 5432 dışı bir değer varsa Maven `.env`'i okumaz. Yukarıdaki komutta `5432` yerine `5433` kullanın; `admin-api` için `HOTEL_ADMIN_DB_URL` override'ını ekleyin.
+
+## Geliştirme ve CI Örnek Verisi (Repeatable Seed — `migrator` Kimliğiyle)
+
+Katalog örnek verisi (`backend/hotel-api/src/main/resources/db/seed/catalog/R__seed_catalog_dev.sql`), canlı (prod) ortama örnek veri sızmaması için varsayılan Flyway konumlarında **yer almaz** (`docs/conventions.md` §4).
+
+- **Önemli Not:** Uygulama runtime'ında `spring.flyway.enabled=false` olduğundan uygulama açılışında seed koşmaz. Ayrıca Maven Flyway plugin'i Spring Boot'a ait `spring.flyway.locations` özelliğini **okumaz**.
+- Bu nedenle örnek veri, standart `./mvnw flyway:migrate` adımından **sonra** ayrı bir adımda ve `app` değil `migrator` kimliğiyle çalıştırılır.
+- **Ortam guard'ı (CR-1):** `seed` profili yalnız `-Dseed.env=local` veya `-Dseed.env=ci` ile çalışır ve JDBC host'unun `localhost`/`127.0.0.1` olmasını zorunlu kılar. Değer yoksa veya URL prod'a işaret ediyorsa komut **fail-fast** ile durur; örnek veri canlı ortama yazılamaz.
+- **Efektif bağlantı guard'ı (CR-1 residual):** Seed SQL'i hedef veritabanında `local-ci-seed` database comment marker'ını arar. Bu comment yalnız `infra/postgres/init` ile boş local/CI hacminde `COMMENT ON DATABASE` üzerinden tanımlanır; prod'da yoktur. `-Dflyway.url`, `FLYWAY_URL`, config dosyası veya `-Dflyway.initSql` ile profil guard'ı aşılmaya çalışılsa bile seed hedef DB'de fail-fast eder.
+
+```bash
+# Yerel geliştirme (varsayılan 5432)
+(cd backend/hotel-api && ./mvnw flyway:migrate -Pseed -Dseed.env=local)
+
+# Yerel geliştirme — .env'de POSTGRES_PORT=5433 ise
+(cd backend/hotel-api && ./mvnw flyway:migrate -Pseed -Dseed.env=local \
+  "-DHOTEL_CORE_DB_URL=jdbc:postgresql://localhost:5433/hotel_core")
+
+# CI
+(cd backend/hotel-api && ./mvnw flyway:migrate -Pseed -Dseed.env=ci)
+```
+
+> `-Pseed` profili olmadan çalıştırılan standart `flyway:migrate` komutu yalnız şema geçişlerini uygular; seed içermez.
+>
+> Mevcut `postgres_data` hacmiyle geliyorsanız `infra/postgres/init` yeniden çalışmaz; `docker compose --env-file .env -f infra/docker-compose.yml down -v` ile temiz başlayın. Aksi halde seed, `local-ci-seed` database comment marker'ı bulunmadığı için fail-fast eder.
 
 ## Veritabanı Yetkileri
 

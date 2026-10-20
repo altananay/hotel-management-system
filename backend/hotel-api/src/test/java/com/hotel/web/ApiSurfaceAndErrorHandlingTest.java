@@ -11,11 +11,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.hotel.config.ClockConfig;
 import com.hotel.config.SecurityConfig;
-import com.hotel.scaffold.SampleItemsController;
 import com.hotel.sharedkernel.api.DomainError;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,12 +34,11 @@ import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Tests for API surface separation, unknown-path handling, CORS, X-Request-Id, RFC 7807 error
- * envelope, domain error categories, /error dispatch and scaffold endpoint on {@code hotel-api}
- * (AC-6, AC-11, CR-1…CR-6).
+ * envelope, domain error categories, /error dispatch and scaffold removal on {@code hotel-api}
+ * (AC-4, QA-12).
  */
 @WebMvcTest(
         controllers = {
-            SampleItemsController.class,
             ProblemErrorController.class,
             ApiSurfaceAndErrorHandlingTest.TestProbeController.class
         })
@@ -58,6 +57,11 @@ class ApiSurfaceAndErrorHandlingTest {
     static class TestProbeController {
 
         record ProbeInput(@NotBlank String name) {}
+
+        @GetMapping(value = "/api/test/probe", produces = MediaType.APPLICATION_JSON_VALUE)
+        public Map<String, Object> probe() {
+            return Map.of("ok", true);
+        }
 
         @PostMapping("/api/test/validation")
         public void validateInput(@Valid @RequestBody ProbeInput input) {}
@@ -103,14 +107,18 @@ class ApiSurfaceAndErrorHandlingTest {
     }
 
     @Test
-    void shouldReturnEmptyItemsList_whenCallingPublicSampleItemsScaffoldEndpoint()
+    void shouldReturn404NotFoundProblemDetail_whenCallingRemovedSampleItemsScaffoldEndpoint()
             throws Exception {
         mockMvc.perform(get("/api/system/sample-items"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(
+                        content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(header().exists("X-Request-Id"))
-                .andExpect(jsonPath("$.items").isArray())
-                .andExpect(jsonPath("$.items").isEmpty());
+                .andExpect(jsonPath("$.type").value("about:blank"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.code").value("system.not_found"))
+                .andExpect(jsonPath("$.instance").value("/api/system/sample-items"))
+                .andExpect(jsonPath("$.requestId").isNotEmpty());
     }
 
     @Test
@@ -180,9 +188,7 @@ class ApiSurfaceAndErrorHandlingTest {
     @Test
     void shouldGenerateUuidV7RequestId_whenHeaderIsMissingOrInvalid() throws Exception {
         MvcResult result =
-                mockMvc.perform(
-                                get("/api/system/sample-items")
-                                        .header("X-Request-Id", "bad!id"))
+                mockMvc.perform(get("/api/test/probe").header("X-Request-Id", "bad!id"))
                         .andExpect(status().isOk())
                         .andReturn();
 
@@ -222,14 +228,14 @@ class ApiSurfaceAndErrorHandlingTest {
                 .andExpect(jsonPath("$.requestId").isNotEmpty());
 
         // 405 -> system.method_not_allowed
-        mockMvc.perform(post("/api/system/sample-items"))
+        mockMvc.perform(post("/api/test/probe"))
                 .andExpect(status().isMethodNotAllowed())
                 .andExpect(
                         content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.type").value("about:blank"))
                 .andExpect(jsonPath("$.status").value(405))
                 .andExpect(jsonPath("$.code").value("system.method_not_allowed"))
-                .andExpect(jsonPath("$.instance").value("/api/system/sample-items"))
+                .andExpect(jsonPath("$.instance").value("/api/test/probe"))
                 .andExpect(jsonPath("$.requestId").isNotEmpty());
     }
 
@@ -247,7 +253,7 @@ class ApiSurfaceAndErrorHandlingTest {
                 .andExpect(jsonPath("$.code").value("system.unsupported_media_type"));
 
         // 406 -> system.not_acceptable (client only accepts XML, endpoint produces JSON)
-        mockMvc.perform(get("/api/system/sample-items").accept(MediaType.APPLICATION_XML))
+        mockMvc.perform(get("/api/test/probe").accept(MediaType.APPLICATION_XML))
                 .andExpect(status().isNotAcceptable())
                 .andExpect(
                         content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
@@ -332,7 +338,7 @@ class ApiSurfaceAndErrorHandlingTest {
             throws Exception {
         // Allowed origin: http://localhost:3000
         mockMvc.perform(
-                        options("/api/system/sample-items")
+                        options("/api/test/probe")
                                 .header("Origin", "http://localhost:3000")
                                 .header("Access-Control-Request-Method", "GET"))
                 .andExpect(status().isOk())
@@ -344,9 +350,7 @@ class ApiSurfaceAndErrorHandlingTest {
                 .andExpect(header().doesNotExist("Access-Control-Allow-Credentials"));
 
         // Negative test: disallowed origin must not receive Access-Control-Allow-Origin
-        mockMvc.perform(
-                        get("/api/system/sample-items")
-                                .header("Origin", "http://localhost:3001"))
+        mockMvc.perform(get("/api/test/probe").header("Origin", "http://localhost:3001"))
                 .andExpect(header().doesNotExist("Access-Control-Allow-Origin"));
     }
 }

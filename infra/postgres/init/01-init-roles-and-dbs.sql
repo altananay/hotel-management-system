@@ -41,6 +41,11 @@ GRANT CONNECT ON DATABASE hotel_admin TO app;
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
 GRANT USAGE, CREATE ON SCHEMA public TO migrator;
 
+-- Local/CI-only seed guard marker. This database comment is intentionally absent
+-- from production databases; db/seed/catalog/R__seed_catalog_dev.sql refuses to
+-- run without it, even if Flyway's effective URL is overridden.
+COMMENT ON DATABASE hotel_core IS 'local-ci-seed';
+
 \connect hotel_admin
 
 -- public schema: closed to everyone except migrator (Flyway history lives here).
