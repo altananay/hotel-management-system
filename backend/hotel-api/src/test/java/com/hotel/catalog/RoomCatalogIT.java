@@ -9,10 +9,14 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -29,9 +33,10 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * Integration tests for {@code catalog} V7 schema constraints, active-only public listing,
- * database-level {@code ORDER BY display_order ASC, id ASC} tie-break sorting, pagination bounds
- * and empty catalog state (AC-1, AC-2, AC-5, QA-3, QA-4, QA-5, QA-6, QA-7, QA-14).
+ * Integration tests for {@code catalog} V7 schema constraints (length, control-character,
+ * max_guests/display_order and unique keys), active-only public listing, database-level
+ * {@code ORDER BY display_order ASC, id ASC} tie-break sorting, pagination bounds and empty
+ * catalog state (AC-1, AC-2, AC-5, QA-3, QA-4, QA-5, QA-6, QA-7, QA-14).
  */
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -203,54 +208,167 @@ class RoomCatalogIT {
         assertThat(overflowJson.get("total").asInt()).isEqualTo(3);
     }
 
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("invalidRoomTypeColumnValues")
+    void shouldRejectInvalidRoomTypeColumnValues(String description, String column, Object value) {
+        assertThatThrownBy(() -> insertRoomTypeWith(column, value))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("invalidAmenityColumnValues")
+    void shouldRejectInvalidAmenityColumnValues(String description, String column, Object value) {
+        assertThatThrownBy(() -> insertAmenityWith(column, value))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
     @Test
-    void shouldEnforceDatabaseCheckAndUniqueConstraints_whenInvalidCatalogDataInserted() {
-        // Invalid max_guests (> 20)
+    void shouldRejectDuplicateUniqueKeys() {
+        insertAmenity(
+                UUID.randomUUID(),
+                "wifi",
+                "Kablosuz İnternet",
+                "Wireless Internet");
+        assertThatThrownBy(
+                        () ->
+                                insertAmenity(
+                                        UUID.randomUUID(),
+                                        "wifi",
+                                        "Kablosuz İnternet 2",
+                                        "Wireless Internet 2"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+
+        UUID duplicateRoomTypeId = UUID.randomUUID();
+        insertRoomType(duplicateRoomTypeId, "Oda", "Room", 2, true, 0);
         assertThatThrownBy(
                         () ->
                                 insertRoomType(
-                                        UUID.fromString("0199f2c0-0000-7000-8000-000000000050"),
-                                        "Oda",
-                                        "Room",
-                                        21,
-                                        true,
-                                        0))
+                                        duplicateRoomTypeId, "Oda 2", "Room 2", 2, true, 0))
                 .isInstanceOf(DataIntegrityViolationException.class);
 
-        // Invalid display_order (< 0)
+        UUID duplicateAmenityId = UUID.randomUUID();
+        insertAmenity(duplicateAmenityId, "spa", "Spa", "Spa");
         assertThatThrownBy(
-                        () ->
-                                insertRoomType(
-                                        UUID.fromString("0199f2c0-0000-7000-8000-000000000051"),
-                                        "Oda",
-                                        "Room",
-                                        2,
-                                        true,
-                                        -1))
+                        () -> insertAmenity(duplicateAmenityId, "pool", "Havuz", "Pool"))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
 
-        // HTML angle bracket in room type name
-        assertThatThrownBy(
-                        () ->
-                                insertRoomType(
-                                        UUID.fromString("0199f2c0-0000-7000-8000-000000000052"),
-                                        "Oda <script>",
-                                        "Room",
-                                        2,
-                                        true,
-                                        0))
-                .isInstanceOf(DataIntegrityViolationException.class);
+    @Test
+    void shouldRejectDuplicateRoomTypeAmenityPair() {
+        UUID roomTypeId = UUID.randomUUID();
+        UUID amenityId = UUID.randomUUID();
+        insertRoomType(roomTypeId, "Oda", "Room", 2, true, 0);
+        insertAmenity(amenityId, "wifi", "Kablosuz İnternet", "Wireless Internet");
 
-        // Invalid amenity code pattern
+        jdbcTemplate.update(
+                "INSERT INTO catalog.room_type_amenities (room_type_id, amenity_id) VALUES (?, ?)",
+                roomTypeId,
+                amenityId);
+
         assertThatThrownBy(
                         () ->
                                 jdbcTemplate.update(
-                                        "INSERT INTO catalog.amenities (id, code, name_tr, name_en) VALUES (?, ?, ?, ?)",
-                                        UUID.fromString("0199f2c0-0000-7000-8000-000000000150"),
-                                        "Invalid-Code",
-                                        "Olanak",
-                                        "Amenity"))
+                                        "INSERT INTO catalog.room_type_amenities "
+                                                + "(room_type_id, amenity_id) VALUES (?, ?)",
+                                        roomTypeId,
+                                        amenityId))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    private static Stream<Arguments> invalidRoomTypeColumnValues() {
+        return Stream.of(
+                Arguments.of("name_tr length 121", "name_tr", "A".repeat(121)),
+                Arguments.of("name_en length 121", "name_en", "A".repeat(121)),
+                Arguments.of("description_tr length 2001", "description_tr", "A".repeat(2001)),
+                Arguments.of("description_en length 2001", "description_en", "A".repeat(2001)),
+                Arguments.of("name_tr whitespace only", "name_tr", "   "),
+                Arguments.of("name_en whitespace only", "name_en", "   "),
+                Arguments.of("description_tr whitespace only", "description_tr", "   "),
+                Arguments.of("description_en whitespace only", "description_en", "   "),
+                Arguments.of("name_tr null", "name_tr", null),
+                Arguments.of("name_tr C0 control", "name_tr", "Oda\u0001"),
+                Arguments.of("name_en C1 control", "name_en", "Room\u0085"),
+                Arguments.of("name_tr DEL control", "name_tr", "Oda\u007F"),
+                Arguments.of("description_tr C0 control", "description_tr", "Açıklama\u0001"),
+                Arguments.of("description_en C1 control", "description_en", "Description\u0085"),
+                Arguments.of("description_en DEL control", "description_en", "Description\u007F"),
+                Arguments.of("name_tr angle bracket", "name_tr", "Oda <script>"),
+                Arguments.of(
+                        "description_en angle bracket",
+                        "description_en",
+                        "Description <script>"),
+                Arguments.of("max_guests below lower bound", "max_guests", 0),
+                Arguments.of("max_guests above upper bound", "max_guests", 21),
+                Arguments.of("display_order below zero", "display_order", -1));
+    }
+
+    private static Stream<Arguments> invalidAmenityColumnValues() {
+        return Stream.of(
+                Arguments.of("code length 51", "code", "a".repeat(51)),
+                Arguments.of("code invalid pattern", "code", "Invalid-Code"),
+                Arguments.of("code too short", "code", "a"),
+                Arguments.of("code blank", "code", ""),
+                Arguments.of("code null", "code", null),
+                Arguments.of("code C0 control", "code", "wifi\u0001"),
+                Arguments.of("name_tr length 81", "name_tr", "A".repeat(81)),
+                Arguments.of("name_en length 81", "name_en", "A".repeat(81)),
+                Arguments.of("name_tr whitespace only", "name_tr", "   "),
+                Arguments.of("name_en whitespace only", "name_en", "   "),
+                Arguments.of("name_tr null", "name_tr", null),
+                Arguments.of("name_en null", "name_en", null),
+                Arguments.of("name_tr C0 control", "name_tr", "Olanak\u0001"),
+                Arguments.of("name_en C1 control", "name_en", "Amenity\u0085"),
+                Arguments.of("name_tr DEL control", "name_tr", "Olanak\u007F"),
+                Arguments.of("name_tr angle bracket", "name_tr", "Olanak <script>"));
+    }
+
+    private void insertRoomTypeWith(String column, Object value) {
+        Object[] args = {
+            UUID.randomUUID(),
+            "Oda",
+            "Room",
+            "Oda açıklaması",
+            "Room description",
+            2,
+            true,
+            0
+        };
+        switch (column) {
+            case "name_tr" -> args[1] = value;
+            case "name_en" -> args[2] = value;
+            case "description_tr" -> args[3] = value;
+            case "description_en" -> args[4] = value;
+            case "max_guests" -> args[5] = value;
+            case "display_order" -> args[7] = value;
+            default -> throw new IllegalArgumentException("Unexpected room type column: " + column);
+        }
+        jdbcTemplate.update(
+                "INSERT INTO catalog.room_types "
+                        + "(id, name_tr, name_en, description_tr, description_en, max_guests, active, display_order) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                args);
+    }
+
+    private void insertAmenityWith(String column, Object value) {
+        Object[] args = {UUID.randomUUID(), "wifi", "Kablosuz İnternet", "Wireless Internet"};
+        switch (column) {
+            case "code" -> args[1] = value;
+            case "name_tr" -> args[2] = value;
+            case "name_en" -> args[3] = value;
+            default -> throw new IllegalArgumentException("Unexpected amenity column: " + column);
+        }
+        jdbcTemplate.update(
+                "INSERT INTO catalog.amenities (id, code, name_tr, name_en) VALUES (?, ?, ?, ?)",
+                args);
+    }
+
+    private void insertAmenity(UUID id, String code, String nameTr, String nameEn) {
+        jdbcTemplate.update(
+                "INSERT INTO catalog.amenities (id, code, name_tr, name_en) VALUES (?, ?, ?, ?)",
+                id,
+                code,
+                nameTr,
+                nameEn);
     }
 
     private void insertRoomType(
