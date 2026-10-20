@@ -1,6 +1,8 @@
 # QA — Kabul Kriteri ↔ Kanıt Matrisi ve Bulgular (Spec 0002)
 
 > Bu dosya `specs/done/evidence/0002/` altında **yeni bir QA kanıt kaydıdır**. `specs/0002-room-catalog.md`, `specs/done/0001/` ve uygulama kodu değiştirilmemiştir.
+>
+> **Fix doğrulaması (2026-10-20):** QA-0002-1/2/3 bulguları `15c845b` head'inde kapatıldı; ayrıntılı son kontrol için bkz. `qa-fix-verification.md`.
 
 - **Denetleyen:** QA (`docs/roles/qa.md`)
 - **Tarih:** 2026-10-20
