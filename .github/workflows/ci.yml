@@ -155,7 +155,17 @@ jobs:
             cat /tmp/seed-guard-missing.log /tmp/seed-guard-prod.log
             exit 1
           fi
-          echo "Seed guard rejected missing and prod environments."
+          if ! grep -q "division by zero" /tmp/seed-guard-missing.log; then
+            echo "Missing-env guard failed for an unexpected reason (expected division by zero)"
+            cat /tmp/seed-guard-missing.log
+            exit 1
+          fi
+          if ! grep -q "division by zero" /tmp/seed-guard-prod.log; then
+            echo "Prod-env guard failed for an unexpected reason (expected division by zero)"
+            cat /tmp/seed-guard-prod.log
+            exit 1
+          fi
+          echo "Seed guard rejected missing and prod environments with the expected guard error."
 
       - name: Verify seed SQL rejects overridden Flyway URL without local/CI marker
         working-directory: backend/hotel-api
@@ -165,11 +175,18 @@ jobs:
           ./mvnw -B flyway:migrate \
             -DHOTEL_CORE_DB_URL=jdbc:postgresql://localhost:5432/hotel_core_guard_test
           if ./mvnw -B flyway:migrate -Pseed -Dseed.env=ci \
-            -Dflyway.url=jdbc:postgresql://localhost:5432/hotel_core_guard_test; then
+            -Dflyway.url=jdbc:postgresql://localhost:5432/hotel_core_guard_test \
+            > /tmp/seed-guard-marker.log 2>&1; then
             echo "Seed SQL guard did not reject database without local/CI marker"
             exit 1
           fi
-          echo "Seed SQL guard rejected overridden Flyway URL without marker."
+          if ! grep -q "division by zero" /tmp/seed-guard-marker.log \
+            || ! grep -q "R__seed_catalog_dev.sql" /tmp/seed-guard-marker.log; then
+            echo "Seed SQL guard failed for an unexpected reason (expected marker guard in R__seed_catalog_dev.sql)"
+            cat /tmp/seed-guard-marker.log
+            exit 1
+          fi
+          echo "Seed SQL guard rejected overridden Flyway URL with the expected marker error."
 
       - name: Run repeatable catalog seed migration as migrator
         working-directory: backend/hotel-api
