@@ -149,4 +149,32 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>seed</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.flywaydb</groupId>
+                        <artifactId>flyway-maven-plugin</artifactId>
+                        <configuration>
+                            <url>${HOTEL_CORE_DB_URL}</url>
+                            <user>${HOTEL_CORE_MIGRATOR_USER}</user>
+                            <password>${HOTEL_CORE_MIGRATOR_PASSWORD}</password>
+                            <locations>
+                                <location>filesystem:src/main/resources/db/migration/catalog</location>
+                                <location>filesystem:src/main/resources/db/migration/pricing</location>
+                                <location>filesystem:src/main/resources/db/migration/booking</location>
+                                <location>filesystem:src/main/resources/db/migration/payment</location>
+                                <location>filesystem:src/main/resources/db/migration/media</location>
+                                <location>filesystem:src/main/resources/db/migration/notification</location>
+                                <location>filesystem:src/main/resources/db/seed/catalog</location>
+                            </locations>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
