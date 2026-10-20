@@ -55,7 +55,7 @@ docker compose --env-file .env -f infra/docker-compose.yml ps
 
 ## Veritabanı Şema Geçişleri (Flyway — `migrator` Kimliğiyle)
 
-Uygulama süreçleri `app` (yalnız DML) kullanıcısıyla ve `spring.flyway.enabled=false` ile çalışır. Şema geçişleri ayrı adımda `migrator` kullanıcısıyla çalıştırılır (`docs/architecture.md` §7). Maven `.env` okumaz; farklı adres/kimlik için `-D` kullanın:
+Uygulama süreçleri `app` (yalnız DML) kullanıcısıyla ve `spring.flyway.enabled=false` ile çalışır. Şema geçişleri ayrı adımda `migrator` kullanıcısıyla çalıştırılır (`docs/architecture.md` §7). Standart `flyway:migrate` komutu yalnızca şema geçişlerini (`db/migration/<modül>`) çalıştırır ve **örnek veri (seed) yüklemez**. Maven `.env` okumaz; farklı adres/kimlik için `-D` kullanın:
 
 ```bash
 (cd backend/hotel-api && ./mvnw flyway:migrate)
@@ -69,6 +69,26 @@ Override örneği:
   "-DHOTEL_CORE_DB_URL=jdbc:postgresql://localhost:5432/hotel_core" \
   "-DHOTEL_CORE_MIGRATOR_USER=migrator" \
   "-DHOTEL_CORE_MIGRATOR_PASSWORD=migrator_local_dev")
+```
+
+## Geliştirme ve CI Örnek Verisi (Repeatable Seed — `migrator` Kimliğiyle)
+
+Katalog örnek verisi (`backend/hotel-api/src/main/resources/db/seed/catalog/R__seed_catalog_dev.sql`), canlı (prod) ortama örnek veri sızmaması için varsayılan Flyway konumlarında **yer almaz** (`docs/conventions.md` §4).
+
+- **Önemli Not:** Uygulama runtime'ında `spring.flyway.enabled=false` olduğundan uygulama açılışında seed koşmaz. Ayrıca Maven Flyway plugin'i Spring Boot'a ait `spring.flyway.locations` özelliğini **okumaz**.
+- Bu nedenle örnek veri, standart `./mvnw flyway:migrate` adımından **sonra** ayrı bir adımda ve `app` değil `migrator` kimliğiyle çalıştırılır:
+
+**Yöntem 1 (`seed` Maven profili ile):**
+
+```bash
+(cd backend/hotel-api && ./mvnw flyway:migrate -Pseed)
+```
+
+**Yöntem 2 (`-Dflyway.locations` CLI parametresi ile):**
+
+```bash
+(cd backend/hotel-api && ./mvnw flyway:migrate \
+  "-Dflyway.locations=filesystem:src/main/resources/db/migration/catalog,filesystem:src/main/resources/db/migration/pricing,filesystem:src/main/resources/db/migration/booking,filesystem:src/main/resources/db/migration/payment,filesystem:src/main/resources/db/migration/media,filesystem:src/main/resources/db/migration/notification,filesystem:src/main/resources/db/seed/catalog")
 ```
 
 ## Veritabanı Yetkileri

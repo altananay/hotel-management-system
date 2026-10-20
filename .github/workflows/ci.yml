@@ -101,7 +101,7 @@ jobs:
           docker compose -f infra/docker-compose.yml --profile init run --rm minio-init
           docker compose -f infra/docker-compose.yml ps
 
-      - name: Run Flyway migrations as migrator and build backend jars
+      - name: Run Flyway migrations (seedless) as migrator and build backend jars
         run: |
           cd backend/hotel-api && ./mvnw -B flyway:migrate package -DskipTests
           cd ../admin-api && ./mvnw -B flyway:migrate package -DskipTests
@@ -134,12 +134,20 @@ jobs:
             sleep 1
           done
 
-      - name: Install Playwright Chromium and run smoke tests
+      - name: Install Playwright Chromium and run @empty smoke tests
         working-directory: e2e
         run: |
           npm ci
           npx playwright install --with-deps chromium
-          npx playwright test
+          npx playwright test --grep @empty
+
+      - name: Run repeatable catalog seed migration as migrator
+        working-directory: backend/hotel-api
+        run: ./mvnw -B flyway:migrate -Pseed
+
+      - name: Run @seeded smoke tests
+        working-directory: e2e
+        run: npx playwright test --grep @seeded
 
       - name: Tear down infrastructure
         if: always()

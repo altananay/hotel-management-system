@@ -1,20 +1,21 @@
 # Uçtan Uca (E2E) Smoke Testleri (`e2e/`)
 
-Bu dizin, `web` (`:3000`) ve `admin-web` (`:3001`) uygulamalarının açılışını, dil geçişini ve üç zorunlu ekran durumunu (**yükleme**, **boş**, **hata**) doğrulayan kök Playwright projesini içerir (`docs/architecture.md` §11, `docs/testing.md` §3).
+Bu dizin, `web` (`:3000`) oda vitrininin (`/[locale]/rooms`) ve `admin-web` (`:3001`) uygulamasının açılışını, TR/EN dil geçişini ve zorunlu ekran durumlarını (**yükleme**, **boş**, **hata**, **dolu**) iki aşamalı (`@empty` ve `@seeded`) olarak doğrulayan kök Playwright projesini içerir (`docs/architecture.md` §11, `docs/testing.md` §3).
 
-## Ön Koşullar ve Yerel Çalıştırma Adımları
+## İki Aşamalı Yerel Doğrulama Akışı (`@empty` → Seed → `@seeded`)
 
 Tüm komutlar **depo kökünden** çalıştırılır. `(cd <dizin> && <komut>)` alt-kabuğu komut bitince otomatik olarak eski dizine döner; uzun süren süreçleri (backend/frontend) ayrı terminallerde başlatın.
 
-1. **Altyapıyı başlatın:**
+1. **Veritabanını temizleyin ve altyapıyı başlatın (gerçek boş durum doğrulaması için):**
 
    ```bash
    cp .env.example .env   # kökte .env yoksa; varsa atlayın
+   docker compose --env-file .env -f infra/docker-compose.yml down -v
    docker compose --env-file .env -f infra/docker-compose.yml up -d --wait
    docker compose --env-file .env -f infra/docker-compose.yml --profile init run --rm minio-init
    ```
 
-2. **Veritabanı şema geçişlerini (`migrator` ile) çalıştırın:**
+2. **Standart veritabanı şema geçişlerini (seed'siz, `migrator` ile) çalıştırın:**
 
    ```bash
    (cd backend/hotel-api && ./mvnw flyway:migrate)
@@ -35,10 +36,24 @@ Tüm komutlar **depo kökünden** çalıştırılır. `(cd <dizin> && <komut>)` 
    (cd admin-web && npm ci && npm run build && npm run start)
    ```
 
-5. **Playwright smoke testlerini çalıştırın:**
+5. **Aşama 1 (`@empty`): Seed öncesi gerçek uçtan boş vitrin durumunu doğrulayın:**
 
    ```bash
-   (cd e2e && npm ci && npx playwright install chromium && npx playwright test)
+   (cd e2e && npm ci && npx playwright install chromium && npx playwright test --grep @empty)
    ```
 
-Test koşumu sırasında kanıt ekran görüntüleri `specs/done/evidence/0001/` dizinine üretilir.
+6. **Örnek katalog verisini (`migrator` kimliğiyle) yükleyin:**
+
+   ```bash
+   (cd backend/hotel-api && ./mvnw flyway:migrate -Pseed)
+   ```
+
+   *(Alternatif açık konum komutu için bkz. `infra/README.md`.)*
+
+7. **Aşama 2 (`@seeded`): Dolu vitrin (TR/EN + dil geçişi), yükleme/hata ve `admin-web` smoke testlerini çalıştırın:**
+
+   ```bash
+   (cd e2e && npx playwright test --grep @seeded)
+   ```
+
+Test koşumu sırasında görsel kanıtlar `specs/done/evidence/0002/` dizinine üretilir (`specs/done/evidence/0001/` arşivi değiştirilmez).
