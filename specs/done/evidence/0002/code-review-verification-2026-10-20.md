@@ -7,6 +7,8 @@
 - **Önceki inceleme:** `79cd4cc` / [`code-review-2026-10-20.md`](code-review-2026-10-20.md)
 - **Yöntem:** Statik diff ve commit incelemesi + GitHub PR/check-run API doğrulaması. Rol gereği test veya derleme çalıştırılmadı.
 
+> **Güncelleme — `08d68b3` sonrası:** Bu doküman `12d3055` head'indeki doğrulamayı tarihsel kayıt olarak korur. Sonraki `9786d63` ve `08d68b3` commit'leriyle CR-1 ve CR-5 kapatıldı; CR-7 ve CR-8 de giderildi. Güncel head `08d68b3` için CI 5/5 success, `mergeable_state=clean` ve `git diff --check` temiz. Bloklayıcı bulgu yok; merge onayı önerilir.
+
 ---
 
 ## 1. CI ve PR durumu
