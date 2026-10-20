@@ -1,6 +1,7 @@
 package com.hotel.catalog;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -9,6 +10,7 @@ import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.Statement;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -32,7 +34,8 @@ import tools.jackson.databind.ObjectMapper;
  * Integration test verifying that standard migrations create an empty catalog and that executing
  * {@code db/seed/catalog/R__seed_catalog_dev.sql} directly twice as {@code migrator} is idempotent
  * (3 active + 1 inactive room types, 5 amenities, tie-break order on {@code display_order = 10},
- * and {@code GET /api/room-types} returning 3 items) (AC-5, QA-1, QA-9, QA-17, QA-18).
+ * and {@code GET /api/room-types} returning 3 items) and that seed fails when the local/CI
+ * database comment marker is absent (AC-5, QA-1, QA-9, QA-17, QA-18).
  */
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -115,6 +118,28 @@ class CatalogSeedIT {
                         hotelCoreJdbcUrl(), "migrator", "migrator_local_dev")) {
             ScriptUtils.executeSqlScript(
                     connection, new ClassPathResource("db/seed/catalog/R__seed_catalog_dev.sql"));
+        }
+    }
+
+    @Test
+    void shouldRejectSeedWhenLocalCiDatabaseCommentIsMissing() throws Exception {
+        try (Connection connection =
+                        DriverManager.getConnection(
+                                hotelCoreJdbcUrl(), "migrator", "migrator_local_dev");
+                Statement statement = connection.createStatement()) {
+            statement.execute("COMMENT ON DATABASE hotel_core IS NULL");
+        }
+
+        try {
+            assertThatThrownBy(this::executeSeedScriptDirectlyAsMigrator)
+                    .hasStackTraceContaining("division by zero");
+        } finally {
+            try (Connection restoreConnection =
+                            DriverManager.getConnection(
+                                    hotelCoreJdbcUrl(), "migrator", "migrator_local_dev");
+                    Statement statement = restoreConnection.createStatement()) {
+                statement.execute("COMMENT ON DATABASE hotel_core IS 'local-ci-seed'");
+            }
         }
     }
 

@@ -1,6 +1,19 @@
 -- Repeatable development/CI seed for catalog module (REQ-5, AC-5, QA-1, QA-9, QA-17, QA-18).
 -- Executed explicitly as migrator outside standard production Flyway locations.
 
+-- Local/CI-only guard: the hotel_core database comment is set to 'local-ci-seed'
+-- by infra/postgres/init on empty local/CI volumes and is intentionally absent in
+-- production. The marker is read from the target database itself, so overriding
+-- Flyway's effective URL (FLYWAY_URL, -Dflyway.url, config files, or initSql)
+-- cannot apply seed data to prod.
+SELECT 1 / CASE
+    WHEN shobj_description(
+        (SELECT oid FROM pg_database WHERE datname = current_database()),
+        'pg_database'
+    ) = 'local-ci-seed' THEN 1
+    ELSE 0
+END;
+
 INSERT INTO catalog.amenities (id, code, name_tr, name_en, updated_at)
 VALUES
     (

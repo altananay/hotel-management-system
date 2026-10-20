@@ -141,6 +141,36 @@ jobs:
           npx playwright install --with-deps chromium
           npx playwright test --grep @empty
 
+      - name: Verify seed guard rejects missing or invalid seed environment
+        working-directory: backend/hotel-api
+        run: |
+          set +e
+          ./mvnw -B flyway:migrate -Pseed > /tmp/seed-guard-missing.log 2>&1
+          missing=$?
+          ./mvnw -B flyway:migrate -Pseed -Dseed.env=prod > /tmp/seed-guard-prod.log 2>&1
+          prod=$?
+          set -e
+          if [ "$missing" -eq 0 ] || [ "$prod" -eq 0 ]; then
+            echo "Seed guard did not reject missing/invalid seed.env"
+            cat /tmp/seed-guard-missing.log /tmp/seed-guard-prod.log
+            exit 1
+          fi
+          echo "Seed guard rejected missing and prod environments."
+
+      - name: Verify seed SQL rejects overridden Flyway URL without local/CI marker
+        working-directory: backend/hotel-api
+        run: |
+          docker exec hotel-postgres psql -U postgres -d postgres \
+            -c "CREATE DATABASE hotel_core_guard_test OWNER migrator;"
+          ./mvnw -B flyway:migrate \
+            -DHOTEL_CORE_DB_URL=jdbc:postgresql://localhost:5432/hotel_core_guard_test
+          if ./mvnw -B flyway:migrate -Pseed -Dseed.env=ci \
+            -Dflyway.url=jdbc:postgresql://localhost:5432/hotel_core_guard_test; then
+            echo "Seed SQL guard did not reject database without local/CI marker"
+            exit 1
+          fi
+          echo "Seed SQL guard rejected overridden Flyway URL without marker."
+
       - name: Run repeatable catalog seed migration as migrator
         working-directory: backend/hotel-api
         run: ./mvnw -B flyway:migrate -Pseed -Dseed.env=ci

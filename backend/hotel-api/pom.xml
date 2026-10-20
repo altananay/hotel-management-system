@@ -163,8 +163,10 @@
                             <url>${HOTEL_CORE_DB_URL}</url>
                             <user>${HOTEL_CORE_MIGRATOR_USER}</user>
                             <password>${HOTEL_CORE_MIGRATOR_PASSWORD}</password>
-                            <!-- Fail-fast guard (CR-1): requires -Dseed.env=local or -Dseed.env=ci
-                                 and refuses non-local JDBC hosts so seed can never run against prod. -->
+                            <!-- Early fail-fast guard (CR-1): requires -Dseed.env=local or -Dseed.env=ci
+                                 and refuses non-local JDBC hosts. The authoritative guard is the
+                                 database comment marker check in the seed SQL itself, which also
+                                 covers -Dflyway.url / FLYWAY_URL / config-file overrides. -->
                             <initSql>
                                 SELECT CASE
                                     WHEN '${seed.env}' IN ('local', 'ci')
