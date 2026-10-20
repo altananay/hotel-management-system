@@ -50,16 +50,6 @@ public class AmenityEntity {
         this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt must not be null");
     }
 
-    public static AmenityEntity fromDomain(Amenity amenity, Instant now) {
-        return new AmenityEntity(
-                amenity.id().value(),
-                amenity.code(),
-                amenity.nameTr(),
-                amenity.nameEn(),
-                now,
-                now);
-    }
-
     public Amenity toDomain() {
         return new Amenity(AmenityId.of(id), code, nameTr, nameEn);
     }

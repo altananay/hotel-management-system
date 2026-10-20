@@ -1,15 +1,10 @@
 package com.hotel.catalog.internal.application;
 
-import com.hotel.catalog.internal.domain.Amenity;
-import com.hotel.catalog.internal.domain.CatalogErrorCodes;
 import com.hotel.catalog.internal.domain.RoomType;
-import com.hotel.catalog.internal.persistence.AmenityEntity;
-import com.hotel.catalog.internal.persistence.AmenityJpaRepository;
 import com.hotel.catalog.internal.persistence.RoomTypeEntity;
 import com.hotel.catalog.internal.persistence.RoomTypeJpaRepository;
 import com.hotel.sharedkernel.api.DomainError;
-import java.time.Clock;
-import java.time.Instant;
+import com.hotel.sharedkernel.api.DomainErrorCategory;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -22,26 +17,22 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class RoomCatalogQueryService {
 
-    private final RoomTypeJpaRepository roomTypeRepository;
-    private final AmenityJpaRepository amenityRepository;
-    private final Clock clock;
+    public static final String INVALID_PAGINATION_CODE = "validation.invalid_request";
 
-    public RoomCatalogQueryService(
-            RoomTypeJpaRepository roomTypeRepository,
-            AmenityJpaRepository amenityRepository,
-            Clock clock) {
+    private final RoomTypeJpaRepository roomTypeRepository;
+
+    public RoomCatalogQueryService(RoomTypeJpaRepository roomTypeRepository) {
         this.roomTypeRepository =
                 Objects.requireNonNull(roomTypeRepository, "roomTypeRepository must not be null");
-        this.amenityRepository =
-                Objects.requireNonNull(amenityRepository, "amenityRepository must not be null");
-        this.clock = Objects.requireNonNull(clock, "clock must not be null");
     }
 
     @Transactional(readOnly = true)
     public PagedRoomTypesResult listActiveRoomTypes(int page, int size) {
         if (page < 0 || size < 1 || size > 100) {
-            throw new IllegalArgumentException(
-                    "Invalid pagination parameters: page must be >= 0 and size between 1 and 100.");
+            throw new DomainError(
+                    INVALID_PAGINATION_CODE,
+                    "Invalid pagination parameters: page must be >= 0 and size between 1 and 100.",
+                    DomainErrorCategory.VALIDATION);
         }
 
         long total = roomTypeRepository.countActive();
@@ -68,19 +59,6 @@ public class RoomCatalogQueryService {
                         .toList();
 
         return new PagedRoomTypesResult(items, page, size, total);
-    }
-
-    @Transactional
-    public Amenity createAmenity(String code, String nameTr, String nameEn) {
-        Amenity amenity = Amenity.create(code, nameTr, nameEn);
-        if (amenityRepository.existsByCode(amenity.code())) {
-            throw DomainError.conflict(
-                    CatalogErrorCodes.AMENITY_CODE_DUPLICATE,
-                    "Amenity with code '" + amenity.code() + "' already exists.");
-        }
-        Instant now = Instant.now(clock);
-        amenityRepository.save(AmenityEntity.fromDomain(amenity, now));
-        return amenity;
     }
 
     public record PagedRoomTypesResult(List<RoomType> items, int page, int size, long total) {}

@@ -2,49 +2,42 @@ package com.hotel.catalog.internal.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.hotel.catalog.internal.application.RoomCatalogQueryService.PagedRoomTypesResult;
 import com.hotel.catalog.internal.domain.Amenity;
-import com.hotel.catalog.internal.domain.CatalogErrorCodes;
-import com.hotel.catalog.internal.domain.RoomType;
 import com.hotel.catalog.internal.persistence.AmenityEntity;
-import com.hotel.catalog.internal.persistence.AmenityJpaRepository;
 import com.hotel.catalog.internal.persistence.RoomTypeEntity;
 import com.hotel.catalog.internal.persistence.RoomTypeJpaRepository;
 import com.hotel.sharedkernel.api.DomainError;
 import com.hotel.sharedkernel.api.DomainErrorCategory;
-import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * Unit tests for {@link RoomCatalogQueryService} (AC-1, AC-2).
+ * Unit tests for {@link RoomCatalogQueryService} (AC-1, AC-2, CR-2, CR-3).
  */
 @ExtendWith(MockitoExtension.class)
 class RoomCatalogQueryServiceTest {
 
     @Mock private RoomTypeJpaRepository roomTypeRepository;
-    @Mock private AmenityJpaRepository amenityRepository;
 
-    private Clock fixedClock;
     private RoomCatalogQueryService service;
 
     @BeforeEach
     void setUp() {
-        fixedClock = Clock.fixed(Instant.parse("2026-10-20T09:00:00Z"), ZoneOffset.UTC);
-        service = new RoomCatalogQueryService(roomTypeRepository, amenityRepository, fixedClock);
+        service = new RoomCatalogQueryService(roomTypeRepository);
     }
 
     @Test
@@ -75,7 +68,7 @@ class RoomCatalogQueryServiceTest {
 
     @Test
     void shouldPreserveDatabaseSortOrderAndSortAmenitiesByCodeAsc_whenHydratingActivePage() {
-        Instant now = Instant.now(fixedClock);
+        Instant now = Instant.parse("2026-10-20T09:00:00Z");
         UUID firstId = UUID.fromString("0199f2c0-0000-7000-8000-000000000001");
         UUID secondId = UUID.fromString("0199f2c0-0000-7000-8000-000000000002");
 
@@ -141,20 +134,18 @@ class RoomCatalogQueryServiceTest {
                 .containsExactly("cave_jacuzzi", "wifi");
     }
 
-    @Test
-    void shouldThrowAmenityCodeDuplicateConflict_whenAmenityCodeAlreadyExists() {
-        when(amenityRepository.existsByCode("wifi")).thenReturn(true);
-
-        assertThatThrownBy(() -> service.createAmenity("wifi", "Kablosuz İnternet", "Wi-Fi"))
+    @ParameterizedTest
+    @CsvSource({"-1,20", "0,0", "0,-5", "0,101"})
+    void shouldThrowValidationDomainError_whenPageOrSizeOutOfBounds(int page, int size) {
+        assertThatThrownBy(() -> service.listActiveRoomTypes(page, size))
                 .isInstanceOf(DomainError.class)
                 .satisfies(
                         ex -> {
                             DomainError error = (DomainError) ex;
-                            assertThat(error.code())
-                                    .isEqualTo(CatalogErrorCodes.AMENITY_CODE_DUPLICATE);
-                            assertThat(error.category()).isEqualTo(DomainErrorCategory.CONFLICT);
+                            assertThat(error.code()).isEqualTo("validation.invalid_request");
+                            assertThat(error.category()).isEqualTo(DomainErrorCategory.VALIDATION);
                         });
 
-        verify(amenityRepository, never()).save(any());
+        verify(roomTypeRepository, never()).countActive();
     }
 }
