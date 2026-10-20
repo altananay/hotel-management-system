@@ -10,10 +10,10 @@
 
 - **Spec No:** `0002`
 - **Başlık:** Oda Kataloğu ve Vitrin (`room-catalog`)
-- **Durum:** Onaylandı
+- **Durum:** Tamamlandı
 - **Branch:** `feature/0002-room-catalog`
 - **İlgili doküman/kararlar:** `docs/architecture.md` (§3 `catalog`, §5 R1/R3/R6, §7, §8, §10 D3/D7/D8, §11), `docs/domain.md` (§1 `RoomType`, `Amenity`), `docs/conventions.md` (§1–§7), `docs/frontend.md`, `docs/testing.md`, `docs/git.md`, `specs/done/0001-project-architecture.md` (`REQ-11`/`AC-11` scaffold kaldırma sözü); Onaylı kararlar: `CLARIFY-1A`, `CLARIFY-2A`, `CLARIFY-3A`, `CLARIFY-4A`, `CLARIFY-5A`; rev.1: onaylı QA düzeltmeleri (QA-1…QA-13, 2026-10-19) işlendi; rev.2: onaylı QA düzeltmeleri (QA-14…QA-18) ve e2e kanıt taşıma kararı işlendi
-- **Tarih:** 2026-10-19 *(Son revizyon: 2026-10-20, rev.2)*
+- **Tarih:** 2026-10-19 *(Son revizyon: 2026-10-20, rev.2 — Kapanış: 2026-10-20)*
 - **Sahip:** Analist (`analyst`)
 - **Onaylayan (Takım Yöneticisi):** Takım Yöneticisi (Onaylandı — 2026-10-20)
 
@@ -75,7 +75,7 @@ Potansiyel otel misafirleri ve otel yönetimi, Nevşehir/Kapadokya otelinin sund
   - `RoomType` (UUIDv7 kimlik, zorunlu TR/EN ad ve açıklama, `maxGuests` kapasite, `active` bayrağı, `displayOrder >= 0` varsayılan `0` ve benzersiz olmayan sıralama alanı, olanak kümesi) ile `Amenity` (UUIDv7 kimlik, benzersiz teknik kod, zorunlu TR/EN ad) domain kuralları birim testleriyle (`*Test`) doğrulanır.
   - **Metin ve kod sınır değerleri ile DB kolon tipleri (`QA-6`, `QA-14`):** Trim sonrası oda tipi adı (`nameTr`, `nameEn`) **1–120** karakter, açıklama (`descriptionTr`, `descriptionEn`) **1–2000** karakter; olanak adı (`nameTr`, `nameEn`) **1–80** karakter; olanak kodu (`code`) `^[a-z][a-z0-9_]{1,49}$` (2–50 karakter, küçük harf, benzersiz) kurallarına uyar. Yalnız boşluktan oluşan metin reddedilir; HTML/kontrol karakteri kuralı uyarınca metin `<` veya `>` içeremez ve C0/C1 kontrol karakterleri (`\u0000`–`\u001F`, `\u007F`–`\u009F`) reddedilir. Veritabanında kolon uzunlukları açıkça oda tipi adı `varchar(120)`, açıklama `varchar(2000)`, olanak adı `varchar(80)`, olanak kodu `varchar(50)` + `check` kısıtları olarak tanımlanır (`QA-14`).
   - **`maxGuests` sınırları (`QA-7`):** `1 <= maxGuests <= 20` zorunludur; veritabanında `smallint` ve `check` kısıtı bulunur; ihlalde `catalog.room_type_invalid_max_guests` (`DomainErrorCategory.VALIDATION`) hatası fırlatılır.
-  - **Sabit hata kodları (`QA-8`, `QA-14`):** İhlallerde sabit kodlar kullanılır (`DomainErrorCategory.VALIDATION` / `CONFLICT`): boş veya yalnız boşluk olduğunda `catalog.room_type_name_required`, `catalog.room_type_description_required`, `catalog.amenity_name_required`; uzunluk, `<`/`>` veya C0/C1 kontrol karakteri ihlallerinde `catalog.room_type_name_invalid`, `catalog.room_type_description_invalid`, `catalog.amenity_name_invalid`; kapasite ve olanak kodu ihlallerinde `catalog.room_type_invalid_max_guests`, `catalog.amenity_code_invalid`, `catalog.amenity_code_duplicate`. Hata mesajları İngilizce ve tekniktir; kullanıcı metni arayüz i18n sözlüğündedir.
+  - **Sabit hata kodları (`QA-8`, `QA-14`):** İhlallerde sabit kodlar kullanılır (`DomainErrorCategory.VALIDATION` / `CONFLICT`): boş veya yalnız boşluk olduğunda `catalog.room_type_name_required`, `catalog.room_type_description_required`, `catalog.amenity_name_required`; uzunluk, `<`/`>` veya C0/C1 kontrol karakteri ihlallerinde `catalog.room_type_name_invalid`, `catalog.room_type_description_invalid`, `catalog.amenity_name_invalid`; kapasite, sıralama ve olanak kodu ihlallerinde `catalog.room_type_invalid_max_guests`, `catalog.room_type_invalid_display_order`, `catalog.amenity_code_invalid`, `catalog.amenity_code_duplicate`. Hata mesajları İngilizce ve tekniktir; kullanıcı metni arayüz i18n sözlüğündedir.
 - **AC-2 (Halka Açık `/api/room-types` Okuma Yüzeyi, Aktiflik ve Sayfalama — `REQ-2`, `CLARIFY-1A`, `CLARIFY-3A`, `CLARIFY-4A`, `QA-3`, `QA-4`, `QA-5`, `QA-8`):**
   - `GET /api/room-types` ucu anonim isteklere `200 OK` ve `docs/conventions.md` §2.3 sayfalama zarfıyla (`{ items, page, size, total }`; varsayılan `page=0`, `size=20`) yanıt verir.
   - **JSON sözleşmesi ve dışlama kuralları (`QA-3`):** Her oda tipi öğesi `{ id, nameTr, nameEn, descriptionTr, descriptionEn, maxGuests, amenities: [{ code, nameTr, nameEn }] }` şeklindedir. `active`, `displayOrder` ve zaman damgaları yanıtta **yer almaz**. `amenities` listesi `code` ASC sıralı döner. `total` alanı filtre sonrası **aktif** oda tipi sayısıdır (tüm kayıtlar değil).
@@ -115,17 +115,17 @@ Potansiyel otel misafirleri ve otel yönetimi, Nevşehir/Kapadokya otelinin sund
 
 ## 6. Definition of Done
 
-- [ ] Tüm AC'ler doğrulandı (test ve/veya görsel kanıt)
-- [ ] Pipeline yeşil (lint + build + test + kritik akış smoke)
-- [ ] Kod incelemesi onaylandı (Takım Yöneticisi)
-- [ ] Davranış değiştiyse dokümanlar güncellendi
-- [ ] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi
-- [ ] SCORECARD dolduruldu
+- [x] Tüm AC'ler doğrulandı (test ve/veya görsel kanıt — bkz. `specs/done/evidence/0002/qa-ac-matrix.md` ve `specs/done/evidence/0002/qa-fix-verification.md`; Backend: `hotel-api` 126 + `admin-api` 16 = 142 test; Frontend: `web` 9 + `admin-web` 6 = 15 test; E2E: 4/4 Playwright smoke testi; 8/8 PNG kanıt görseli)
+- [x] Pipeline yeşil (lint + build + test + kritik akış smoke — bkz. `specs/done/evidence/0002/code-review-verification-2026-10-20.md` ve `specs/done/evidence/0002/qa-fix-verification.md`)
+- [x] Kod incelemesi onaylandı (Takım Yöneticisi — bkz. `specs/done/evidence/0002/code-review-2026-10-20.md` ve `specs/done/evidence/0002/code-review-verification-2026-10-20.md`)
+- [x] Davranış değiştiyse dokümanlar güncellendi (`docs/architecture.md` §11, `docs/conventions.md` §4, `infra/README.md`, `e2e/README.md`, `.github/workflows/ci.yml`)
+- [x] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi (`specs/done/0002-room-catalog.md`, `specs/done/evidence/0002/AC-6-*.png`)
+- [x] SCORECARD dolduruldu
 
 ## 7. SCORECARD
 
 - **Spec revizyon sayısı:** 2
-- **Düzeltme turu sayısı:**
-- **Bulgu gerçek/gürültü oranı:**
-- **Regresyon sayısı:**
-- **Kaçan hata (escaped bug):**
+- **Düzeltme turu sayısı:** 3 (CR-1…CR-6 ilk kod inceleme fix turu; CR-1 residual / CR-5 / CR-7 / CR-8 doğrulama fix turu; QA-0002-1…QA-0002-3 QA fix turu)
+- **Bulgu gerçek/gürültü oranı:** 11/11 gerçek bulgu (CR-1…CR-8: 8 kod inceleme bulgusu; QA-0002-1…QA-0002-3: 3 QA bulgusu); gürültü 0
+- **Regresyon sayısı:** 0
+- **Kaçan hata (escaped bug):** 0

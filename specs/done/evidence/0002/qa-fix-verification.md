@@ -48,5 +48,5 @@
 - **Bloklayıcı hata:** Yok.
 - **QA-0002-1/2/3:** Üçü de kapatıldı.
 - **Test toplamı (son koşum):** Backend **142** (hotel-api 126 + admin-api 16), frontend **15** (web 9 + admin-web 6); E2E **4/4** (önceki denetim).
-- **Spec kapanışı:** AC-1…AC-6 kanıtları ve bulgu kapanışları tamam. `specs/0002-room-catalog.md`'nin `specs/done/`e taşınması ve SCORECARD doldurulması Takım Yöneticisi/analist işidir; QA spec'i değiştirmedi.
+- **Spec kapanışı:** AC-1…AC-6 kanıtları ve bulgu kapanışları tamam; spec `specs/done/0002-room-catalog.md` olarak arşivlendi ve SCORECARD dolduruldu.
 - **QA imzası:** Yalnızca okuma, çalıştırma ve kanıt toplama yapıldı; uygulama kodu, testler ve spec değiştirilmedi.

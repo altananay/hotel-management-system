@@ -7,7 +7,7 @@
 - **Denetleyen:** QA (`docs/roles/qa.md`)
 - **Tarih:** 2026-10-20
 - **Denetlenen head:** `3e89c25` (`feature/0002-room-catalog`)
-- **Spec:** `specs/0002-room-catalog.md` (rev.2, Durum: Onaylandı)
+- **Spec:** `specs/done/0002-room-catalog.md` (denetim anında: `specs/0002-room-catalog.md`, rev.2, Durum: Onaylandı → Tamamlandı)
 - **Ortam:** Windows 11 · Java 25.0.2 · Node 24.11.1 · Docker 28.5.1 / Compose 2.40.3 · PostgreSQL 17.4-alpine · Playwright 1.51.0 (Chromium)
 - **Yöntem:** Bağımsız test koşumu, temiz yerel yığın, canlı HTTP/DB probe'ları ve görsel kanıt incelemesi. Kod/test/spec yazılmadı.
 
@@ -72,7 +72,7 @@
 1. **Spec izlenebilirliği (analist notu):** AC-1'in "sabit hata kodları" listesinde `displayOrder` için kod yok; uygulama `catalog.room_type_invalid_display_order` kullanıyor ve `RoomTypeTest` bunu doğruluyor. Davranış doğru; liste kapsayıcı kabul edilecekse AC-1'e bu kodun eklenmesi önerilir. Kod değişikliği gerekmez.
 2. **Görsel kanıt:** 8/8 PNG mevcut ve görsel olarak doğru durumları gösteriyor (boş, loading, error + retry, TR/EN dolu, admin loading/empty/error). QA yeniden koşumunda üç PNG byte düzeyinde farklılaştı; commit'li kanıtlar geri yüklendi.
 3. **CI kanıtı:** Yerel tüm suite'ler yeşil. GitHub check-run'ları bu oturumda bağımsız sorgulanamadı (gh yok); `code-review-verification-2026-10-20.md` 5/5 success kaydını taşıyor. Nihai merge/CI onayı Takım Yöneticisi'nin kararıdır.
-4. **DoD:** AC'ler ve kanıtlar tamam; ancak spec hâlâ `specs/0002-room-catalog.md` altında ( `specs/done/`'a taşınmamış) ve SCORECARD alanları boş. Bu iki madde QA sonrası Takım Yöneticisi/analist işidir; QA spec'i taşımadı.
+4. **DoD:** AC'ler ve kanıtlar tamam; denetim anında spec `specs/0002-room-catalog.md` altındaydı, kapanış adımında `specs/done/0002-room-catalog.md` olarak taşındı ve SCORECARD dolduruldu.
 
 ## 5. Sonuç
 
