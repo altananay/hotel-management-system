@@ -101,7 +101,7 @@ jobs:
           docker compose -f infra/docker-compose.yml --profile init run --rm minio-init
           docker compose -f infra/docker-compose.yml ps
 
-      - name: Run Flyway migrations as migrator and build backend jars
+      - name: Run Flyway migrations (seedless) as migrator and build backend jars
         run: |
           cd backend/hotel-api && ./mvnw -B flyway:migrate package -DskipTests
           cd ../admin-api && ./mvnw -B flyway:migrate package -DskipTests
@@ -134,12 +134,67 @@ jobs:
             sleep 1
           done
 
-      - name: Install Playwright Chromium and run smoke tests
+      - name: Install Playwright Chromium and run @empty smoke tests
         working-directory: e2e
         run: |
           npm ci
           npx playwright install --with-deps chromium
-          npx playwright test
+          npx playwright test --grep @empty
+
+      - name: Verify seed guard rejects missing or invalid seed environment
+        working-directory: backend/hotel-api
+        run: |
+          set +e
+          ./mvnw -B flyway:migrate -Pseed > /tmp/seed-guard-missing.log 2>&1
+          missing=$?
+          ./mvnw -B flyway:migrate -Pseed -Dseed.env=prod > /tmp/seed-guard-prod.log 2>&1
+          prod=$?
+          set -e
+          if [ "$missing" -eq 0 ] || [ "$prod" -eq 0 ]; then
+            echo "Seed guard did not reject missing/invalid seed.env"
+            cat /tmp/seed-guard-missing.log /tmp/seed-guard-prod.log
+            exit 1
+          fi
+          if ! grep -q "division by zero" /tmp/seed-guard-missing.log; then
+            echo "Missing-env guard failed for an unexpected reason (expected division by zero)"
+            cat /tmp/seed-guard-missing.log
+            exit 1
+          fi
+          if ! grep -q "division by zero" /tmp/seed-guard-prod.log; then
+            echo "Prod-env guard failed for an unexpected reason (expected division by zero)"
+            cat /tmp/seed-guard-prod.log
+            exit 1
+          fi
+          echo "Seed guard rejected missing and prod environments with the expected guard error."
+
+      - name: Verify seed SQL rejects overridden Flyway URL without local/CI marker
+        working-directory: backend/hotel-api
+        run: |
+          docker exec hotel-postgres psql -U postgres -d postgres \
+            -c "CREATE DATABASE hotel_core_guard_test OWNER migrator;"
+          ./mvnw -B flyway:migrate \
+            -DHOTEL_CORE_DB_URL=jdbc:postgresql://localhost:5432/hotel_core_guard_test
+          if ./mvnw -B flyway:migrate -Pseed -Dseed.env=ci \
+            -Dflyway.url=jdbc:postgresql://localhost:5432/hotel_core_guard_test \
+            > /tmp/seed-guard-marker.log 2>&1; then
+            echo "Seed SQL guard did not reject database without local/CI marker"
+            exit 1
+          fi
+          if ! grep -q "division by zero" /tmp/seed-guard-marker.log \
+            || ! grep -q "R__seed_catalog_dev.sql" /tmp/seed-guard-marker.log; then
+            echo "Seed SQL guard failed for an unexpected reason (expected marker guard in R__seed_catalog_dev.sql)"
+            cat /tmp/seed-guard-marker.log
+            exit 1
+          fi
+          echo "Seed SQL guard rejected overridden Flyway URL with the expected marker error."
+
+      - name: Run repeatable catalog seed migration as migrator
+        working-directory: backend/hotel-api
+        run: ./mvnw -B flyway:migrate -Pseed -Dseed.env=ci
+
+      - name: Run @seeded smoke tests
+        working-directory: e2e
+        run: npx playwright test --grep @seeded
 
       - name: Tear down infrastructure
         if: always()

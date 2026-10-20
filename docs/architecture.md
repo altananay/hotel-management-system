@@ -1,7 +1,7 @@
 # Mimari (v1.1)
 
 > Bu dosya mimarinin **tek gerçek kaynağıdır**. Kurallar buraya yazılır; diğer dosyalar buraya işaret eder.
-> Son güncelleme: 2026-10-18 — Karar kaydı (D1–D19) §10'dadır; toolchain §10'da, local portlar ve dev bağlantı düzeni §11'dedir.
+> Son güncelleme: 2026-10-20 — Karar kaydı (D1–D19) §10'dadır; toolchain §10'da, local portlar ve dev bağlantı düzeni §11'dedir.
 
 ## 1. Sistem Topolojisi
 
@@ -219,4 +219,4 @@ backend/hotel-api/    backend/admin-api/    web/    admin-web/
 contracts/            docs/                 specs/  infra/  e2e/
 ```
 
-**Çalıştırma (V1):** altyapı `infra/docker-compose.yml` ile ayağa kalkar; yerel altyapı iki adımda ayağa kalkar: (1) `up -d --wait` ile servisler, (2) `--profile init run --rm minio-init` ile `hotel-media` bucket'ı. Uygulamalar geliştirme sırasında IDE / `npm run dev` ile çalıştırılır. E2E smoke, kök `e2e/` Playwright projesiyle koşar (CI: compose → migrate + jar → frontend build + start → test).
+**Çalıştırma (V1):** altyapı `infra/docker-compose.yml` ile ayağa kalkar; yerel altyapı iki adımda ayağa kalkar: (1) `up -d --wait` ile servisler, (2) `--profile init run --rm minio-init` ile `hotel-media` bucket'ı. Uygulamalar geliştirme sırasında IDE / `npm run dev` ile çalıştırılır. E2E smoke, kök `e2e/` Playwright projesiyle koşar. E2E/seed akışı: `docker compose up -d --wait` + minio init → `flyway:migrate` (**seed'siz**) → backend/frontend build + start → `npx playwright test --grep @empty` → `db/seed/catalog` repeatable seed (migrator; `-Pseed -Dseed.env=local|ci`) → `npx playwright test --grep @seeded`. Standart migrate seed içermez; prod'da seed konumu yoktur, `seed` profili prod URL'sinde fail-fast eder ve seed SQL'i hedef DB'de local/CI `local-ci-seed` database comment marker'ı olmadan çalışmaz.
