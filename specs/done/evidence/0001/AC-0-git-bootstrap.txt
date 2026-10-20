@@ -1,0 +1,16 @@
+﻿=== git branch -a ===
+* feature/0001-project-architecture
+  integration
+  master
+  releasable
+  remotes/origin/feature/0001-project-architecture
+  remotes/origin/integration
+  remotes/origin/master
+  remotes/origin/releasable
+=== git merge-base --is-ancestor releasable feature/0001-project-architecture ===
+ExitCode: 0 (0 = true, feature/0001-project-architecture is descendant of releasable)
+
+=== Dal koruması (Rulesets) ===
+Ruleset "protect-release-branches" (active): hedefler master + integration + releasable;
+dal silme ve force push yasak; PR zorunlu; required check: "CI Quality Gate".
+API doğrulaması: AC-0-branch-protection.txt

@@ -1,0 +1,215 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [master, integration, releasable]
+  push:
+    branches: [master, integration, releasable]
+
+jobs:
+  backend:
+    name: Backend (hotel-api & admin-api)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      - name: Verify hotel-api (Spotless + Unit + Modulith/ArchUnit + Testcontainers IT)
+        working-directory: backend/hotel-api
+        run: ./mvnw -B verify
+
+      - name: Verify admin-api (Spotless + Unit + Modulith/ArchUnit + Testcontainers IT)
+        working-directory: backend/admin-api
+        run: ./mvnw -B verify
+
+      - name: Guard admin-api isolation (no business core references outside tests)
+        run: |
+          if git grep -n -i "hotel_core" -- backend/admin-api ':!backend/admin-api/src/test' ':!backend/admin-api/target'; then
+            echo "Found forbidden hotel_core reference in admin-api (CR-8)"
+            exit 1
+          fi
+          echo "OK: admin-api has no hotel_core references outside tests"
+
+  frontend:
+    name: Frontend (web & admin-web)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js from .nvmrc
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+          cache-dependency-path: |
+            web/package-lock.json
+            admin-web/package-lock.json
+
+      - name: Lint, build and test web
+        working-directory: web
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+          npm test
+
+      - name: Lint, build and test admin-web
+        working-directory: admin-web
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+          npm test
+
+  e2e:
+    name: E2E Smoke (Playwright Chromium)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      - name: Set up Node.js from .nvmrc
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+          cache-dependency-path: |
+            web/package-lock.json
+            admin-web/package-lock.json
+            e2e/package-lock.json
+
+      - name: Start local infrastructure (Postgres, MinIO, Mailpit)
+        run: |
+          docker compose -f infra/docker-compose.yml up -d --wait
+          # Tek seferlik bucket init'i: `up --wait`, exit eden job'u hata sayar (docker/compose#10596);
+          # bu yüzden ayrı `run` ile çalıştırılır ve kendi exit koduyla doğrulanır.
+          docker compose -f infra/docker-compose.yml --profile init run --rm minio-init
+          docker compose -f infra/docker-compose.yml ps
+
+      - name: Run Flyway migrations (seedless) as migrator and build backend jars
+        run: |
+          cd backend/hotel-api && ./mvnw -B flyway:migrate package -DskipTests
+          cd ../admin-api && ./mvnw -B flyway:migrate package -DskipTests
+
+      - name: Start hotel-api (:8081) and admin-api (:8082) as app user
+        run: |
+          nohup java -jar backend/hotel-api/target/hotel-api-0.0.1-SNAPSHOT.jar > /tmp/hotel-api.log 2>&1 &
+          nohup java -jar backend/admin-api/target/admin-api-0.0.1-SNAPSHOT.jar > /tmp/admin-api.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:8081/actuator/health && curl -fsS http://localhost:8082/actuator/health; then
+              echo "Backends are healthy"
+              break
+            fi
+            sleep 1
+          done
+          curl -fsS http://localhost:8081/actuator/health
+          curl -fsS http://localhost:8082/actuator/health
+
+      - name: Build and start web (:3000) and admin-web (:3001) in production mode
+        run: |
+          cd web && npm ci && npm run build
+          nohup npm run start > /tmp/web.log 2>&1 &
+          cd ../admin-web && npm ci && npm run build
+          nohup npm run start > /tmp/admin-web.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:3000/tr > /dev/null && curl -fsS http://localhost:3001 > /dev/null; then
+              echo "Frontends are ready"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Install Playwright Chromium and run @empty smoke tests
+        working-directory: e2e
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          npx playwright test --grep @empty
+
+      - name: Verify seed guard rejects missing or invalid seed environment
+        working-directory: backend/hotel-api
+        run: |
+          set +e
+          ./mvnw -B flyway:migrate -Pseed > /tmp/seed-guard-missing.log 2>&1
+          missing=$?
+          ./mvnw -B flyway:migrate -Pseed -Dseed.env=prod > /tmp/seed-guard-prod.log 2>&1
+          prod=$?
+          set -e
+          if [ "$missing" -eq 0 ] || [ "$prod" -eq 0 ]; then
+            echo "Seed guard did not reject missing/invalid seed.env"
+            cat /tmp/seed-guard-missing.log /tmp/seed-guard-prod.log
+            exit 1
+          fi
+          if ! grep -q "division by zero" /tmp/seed-guard-missing.log; then
+            echo "Missing-env guard failed for an unexpected reason (expected division by zero)"
+            cat /tmp/seed-guard-missing.log
+            exit 1
+          fi
+          if ! grep -q "division by zero" /tmp/seed-guard-prod.log; then
+            echo "Prod-env guard failed for an unexpected reason (expected division by zero)"
+            cat /tmp/seed-guard-prod.log
+            exit 1
+          fi
+          echo "Seed guard rejected missing and prod environments with the expected guard error."
+
+      - name: Verify seed SQL rejects overridden Flyway URL without local/CI marker
+        working-directory: backend/hotel-api
+        run: |
+          docker exec hotel-postgres psql -U postgres -d postgres \
+            -c "CREATE DATABASE hotel_core_guard_test OWNER migrator;"
+          ./mvnw -B flyway:migrate \
+            -DHOTEL_CORE_DB_URL=jdbc:postgresql://localhost:5432/hotel_core_guard_test
+          if ./mvnw -B flyway:migrate -Pseed -Dseed.env=ci \
+            -Dflyway.url=jdbc:postgresql://localhost:5432/hotel_core_guard_test \
+            > /tmp/seed-guard-marker.log 2>&1; then
+            echo "Seed SQL guard did not reject database without local/CI marker"
+            exit 1
+          fi
+          if ! grep -q "division by zero" /tmp/seed-guard-marker.log \
+            || ! grep -q "R__seed_catalog_dev.sql" /tmp/seed-guard-marker.log; then
+            echo "Seed SQL guard failed for an unexpected reason (expected marker guard in R__seed_catalog_dev.sql)"
+            cat /tmp/seed-guard-marker.log
+            exit 1
+          fi
+          echo "Seed SQL guard rejected overridden Flyway URL with the expected marker error."
+
+      - name: Run repeatable catalog seed migration as migrator
+        working-directory: backend/hotel-api
+        run: ./mvnw -B flyway:migrate -Pseed -Dseed.env=ci
+
+      - name: Run @seeded smoke tests
+        working-directory: e2e
+        run: npx playwright test --grep @seeded
+
+      - name: Tear down infrastructure
+        if: always()
+        run: docker compose -f infra/docker-compose.yml down -v
+
+  ci-gate:
+    name: CI Quality Gate
+    if: always()
+    needs: [backend, frontend, e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify all quality gates succeeded
+        run: |
+          if [ "${{ needs.backend.result }}" != "success" ] || [ "${{ needs.frontend.result }}" != "success" ] || [ "${{ needs.e2e.result }}" != "success" ]; then
+            echo "One or more CI jobs failed: backend=${{ needs.backend.result }}, frontend=${{ needs.frontend.result }}, e2e=${{ needs.e2e.result }}"
+            exit 1
+          fi
+          echo "All CI quality gates passed!"

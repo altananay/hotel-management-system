@@ -1,0 +1,35 @@
+=== AC-0: Dal koruması (Rulesets) — GitHub API doğrulaması ===
+Tarih : 2026-10-18 (güncelleme: 2026-10-19)
+Kaynak: GET /repos/altananay/hotel-management-system/rulesets (+ /25358074)
+
+Repo görünürlüğü: public
+  - Actions: standart GitHub-hosted runner'larda ücretsiz/sınırsız
+  - Free planda "protected branches" public repolarda kullanılabilir (private'da Pro gerekir)
+
+Ruleset: protect-release-branches
+  id             : 25358074
+  target         : branch
+  enforcement    : active
+  hedefler       : refs/heads/master, refs/heads/integration, refs/heads/releasable
+  bypass listesi : 0 aktör (kurallar admin dahil herkes için geçerli)
+
+Kurallar:
+  - deletion             → dal silme yasak
+  - non_fast_forward     → force push yasak
+  - pull_request         → doğrudan commit yasak (required_approving_review_count=0; solo-maintainer
+                            istisnası — docs/git.md §5)
+  - required_status_checks → context "CI Quality Gate" (GitHub Actions)
+  - allowed_merge_methods  → yalnız "squash" (VR-1 kapsamında 2026-10-19'da uygulandı)
+
+PR #1 doğrulaması: mergeable=true, mergeable_state=clean (30 commit)
+
+Ekran görüntüleri (arayüz):
+  - AC-0-branch-protection.png — Settings → Rules → Rulesets: hedefler, kurallar ve
+    "Require status checks to pass → CI Quality Gate"
+  - AC-9-required-check.png — PR #1 → Checks sekmesi (head 23cf0a6): GitGuardian Security Checks
+    ve Backend/Frontend/E2E/CI Quality Gate — tümü yeşil
+
+=== VR-1 (2026-10-19 doğrulama turu) — çözüldü ===
+Yönetici kararı: (b) solo-maintainer istisnası → docs/git.md §5'e eklendi (48b3910).
+Ruleset güncellemesi uygulandı: allowed_merge_methods=["squash"] (2026-10-19 06:19:43Z);
+required_approving_review_count=0 bu istisna kapsamında kabul edildi (reviewer ek doğrulaması, §6).

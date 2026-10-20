@@ -1,0 +1,51 @@
+server:
+  port: ${HOTEL_API_PORT:8081}
+  error:
+    whitelabel:
+      enabled: false
+
+spring:
+  application:
+    name: hotel-api
+  modulith:
+    detection-strategy: explicitly-annotated
+    events:
+      jdbc:
+        schema-initialization:
+          enabled: false
+  datasource:
+    url: ${HOTEL_CORE_DB_URL:jdbc:postgresql://localhost:5432/hotel_core}
+    username: ${HOTEL_CORE_DB_USER:app}
+    # LOCAL DEV DEFAULT — NOT A SECRET
+    password: ${HOTEL_CORE_DB_PASSWORD:app_local_dev}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: false
+
+hotel:
+  cors:
+    allowed-origins: ${HOTEL_API_CORS_ALLOWED_ORIGINS:http://localhost:3000}
+
+management:
+  endpoints:
+    access:
+      default: none
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      access: read_only
+      show-details: never
+
+logging:
+  pattern:
+    level: "%5p [requestId=%X{requestId:-}]"

@@ -18,6 +18,8 @@
 5. **Dilimler mini-spec ile koşar:** her kriter için ekran görüntüsü kanıtı + kritik akışta smoke test.
 6. **Zod her sınıra:** form doğrulama ve API yanıtı ayrıştırma; şema = tip kaynağı.
 7. **CI:** lint + build zorunlu (ayrıntılı kalite kapıları ilk dilimde eklenecek).
+8. **E2E seçicileri `data-testid` ile:** ad deseni `<alan>-<öğe>` (ör. `reservation-submit`); CSS sınıfı veya görünür metinle seçim yapılmaz (metin dile göre değişir).
+9. **Dil geçişi (web):** rota tabanlı `/[locale]` (`tr` varsayılan; `/` → `/tr`); sözlükler `src/lib/i18n/{tr,en}.json`; `<html lang>` locale'e göre ayarlanır; i18n kütüphanesi ihtiyacı arayüz spec'inde değerlendirilir.
 
 ## İlk Dilimde Genişletilecekler
 

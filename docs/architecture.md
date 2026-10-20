@@ -1,7 +1,7 @@
 # Mimari (v1.1)
 
 > Bu dosya mimarinin **tek gerçek kaynağıdır**. Kurallar buraya yazılır; diğer dosyalar buraya işaret eder.
-> Son güncelleme: 2026-10-17 — Karar kaydı (D1–D19) §10'dadır.
+> Son güncelleme: 2026-10-20 — Karar kaydı (D1–D19) §10'dadır; toolchain §10'da, local portlar ve dev bağlantı düzeni §11'dedir.
 
 ## 1. Sistem Topolojisi
 
@@ -56,6 +56,10 @@ Personel ─► admin-web (Next.js, shadcn)        │
 
 Kurallar: gateway yalnızca **taşır**; dönüştürme dışında mantık eklemek yasaktır (§8.11). Admin-web'e özel bir birleştirme (aggregation) ihtiyacı doğarsa önce bu doküman güncellenir.
 
+**Modül bağımlılık listesi (kapalı):** `adminidentity`, `adminaudit`, `preferences` ve `gateway` arasında **onaylanmış çapraz bağımlılık yoktur; liste boştur.** Yeni bir çapraz bağımlılık gerektiğinde önce bu doküman güncellenir, ardından `AdminApiModularityTest`'teki kapalı izin listesine işlenir (§5 R3'teki kapalı liste felsefesinin aynısı).
+
+Ayrıca: admin-api'nin kendi REST yüzeyi de `/admin-api/**` ön ekini kullanır; admin-web yalnızca bu ön eki bilir. Gateway, gelen `/admin-api/**` isteğini hotel-api'nin aynı adlı yüzeyine iletir.
+
 ## 5. İletişim Kuralları
 
 ### R1 — Senkron (doğrudan) çağrı, yalnızca şu üç durumda:
@@ -84,7 +88,7 @@ Etkin bağımlılık = senkron çağrı **+** event aboneliği (abone, yayıncı
 | notification ← booking/payment | event | voucher, makbuz |
 | reporting → booking/catalog/payment/pricing | senkron (read) | doluluk, ciro |
 
-Yaprak modüller: `catalog`, `pricing`, `payment`. `catalog` asla `booking`'e bağımlı olamaz. Zorlama: **Spring Modulith doğrulaması + ArchUnit testleri CI'da zorunlu** — ihlal, kırmızı build'dir.
+Yaprak modüller: `catalog`, `pricing`, `payment`. `catalog` asla `booking`'e bağımlı olamaz. İzin listesi **kapalıdır**: listede olmayan her çapraz bağımlılık ihlaldir; tüm modüller `sharedkernel`'e bağımlı olabilir, `sharedkernel` hiçbir modüle bağımlı olamaz. Zorlama: **Spring Modulith doğrulaması + ArchUnit testleri CI'da zorunlu** — ihlal, kırmızı build'dir.
 
 ### R4 — Transaction sınırı
 **1 transaction = 1 modül.** Cross-module tutarlılık senkron çağrı + kompanzasyonla sağlanır (hold süresi dolunca `ReservationExpired`; ödeme alınamazsa hold düşer). "Booking + payment tek transaction" yasaktır.
@@ -98,6 +102,7 @@ Yaprak modüller: `catalog`, `pricing`, `payment`. `catalog` asla `booking`'e ba
 
 ### R6 — REST yüzeyleri ve frontend kuralları
 - İki API yüzeyi: **public API** (`/api/**`) ve **admin API** (`/admin-api/**`); ayrı Spring Security zinciri, ayrı kimlik profili.
+- **Sağlık ucu:** her iki uygulamada Actuator `/actuator/health` (detay kapalı, kimliksiz; yalnız bu uç açık, diğer Actuator uçları kapalı).
 - admin-web → yalnız admin-api; web → yalnız hotel-api public API. İki frontend arasında kod paylaşımı yok.
 - Oda panosu gibi birleşik okuma ekranları tek read API olarak sunulur (V1: `reporting.RoomBoard(date)`); frontend iş mantığı birleştirmez.
 
@@ -121,6 +126,7 @@ Yaprak modüller: `catalog`, `pricing`, `payment`. `catalog` asla `booking`'e ba
 
 - **Tek PostgreSQL sunucusu, iki veritabanı:** `hotel_core`, `hotel_admin`. `hotel_core` içinde şema/modül. Cross-schema erişim yasaktır.
 - **Flyway:** modül başına migration klasörü (`db/migration/<modül>/`); bir modülün migration'ı başka şemaya dokunamaz. admin-api, `hotel_admin`'i kendi Flyway'ıyla yönetir.
+- **Flyway çalıştırma modeli:** migration'lar ayrı adımda `migrator` kimliğiyle koşar (`./mvnw flyway:migrate`); uygulama süreçleri `app` kimliğiyle çalışır ve `spring.flyway.enabled=false`'tur. Local quickstart ve CI bu adımı içerir; IT'lerde migration test profilinde migrator kimliğiyle koşar.
 - **ID:** UUIDv7. **Zaman:** DB'de UTC (`timestamptz`); iş günü Europe/Istanbul (`HotelDate`); konaklama tarihleri `LocalDate`.
 - **Para:** her zaman `BigDecimal` + para birimi (`Money` value object). Ayrıntı: `docs/conventions.md`.
 - **Event altyapısı aşamaları:**
@@ -176,22 +182,23 @@ Yaprak modüller: `catalog`, `pricing`, `payment`. `catalog` asla `booking`'e ba
 | D11 | Hero/animasyon | Hero video döngüsü + scroll hikâyesi (pinli bölümler + parallax) + mikro etkileşimler |
 | D12 | Housekeeping | V1 manuel oda durumu; otomasyon V2 |
 | D13 | e-Fatura | V1 kapsam dışı |
-| D14 | Repo yapısı | Monorepo (backend/, web/, admin-web/, contracts/, docs/, specs/, infra/) |
+| D14 | Repo yapısı | Monorepo (backend/, web/, admin-web/, contracts/, docs/, specs/, infra/, e2e/) |
 | D15 | Fiyat/kur modeli | TRY baz + TCMB kuru + buffer/yuvarlama + manuel override (öncelik: elle fiyat > elle kur > TCMB) |
 | D16 | Event altyapısı | Aşama 1: in-process; Aşama 2: Kafka uyumlu broker; Aşama 3 opsiyonel broker tüketimi |
 | D17 | Broker + arayüz | **Redpanda** (KRaft Kafka yerine; Java ekip öğrenme tercihi) + **kafbat-ui** |
 | D18 | Hero video | Pexels 30653318 (Pexels License; kaynak + lisans `CREDITS.md`'ye işlenir) |
 | D19 | Admin DB erişimi | **Spring Data JPA + Flyway** (admin-api içinde); Drizzle/Prisma kullanılmaz |
 | — | Para kuralı | Para/yüzde alanları **her zaman BigDecimal**; `double`/`float` yasak (kural) |
+| — | Toolchain | Backend **Maven** (`pom.xml` + `mvnw`), frontend **npm** (`package-lock.json`); Java 25 + Spring Boot 4.x + uyumlu Spring Modulith; Gradle/pnpm kullanılmaz (karar, 2026-10-18) |
 
 ## 11. Ortam ve Portlar (local)
 
 | Bileşen | Port | Not |
 |---|---|---|
 | web | 3000 | Next.js public |
-| admin-web | 3001 | Next.js admin (rewrites → 8081) |
-| hotel-api | 8080 | Spring Boot |
-| admin-api | 8081 | Spring Boot |
+| admin-web | 3001 | Next.js admin (rewrites → 8082) |
+| hotel-api | 8081 | Spring Boot |
+| admin-api | 8082 | Spring Boot |
 | postgres | 5432 | `hotel_core` + `hotel_admin` |
 | minio | 9000 / 9001 | S3 API / konsol |
 | mailpit | 1025 / 8025 | SMTP / web arayüz |
@@ -199,11 +206,17 @@ Yaprak modüller: `catalog`, `pricing`, `payment`. `catalog` asla `booking`'e ba
 | kafbat-ui | 8090 | Aşama 2 |
 | webhook (fake sağlayıcı) | hotel-api içinde | `/api/webhooks/payments/fake` |
 
+**Dev bağlantı düzeni:**
+- web → hotel-api: doğrudan (`NEXT_PUBLIC_API_BASE_URL=http://localhost:8081`); hotel-api CORS allowlist yalnız `http://localhost:3000` (credential yok).
+- admin-web → admin-api: rewrites (`/admin-api/:path*` → `http://localhost:8082`); aynı origin (çerez/CSRF).
+- admin-api → hotel-api: iç çağrı `http://localhost:8081/admin-api/**`.
+- Not (2026-10-18): Local'de 8080 portu dolu olduğundan hotel-api `8081`'e, admin-api `8082`'ye alındı. Prod topolojisi (ters proxy/alan adları) ayrıca ele alınır.
+
 **Repo düzeni:**
 
 ```
 backend/hotel-api/    backend/admin-api/    web/    admin-web/
-contracts/            docs/                 specs/  infra/
+contracts/            docs/                 specs/  infra/  e2e/
 ```
 
-**Çalıştırma (V1):** altyapı `infra/docker-compose.yml` ile ayağa kalkar; uygulamalar geliştirme sırasında IDE / `npm run dev` ile çalıştırılır.
+**Çalıştırma (V1):** altyapı `infra/docker-compose.yml` ile ayağa kalkar; yerel altyapı iki adımda ayağa kalkar: (1) `up -d --wait` ile servisler, (2) `--profile init run --rm minio-init` ile `hotel-media` bucket'ı. Uygulamalar geliştirme sırasında IDE / `npm run dev` ile çalıştırılır. E2E smoke, kök `e2e/` Playwright projesiyle koşar. E2E/seed akışı: `docker compose up -d --wait` + minio init → `flyway:migrate` (**seed'siz**) → backend/frontend build + start → `npx playwright test --grep @empty` → `db/seed/catalog` repeatable seed (migrator; `-Pseed -Dseed.env=local|ci`) → `npx playwright test --grep @seeded`. Standart migrate seed içermez; prod'da seed konumu yoktur, `seed` profili prod URL'sinde fail-fast eder ve seed SQL'i hedef DB'de local/CI `local-ci-seed` database comment marker'ı olmadan çalışmaz.
