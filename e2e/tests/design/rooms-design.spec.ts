@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { WEB_BASE_URL } from "../../helpers/config";
 import { collectConsole } from "../../helpers/console";
 import { capture, writeEvidence } from "../../helpers/evidence";
@@ -15,6 +15,27 @@ const LOF_FONT_WITHOUT_LATIN_GLYPHS = path.join(
   "fonts",
   "empty-latin.woff2",
 );
+
+async function measureBodyFontFallback(page: Page) {
+  return page.evaluate(() => {
+    const measure = (family: string) => {
+      const span = document.createElement("span");
+      span.style.cssText = `position:absolute;visibility:hidden;white-space:nowrap;font-size:16px;font-family:${family}`;
+      span.textContent = "Kapadokya Taş Konak";
+      document.body.appendChild(span);
+      const width = span.getBoundingClientRect().width;
+      span.remove();
+      return width;
+    };
+    const bodyFamily = getComputedStyle(document.body).fontFamily;
+    return {
+      withCustomFace: measure(bodyFamily),
+      withoutCustomFace: measure(bodyFamily.replace(/"Source Sans 3",\s*/, "")),
+      status: document.fonts.status,
+      faces: [...document.fonts].map((face) => face.status),
+    };
+  });
+}
 
 test.describe("Design — room showcase (AC-3, AC-6, B-13, B-16)", () => {
   test(
@@ -160,7 +181,7 @@ test.describe("Design — room showcase (AC-3, AC-6, B-13, B-16)", () => {
   );
 
   test(
-    "shouldFallbackToASystemFontWithoutConsoleErrors",
+    "shouldFallbackToASystemFontWhenTheCustomFontLacksLatinGlyphs",
     { tag: ["@design", "@seeded"] },
     async ({ page }) => {
       const console = collectConsole(page);
@@ -176,30 +197,46 @@ test.describe("Design — room showcase (AC-3, AC-6, B-13, B-16)", () => {
       await page.goto(`${WEB_BASE_URL}/tr/rooms`, { waitUntil: "networkidle" });
       await expect(page.getByTestId("rooms-page")).toBeVisible();
       await expect(page.getByTestId("room-card-name").first()).toBeVisible();
-      const fallback = await page.evaluate(() => {
-        const measure = (family: string) => {
-          const span = document.createElement("span");
-          span.style.cssText = `position:absolute;visibility:hidden;white-space:nowrap;font-size:16px;font-family:${family}`;
-          span.textContent = "Kapadokya Taş Konak";
-          document.body.appendChild(span);
-          const width = span.getBoundingClientRect().width;
-          span.remove();
-          return width;
-        };
-        const bodyFamily = getComputedStyle(document.body).fontFamily;
-        return {
-          withCustomFace: measure(bodyFamily),
-          withoutCustomFace: measure(bodyFamily.replace(/"Source Sans 3",\s*/, "")),
-          status: document.fonts.status,
-        };
-      });
-      expect(fallback.status).toBe("loaded");
+      const fallback = await measureBodyFontFallback(page);
+      expect(fallback.faces.every((status) => status === "loaded")).toBe(true);
       expect(fallback.withCustomFace).toBeCloseTo(fallback.withoutCustomFace, 2);
       expect(console.errors).toEqual([]);
       writeEvidence(
         "0003",
+        "AC-1-font-glyph-fallback.log",
+        "A valid WOFF2 fixture without Latin glyphs was served for every font request; all faces loaded, the rendered width matched the same stack without Source Sans 3, proving glyph fallback, and no console errors were produced.",
+      );
+    },
+  );
+
+  test(
+    "shouldFallbackToASystemFontWhenFontRequestsFail",
+    { tag: ["@design", "@seeded"] },
+    async ({ page }) => {
+      const console = collectConsole(page);
+      const failedFonts: string[] = [];
+      page.on("requestfailed", (request) => {
+        if (request.url().includes("/fonts/")) {
+          failedFonts.push(request.url());
+        }
+      });
+      await mockRooms(page);
+      await page.route("**/fonts/**", (route) => route.abort("failed"));
+      await page.goto(`${WEB_BASE_URL}/tr/rooms`, { waitUntil: "networkidle" });
+      await expect(page.getByTestId("rooms-page")).toBeVisible();
+      await expect(page.getByTestId("room-card-name").first()).toBeVisible();
+      const fallback = await measureBodyFontFallback(page);
+      expect(fallback.faces.every((status) => status === "error")).toBe(true);
+      expect(fallback.withCustomFace).toBeCloseTo(fallback.withoutCustomFace, 2);
+      expect(failedFonts).toHaveLength(3);
+      expect(console.errors).toHaveLength(failedFonts.length);
+      expect(
+        console.errors.every((message) => /^Failed to load resource: net::ERR_FAILED$/.test(message)),
+      ).toBe(true);
+      writeEvidence(
+        "0003",
         "AC-1-font-fallback.log",
-        "A valid WOFF2 fixture without Latin glyphs was served for every font request; the rendered width matched the same stack without Source Sans 3, proving the system fallback, and no console errors were produced.",
+        `All ${failedFonts.length} font requests failed with net::ERR_FAILED; font faces entered the error state, the rendered width matched the same stack without Source Sans 3, and the only console messages were the browser's expected resource errors (no application/page errors).`,
       );
     },
   );

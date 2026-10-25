@@ -194,34 +194,102 @@ test.describe("Design — hero media (AC-2, AC-4, B-05, B-13)", () => {
   );
 
   test(
-    "shouldKeepThePosterAndNoConsoleErrorsWhenTheVideoPreflightReturns404",
+    "shouldKeepThePosterAndOnlyTheExpectedResourceErrorWhenTheVideoPreflightReturns404",
     { tag: ["@design", "@seeded"] },
     async ({ page }) => {
       const console = collectConsole(page);
-      // A real 404 makes Chromium log a resource error that application code cannot suppress.
-      // The fetch shim exercises the same `response.ok === false` branch without network noise.
-      await page.addInitScript(() => {
-        const originalFetch = window.fetch.bind(window);
-        window.fetch = (input, init) => {
-          const url =
-            typeof input === "string"
-              ? input
-              : input instanceof URL
-                ? input.href
-                : input.url;
-          if (url.endsWith("/media/hero/home-hero.mp4") && init?.method === "HEAD") {
-            return Promise.resolve(new Response(null, { status: 404 }));
-          }
-          return originalFetch(input, init);
-        };
+      let preflight = { method: "", status: 0 };
+      page.on("response", (response) => {
+        if (response.url().endsWith("/media/hero/home-hero.mp4")) {
+          preflight = {
+            method: response.request().method(),
+            status: response.status(),
+          };
+        }
       });
+      await page.route("**/media/hero/home-hero.mp4", (route) =>
+        route.fulfill({ status: 404, contentType: "video/mp4", body: "" }),
+      );
       await openHome(page);
       await page.waitForTimeout(1200);
 
       await expect(page.getByTestId("home-hero-poster")).toBeVisible();
       await expect(page.getByTestId("home-hero-video")).toHaveCount(0);
-      expect(console.errors).toEqual([]);
+      expect(preflight).toEqual({ method: "HEAD", status: 404 });
+      expect(console.errors).toHaveLength(1);
+      expect(console.errors[0]).toMatch(
+        /^Failed to load resource: the server responded with a status of 404 \(Not Found\)$/,
+      );
       await capture(page, "0003", "AC-2-home-video-fallback.png", { fullPage: false });
+    },
+  );
+
+  test(
+    "shouldRemoveTheVideoAndKeepThePosterWhenTheVideoSourcesReturn404",
+    { tag: ["@design", "@seeded"] },
+    async ({ page }) => {
+      const console = collectConsole(page);
+      const failedSources: string[] = [];
+      let preflightStatus = 0;
+      page.on("response", (response) => {
+        if (response.url().endsWith("/media/hero/home-hero.mp4")) {
+          if (response.request().method() === "HEAD") {
+            preflightStatus = response.status();
+          } else if (response.status() === 404) {
+            failedSources.push(response.url());
+          }
+        }
+        if (response.url().endsWith("/media/hero/home-hero.webm") && response.status() === 404) {
+          failedSources.push(response.url());
+        }
+      });
+      await page.addInitScript(() => {
+        const mediaErrors: string[] = [];
+        document.addEventListener(
+          "error",
+          (event) => {
+            const target = event.target;
+            if (target instanceof HTMLVideoElement) {
+              mediaErrors.push("video");
+            } else if (target instanceof HTMLSourceElement) {
+              mediaErrors.push("source");
+            }
+          },
+          true,
+        );
+        (window as Window & { __mediaErrors?: string[] }).__mediaErrors = mediaErrors;
+      });
+      await page.route("**/media/hero/home-hero.mp4", (route) => {
+        if (route.request().method() === "HEAD") {
+          return route.fulfill({ status: 200, contentType: "video/mp4", body: "" });
+        }
+        return route.fulfill({ status: 404, contentType: "video/mp4", body: "" });
+      });
+      await page.route("**/media/hero/home-hero.webm", (route) =>
+        route.fulfill({ status: 404, contentType: "video/webm", body: "" }),
+      );
+      await openHome(page);
+      await page.waitForTimeout(1500);
+
+      await expect(page.getByTestId("home-hero-poster")).toBeVisible();
+      await expect(page.getByTestId("home-hero-video")).toHaveCount(0);
+      expect(preflightStatus).toBe(200);
+      expect(failedSources).toHaveLength(2);
+      const mediaErrors = await page.evaluate(
+        () => (window as Window & { __mediaErrors?: string[] }).__mediaErrors ?? [],
+      );
+      expect(mediaErrors).toContain("source");
+      expect(console.errors).toHaveLength(2);
+      expect(
+        console.errors.every((message) =>
+          /^Failed to load resource: the server responded with a status of 404 \(Not Found\)$/.test(
+            message,
+          ),
+        ),
+      ).toBe(true);
+      await capture(page, "0003", "AC-2-home-video-source-fallback.png", {
+        fullPage: false,
+      });
     },
   );
 

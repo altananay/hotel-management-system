@@ -187,8 +187,9 @@ ile çizilir.
 - Video `preload="none"`; ilk boyamadan sonra eklenir ve `canplay` olunca görünür.
 - Video yalnız ≥768 px, `prefers-reduced-motion: no-preference` ve save-data
   kapalıyken DOM'a eklenir.
-- Hata/404/autoplay reddinde video kaldırılır, poster kalır; uygulama konsol
-  hatası üretilmez.
+- Hata/404/autoplay reddinde video kaldırılır, poster kalır. Gerçek ağ
+  404/abort'ta tarayıcının ürettiği `Failed to load resource` kaynak logu tek
+  beklenen istisnadır; `pageerror`/uygulama hatası üretilmez.
 - `aria-hidden="true"`, `muted`, `loop`, `playsInline`, ses kanalı yok.
 
 ## 5. Performans Bütçesi
@@ -229,8 +230,8 @@ ile çizilir.
 
 | Durum | Davranış |
 |---|---|
-| Video yüklenemez / autoplay reddi | Video kaldırılır, poster kalır, uygulama konsol hatası yok |
-| Font yüklenemez | `font-display: swap` + sistem fallback; kullanıcıya hata yok |
+| Video yüklenemez / 404 / autoplay reddi | Video kaldırılır, poster kalır. Gerçek ağ 404/abort'ta yalnız tarayıcının `Failed to load resource` kaynak logu beklenir; uygulama/`pageerror` hatası yok |
+| Font yüklenemez | `font-display: swap` + sistem fallback; gerçek istek hatasında yalnız tarayıcının `net::ERR_FAILED` kaynak logu beklenir, uygulama hatası yok |
 | Rooms API 4xx/5xx/ağ/timeout/şema | `rooms-error` + sabit metin + `rooms-retry`; 10 sn timeout; teknik detay gizli |
 | `CREDITS.md` eksik/bozuk | Build fail-fast |
 | Hero/poster/OG eksik veya bütçe aşımı | Build/bütçe kontrolü fail-fast |

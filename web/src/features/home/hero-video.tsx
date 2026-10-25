@@ -122,7 +122,8 @@ export function HomeHeroVideo() {
       style={{ transitionDuration: "var(--duration-slow)" }}
     >
       <source src={HERO_WEBM} type="video/webm" />
-      <source src={HERO_MP4} type="video/mp4" />
+      {/* MP4 is the last source: its failure means neither codec loaded. */}
+      <source src={HERO_MP4} type="video/mp4" onError={handleError} />
     </video>
   );
 }
