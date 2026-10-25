@@ -17,13 +17,12 @@
 
 - **CR-1:** `origin/integration` feature branch'e merge edildi (`0305043`); conflict'ler
   feature içeriği korunarak çözüldü. Push sonrası PR #11 **mergeable=true /
-  clean** oldu; CI run [40224276319](https://github.com/altananay/hotel-management-system/actions/runs/40224276319)
+  clean** oldu; CI run [40227343692](https://github.com/altananay/hotel-management-system/actions/runs/40227343692)
   **success**.
 - **CR-3:** `appErrors()` kaynak-hatası filtresi kaldırıldı; tüm senaryolar ham
-  `console.errors` ile doğrulanıyor. Font fallback testi Latin glyph'i olmayan
-  geçerli bir WOFF2 fixture'ı (`e2e/fixtures/fonts/empty-latin.woff2`) sunar;
-  video preflight 404 dalı ağ gürültüsü olmadan aynı `response.ok === false`
-  koşulunu çalıştırır.
+  `console.errors` ile doğrulanıyor. Font glyph fallback testi Latin glyph'i
+  olmayan geçerli bir WOFF2 fixture'ı (`e2e/fixtures/fonts/empty-latin.woff2`)
+  sunar; gerçek font/video failure-path testleri CR-8'de ayrıca ele alınır.
 - **CR-4:** Parallax testi `window.__hotelMotionLoaded.gsap === true` ve
   `data-motion="pinned"` bekler; en az bir offsetin **0 < |offset| ≤ 40 px**
   olduğunu doğrular.
@@ -67,8 +66,8 @@ node scripts/sha256-manifest.mjs verify ../specs/done/evidence/0002 "$RUNNER_TEM
 
 ## CI
 
-- **CI run:** [40224276319](https://github.com/altananay/hotel-management-system/actions/runs/40224276319)
-  — head `8537442`, sonuç **success**.
+- **CI run:** [40227343692](https://github.com/altananay/hotel-management-system/actions/runs/40227343692)
+  — head `ae0f92d`, sonuç **success**.
   - Backend (hotel-api & admin-api): **success**
   - Frontend (web & admin-web): **success**
   - E2E Smoke (Playwright Chromium): **success**
@@ -80,7 +79,7 @@ node scripts/sha256-manifest.mjs verify ../specs/done/evidence/0002 "$RUNNER_TEM
   `pull_request` workflow'u tetiklenmedi. `origin/integration` merge edilip
   conflict'ler feature içeriğiyle çözülünce PR `mergeable=true` / `clean`
   oldu ve CI run başladı.
-- **PR kapsamı:** 140 dosya; `backend/`, `admin-web/` ve
+- **PR kapsamı:** 143 dosya; `backend/`, `admin-web/` ve
   `specs/done/evidence/0002/` değişmedi.
 - CI akışı: `@empty` → seed → `@seeded` smoke (geçici kanıt kökü) →
   SHA manifest → `@seeded` design → SHA doğrulama → 0003 kanıt artefaktı.

@@ -2,10 +2,11 @@
 
 - **Tarih:** 2026-10-25
 - **İncelenen head:** `8bbe705`
-- **Fix head:** `8537442` (kod + kanıt commit'leri)
+- **Fix head:** `ae0f92d` (kod + kanıt commit'leri)
 - **PR:** [#11](https://github.com/altananay/hotel-management-system/pull/11)
-- **Kapsam:** `code-review-2026-10-25.md` içindeki CR-1, CR-3, CR-4, CR-5, CR-6, CR-7.
-  CR-2 Takım Yöneticisi kararıyla kapalıdır; değiştirilmedi.
+- **Kapsam:** `code-review-2026-10-25.md` ve
+  `code-review-verification-2026-10-25.md` içindeki CR-1, CR-3, CR-4, CR-5,
+  CR-6, CR-7 ve CR-8. CR-2 Takım Yöneticisi kararıyla kapalıdır; değiştirilmedi.
 
 ## Bulgu bazında çözüm
 
@@ -16,7 +17,9 @@
   merge öncesi feature ağacıyla birebir aynıdır.
 - Böylece PR diff'i yalnız 0003 kapsamına iner ve GitHub merge ref'i
   oluşturabilir; `pull_request` workflow'u tetiklenebilir.
-- Push sonrası PR `mergeable` durumu ve CI koşuları ayrıca doğrulanacaktır.
+- Push sonrası doğrulandı: PR `mergeable=true` / `clean`; CI run
+  [40227343692](https://github.com/altananay/hotel-management-system/actions/runs/40227343692)
+  **success**.
 
 ### CR-3 — Console filtreleri
 
@@ -108,10 +111,10 @@
 
 ## CI
 
-- **CI run:** [40224276319](https://github.com/altananay/hotel-management-system/actions/runs/40224276319)
-  — head `8537442`, **success** (Backend, Frontend, E2E, CI Quality Gate;
+- **CI run:** [40227343692](https://github.com/altananay/hotel-management-system/actions/runs/40227343692)
+  — head `ae0f92d`, **success** (Backend, Frontend, E2E, CI Quality Gate;
   GitGuardian ayrıca success).
-- PR #11: `mergeable=true`, `mergeable_state=clean`, **140 dosya**;
+- PR #11: `mergeable=true`, `mergeable_state=clean`, **143 dosya**;
   `backend/`, `admin-web/` ve `specs/done/evidence/0002/` kapsam dışı.
 - İlk PR'da CI'nın çalışmama nedeni: `releasable` tabanlı branch ile
   `integration` base'i arasındaki conflict, PR'ı `dirty` yapıp GitHub merge
