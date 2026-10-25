@@ -10,6 +10,7 @@ const FONT_BUDGET = 204_800;
 const VIDEO_BUDGET = 8_388_608;
 const POSTER_BUDGET = 307_200;
 const OG_BUDGET = 307_200;
+const STILL_BUDGET = 204_800;
 
 const FONT_FILES = [
   "cormorant-garamond-600.woff2",
@@ -49,6 +50,8 @@ function main() {
   const fontsDir = path.join(webRoot, "public", "fonts");
   const heroDir = path.join(webRoot, "public", "media", "hero");
   const ogDir = path.join(webRoot, "public", "media", "og");
+  const storyDir = path.join(webRoot, "public", "media", "story");
+  const experienceDir = path.join(webRoot, "public", "media", "experience");
 
   const woff2 = fs.existsSync(fontsDir)
     ? fs.readdirSync(fontsDir).filter((file) => file.endsWith(".woff2")).sort()
@@ -92,6 +95,16 @@ function main() {
     "hero poster 960",
   );
   checkFile(path.join(ogDir, "home-og.jpg"), OG_BUDGET, "OG image");
+  checkFile(
+    path.join(storyDir, "home-story-portrait.webp"),
+    STILL_BUDGET,
+    "story still",
+  );
+  checkFile(
+    path.join(experienceDir, "home-experience-panorama.webp"),
+    STILL_BUDGET,
+    "experience still",
+  );
 
   const creditsPath = path.join(repoRoot, "CREDITS.md");
   if (!fs.existsSync(creditsPath)) {

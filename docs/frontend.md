@@ -150,7 +150,7 @@ Kurallar:
 ### 4.1 Kütüphane görev dağılımı
 
 - **GSAP ScrollTrigger** — yalnız dekoratif parallax (pin, `data-motion="pinned"` + CSS sticky ile yapılır).
-- **Motion** — yalnız reveal ve mikro etkileşim (opacity/transform).
+- **Motion** — yalnız reveal, ikon stroke draw ve dekoratif yavaş zoom (opacity/transform).
 - **Lenis** — yalnız desktop smooth scroll.
 - Üçü de ilk boyamadan sonra (≈2 sn gecikmeli) dinamik import edilir.
 - `< 1024 px`'te GSAP ve Lenis yüklenmez; yalnız hafif Motion reveal vardır.
@@ -174,6 +174,9 @@ Toplam pinli sahne **tam 2**'dir. Pin, `data-motion="pinned"` + CSS sticky ile
 kısa bir track (`115svh`) üzerinde tutulur; böylece tek scroll jestiyle sahne
 geçilebilir. Parallax yalnız dekoratif arka plan katmanındadır ve en fazla
 **±40 px**'dir (dekoratif sayı 20 px, grid 24 px); metin parallax'ı yoktur.
+Dekoratif story/experience görselleri ±20/24 px parallax ve 1.045'e kadar
+scroll-driven scale alır; experience ikonları görünür olduklarında stroke draw
+ile çizilir.
 
 ### 4.3 Hero video
 
@@ -199,8 +202,11 @@ geçilebilir. Parallax yalnız dekoratif arka plan katmanındadır ve en fazla
 | Font toplamı | ≤ 204.800 B | `web/public/fonts/**/*.woff2` |
 | Hero WebM / MP4 | her biri ≤ 8.388.608 B | dosya boyutu |
 | Poster / OG | her biri ≤ 307.200 B | dosya boyutu |
+| Story / experience stilleri | her biri ≤ 204.800 B | dosya boyutu |
 
 - Hero video LCP öğesi olamaz; poster/metin LCP'yi taşır.
+- Story ve experience dekoratif stilleri aynı D18 kaynağından türetilir; her
+  biri **≤ 204.800 B**'dir. Below-fold yüklenir; poster/video bütçesini etkilemez.
 - Çalışma zamanında üçüncü taraf font/medya/script isteği yapılmaz; ana sayfa
   yalnız aynı origin ve `http://localhost:8081` API çağrıları üretir.
 - CI'da deterministik dosya ve bundle bütçesi kapısı vardır; Lighthouse CI gate'i

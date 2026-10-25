@@ -10,6 +10,7 @@ const JS_BUDGET = 256_000;
 const FONT_BUDGET = 204_800;
 const VIDEO_BUDGET = 8_388_608;
 const IMAGE_BUDGET = 307_200;
+const STILL_BUDGET = 204_800;
 
 interface LayoutShiftEntry extends PerformanceEntry {
   value: number;
@@ -60,6 +61,8 @@ test.describe("Design — performance budget (AC-5, B-11, B-15)", () => {
         ["hero MP4", path.join(REPO_ROOT, "web", "public", "media", "hero", "home-hero.mp4"), VIDEO_BUDGET, false],
         ["hero poster", path.join(REPO_ROOT, "web", "public", "media", "hero", "home-hero-poster.webp"), IMAGE_BUDGET, false],
         ["OG image", path.join(REPO_ROOT, "web", "public", "media", "og", "home-og.jpg"), IMAGE_BUDGET, false],
+        ["story still", path.join(REPO_ROOT, "web", "public", "media", "story", "home-story-portrait.webp"), STILL_BUDGET, false],
+        ["experience still", path.join(REPO_ROOT, "web", "public", "media", "experience", "home-experience-panorama.webp"), STILL_BUDGET, false],
       ] as const;
 
       const log: string[] = [

@@ -20,9 +20,9 @@ test.describe("Design — scroll story video evidence (AC-6)", () => {
       await page.setViewportSize({ width: 1280, height: 800 });
       await page.goto(`${WEB_BASE_URL}/tr`, { waitUntil: "networkidle" });
       await page.waitForTimeout(1500);
-      for (let index = 0; index < 14; index += 1) {
-        await page.mouse.wheel(0, 650);
-        await page.waitForTimeout(600);
+      for (let index = 0; index < 12; index += 1) {
+        await page.mouse.wheel(0, 400);
+        await page.waitForTimeout(700);
       }
 
       const video = page.video();

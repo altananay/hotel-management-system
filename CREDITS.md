@@ -7,7 +7,8 @@ generated from the sections below at build time.
 ## Visual Media
 
 - Hero video — Pexels, video 30653318; Pexels License. Source: [Pexels video 30653318](https://www.pexels.com/video/30653318/), accessed 2026-10-25.
-- Hero poster — a still frame from the hero video; 1920×1080 WebP q80.
+- Hero poster — a still frame from the hero video; 1920×1080 WebP q80; responsive 960×540 and 1280×720 variants.
+- Story and experience stills — decorative frames derived from the same hero video source; 1080×1350 and 1200×900 WebP q80.
 - Open Graph image — a still frame from the hero video; 1200×630 JPEG, no text.
 - Pexels License — [https://www.pexels.com/license/](https://www.pexels.com/license/).
 

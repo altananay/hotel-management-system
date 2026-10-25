@@ -53,6 +53,21 @@ function clearReveals() {
   });
 }
 
+function clearIconDraws() {
+  document.querySelectorAll<SVGElement>("[data-icon-draw] *").forEach((shape) => {
+    const element = shape as SVGGeometryElement;
+    element.style.removeProperty("stroke-dasharray");
+    element.style.removeProperty("stroke-dashoffset");
+    element.removeAttribute("pathLength");
+  });
+}
+
+function clearScrollTransforms() {
+  document.querySelectorAll<HTMLElement>("[data-parallax], [data-slow-zoom]").forEach((element) => {
+    element.style.removeProperty("transform");
+  });
+}
+
 export function HomeMotion() {
   const { isDesktop, reduceMotion } = useMotionPreferences();
 
@@ -71,6 +86,8 @@ export function HomeMotion() {
       return () => {
         setScenes(false);
         clearReveals();
+        clearIconDraws();
+        clearScrollTransforms();
         setFlags({ motion: false, gsap: false, lenis: false });
       };
     }
@@ -113,11 +130,43 @@ export function HomeMotion() {
         observer.observe(element);
       });
 
+      const iconObserver = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) {
+              continue;
+            }
+            const icon = entry.target as SVGElement;
+            iconObserver.unobserve(icon);
+            icon
+              .querySelectorAll<SVGGeometryElement>("path, circle, line, rect, polygon")
+              .forEach((shape) => {
+                shape.setAttribute("pathLength", "1");
+                shape.style.strokeDasharray = "1";
+                shape.style.strokeDashoffset = "1";
+                const animation = animate(
+                  shape,
+                  { strokeDashoffset: [1, 0] },
+                  { duration: 0.9, ease: [0.22, 1, 0.36, 1] },
+                );
+                animations.add(animation);
+              });
+          }
+        },
+        { threshold: 0.4 },
+      );
+
+      document.querySelectorAll<SVGElement>("[data-icon-draw]").forEach((icon) => {
+        iconObserver.observe(icon);
+      });
+
       revealCleanup = () => {
         observer.disconnect();
+        iconObserver.disconnect();
         animations.forEach((animation) => animation.stop());
         animations.clear();
         clearReveals();
+        clearIconDraws();
       };
 
       if (!isDesktop) {
@@ -166,6 +215,33 @@ export function HomeMotion() {
         });
       });
 
+      document.querySelectorAll<HTMLElement>("[data-slow-zoom]").forEach((layer) => {
+        const track = layer.closest("[data-motion-track]") ?? layer.closest("section");
+        if (!track) {
+          return;
+        }
+        const tween = gsap.fromTo(
+          layer,
+          { scale: 1 },
+          {
+            scale: 1.045,
+            ease: "none",
+            scrollTrigger: {
+              trigger: track,
+              start: "top bottom",
+              end: "bottom top",
+              scrub: true,
+            },
+          },
+        );
+        triggers.push({
+          kill: () => {
+            tween.scrollTrigger?.kill();
+            tween.kill();
+          },
+        });
+      });
+
       ScrollTrigger.refresh();
 
       const lenis = new Lenis({ duration: 0.9, smoothWheel: true });
@@ -188,6 +264,7 @@ export function HomeMotion() {
         gsap.ticker.remove(tick);
         lenis.destroy();
         triggers.forEach((trigger) => trigger.kill());
+        clearScrollTransforms();
         setScenes(false);
         setFlags({ motion: false, gsap: false, lenis: false });
       };
@@ -207,6 +284,8 @@ export function HomeMotion() {
       pinCleanup?.();
       setScenes(false);
       clearReveals();
+      clearIconDraws();
+      clearScrollTransforms();
       setFlags({ motion: false, gsap: false, lenis: false });
     };
   }, [isDesktop, reduceMotion]);

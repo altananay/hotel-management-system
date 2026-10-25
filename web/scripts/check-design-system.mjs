@@ -100,7 +100,11 @@ function main() {
       if (palettePattern.test(line)) {
         fail(`${relative}:${index + 1} uses a raw palette class: ${line.trim()}`);
       }
-      if (/transition-all|hover:-translate|hover:scale|hover:rotate/.test(line)) {
+      if (
+        /transition-all|hover:-translate|hover:scale|hover:rotate|group-hover:w-|group-hover:h-|hover:w-|hover:h-/.test(
+          line,
+        )
+      ) {
         fail(`${relative}:${index + 1} uses a forbidden CSS transition/transform: ${line.trim()}`);
       }
     });

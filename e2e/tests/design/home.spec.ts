@@ -47,6 +47,30 @@ test.describe("Design — home, chrome and language (AC-2, AC-4, AC-6)", () => {
           "href",
           `/${locale}/rooms`,
         );
+        await expect(page.getByTestId("home-story-image")).toHaveAttribute(
+          "aria-hidden",
+          "true",
+        );
+        await expect(page.getByTestId("home-story-image")).toHaveAttribute(
+          "src",
+          /\/media\/story\/home-story-portrait\.webp$/,
+        );
+        await expect(page.getByTestId("home-experience-image")).toHaveAttribute(
+          "aria-hidden",
+          "true",
+        );
+        await expect(page.getByTestId("home-experience-image")).toHaveAttribute(
+          "src",
+          /\/media\/experience\/home-experience-panorama\.webp$/,
+        );
+        await expect(page.getByTestId("home-story-image")).toHaveJSProperty(
+          "complete",
+          true,
+        );
+        await expect(page.getByTestId("home-experience-image")).toHaveJSProperty(
+          "complete",
+          true,
+        );
         await expect(page.getByTestId("home-contact-address")).toHaveText(
           dict.home.contact.address,
         );
@@ -68,6 +92,13 @@ test.describe("Design — home, chrome and language (AC-2, AC-4, AC-6)", () => {
           "href",
           `/${locale}/credits`,
         );
+        await page.evaluate(async () => {
+          await Promise.all(
+            Array.from(document.images).map((image) =>
+              image.decode().catch(() => undefined),
+            ),
+          );
+        });
 
         await capture(page, "0003", `AC-2-home-${locale}-desktop.png`);
       }
@@ -83,6 +114,21 @@ test.describe("Design — home, chrome and language (AC-2, AC-4, AC-6)", () => {
       await page.goto(`${WEB_BASE_URL}/tr`, { waitUntil: "networkidle" });
       await expect(page.getByTestId("web-site-title")).toHaveText("Kapadokya Taş Konak Otel");
       await expect(page.getByTestId("mobile-nav-toggle")).toBeVisible();
+      await expect(page.getByTestId("home-story-image")).toHaveJSProperty(
+        "complete",
+        true,
+      );
+      await expect(page.getByTestId("home-experience-image")).toHaveJSProperty(
+        "complete",
+        true,
+      );
+      await page.evaluate(async () => {
+        await Promise.all(
+          Array.from(document.images).map((image) =>
+            image.decode().catch(() => undefined),
+          ),
+        );
+      });
       await capture(page, "0003", "AC-2-home-tr-mobile.png");
     },
   );
@@ -118,6 +164,10 @@ test.describe("Design — home, chrome and language (AC-2, AC-4, AC-6)", () => {
       await expect(page.getByText("Kapadokya'yı Hissetmenin Dört Yolu")).toBeVisible();
       await expect(page.locator('[data-motion="pinned"]')).toHaveCount(0);
       await expect(page.getByTestId("home-hero-video")).toHaveCount(0);
+      await page.mouse.wheel(0, 4200);
+      await page.waitForTimeout(400);
+      await page.mouse.wheel(0, -4200);
+      await page.waitForTimeout(400);
       await capture(page, "0003", "AC-2-home-nojs.png");
       await context.close();
     },
