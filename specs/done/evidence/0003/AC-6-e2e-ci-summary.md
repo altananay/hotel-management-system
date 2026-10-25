@@ -53,7 +53,9 @@
   `AC-5-build-guard.log` LF checkout'ta `OFL-SourceSans3.txt` için **4.486 B**
   yazar; `AC-1-scope.txt` güncel test satırları ve görsel boyutlarıyla
   yenilendi. Kapanış CI run'ları #39 (`ae0f92d`) ve #40 (`ad4603f`) ayrı
-  ayrı success olarak aşağıda listelendi; QA fix run'ı `PENDING`.
+  ayrı success olarak aşağıda listelendi; QA fix run'ı
+  [40232356949](https://github.com/altananay/hotel-management-system/actions/runs/40232356949)
+  (`45e6fc8`) success.
 - **QA-0003-2 (yerel ortam):** `e2e/README.md` içine Windows'ta çalışan
   backend jar'ı nedeniyle `spring-boot:repackage` kilidi notu ve
   `-Dspring-boot.repackage.skip=true` önerisi eklendi.
@@ -71,7 +73,9 @@
   `OFL-SourceSans3.txt` **4.486 B**.
 - `AC-1-scope.txt`: final koda göre güncellendi; `backend/` ve `admin-web/`
   kapsam dışı.
-- CI: kapanış #39 ve #40 success; QA fix run'ı `PENDING`.
+- CI: kapanış #39 ve #40 success; QA fix run'ı
+  [40232356949](https://github.com/altananay/hotel-management-system/actions/runs/40232356949)
+  (`45e6fc8`) success.
 
 ## Komutlar
 
@@ -100,7 +104,8 @@ node scripts/sha256-manifest.mjs verify ../specs/done/evidence/0002 "$RUNNER_TEM
     — head `ad4603f`, sonuç **success** (spec DoD'deki final run).
   - Her iki run'da Backend, Frontend, E2E ve CI Quality Gate success;
     GitGuardian ayrıca success.
-- **QA fix CI run:** `PENDING` (PR #13 head `5f8b4b3` + evidence commit'i).
+- **QA fix CI run:** [40232356949](https://github.com/altananay/hotel-management-system/actions/runs/40232356949)
+  — head `45e6fc8`, sonuç **success**.
 - **Neden ilk PR'da run oluşmadı:** Branch `releasable` tabanlıydı, PR base'i
   `integration` idi. İki geçmiş ayrıştığı ve conflict oluştuğu için PR
   `mergeable=false` / `dirty` kaldı; GitHub merge ref'i üretemedi ve
