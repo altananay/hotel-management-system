@@ -1,6 +1,6 @@
 # Asset and bundle budget
 
-JS gzip-9 total: 206.557 B / limit 256.000 B
+JS gzip-9 total: 206.788 B / limit 256.000 B
 
 | Chunk | gzip-9 |
 |---|---:|
@@ -15,7 +15,7 @@ JS gzip-9 total: 206.557 B / limit 256.000 B
 | http://localhost:3000/_next/static/chunks/640-9d5c2e66e740b362.js | 5.019 B |
 | http://localhost:3000/_next/static/chunks/619-ba102abea3e3d0e4.js | 3.385 B |
 | http://localhost:3000/_next/static/chunks/app/%5Blocale%5D/layout-3cfcbdfb1fb0ac3e.js | 2.460 B |
-| http://localhost:3000/_next/static/chunks/app/%5Blocale%5D/page-075abb1fb59739a8.js | 2.184 B |
+| http://localhost:3000/_next/static/chunks/app/%5Blocale%5D/page-20f515493ba0a383.js | 2.415 B |
 | http://localhost:3000/_next/static/chunks/webpack-60993da474c04ee5.js | 1.882 B |
 | http://localhost:3000/_next/static/chunks/main-app-6e5b46afabdb4795.js | 226 B |
 
@@ -26,3 +26,5 @@ JS gzip-9 total: 206.557 B / limit 256.000 B
 | hero MP4 | 3.606.393 B | 8.388.608 B |
 | hero poster | 111.972 B | 307.200 B |
 | OG image | 145.592 B | 307.200 B |
+| story still | 137.098 B | 204.800 B |
+| experience still | 78.102 B | 204.800 B |

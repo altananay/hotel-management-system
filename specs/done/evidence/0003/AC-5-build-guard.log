@@ -10,6 +10,8 @@ hero poster: 111.972 B / limit 307.200 B
 hero poster 1280: 63.228 B / limit 307.200 B
 hero poster 960: 44.276 B / limit 307.200 B
 OG image: 145.592 B / limit 307.200 B
+story still: 137.098 B / limit 204.800 B
+experience still: 78.102 B / limit 204.800 B
 CREDITS.md: present
 SELF-TEST PASS: synthetic oversized font exceeds its budget by 1 B
 Asset budget check passed.

@@ -5,9 +5,9 @@
   - 0002 kanıt kökü geçici dizin kullanıldı; arşiv değişmedi.
 - 0003 design (`@design @seeded`): **36/36 passed**
 - Axe: altı rotada kritik/ciddi ihlal **0**
-- JS bütçesi: **206.557 B / 256.000 B** (gzip-9)
+- JS bütçesi: **206.788 B / 256.000 B** (gzip-9)
 - CLS (scroll): **0.0000**; Lighthouse CLS: **0.042**
-- Lighthouse mobil (devtools throttling, 3 koşu median): **LCP 2287,56 ms**,
+- Lighthouse mobil (devtools throttling, 3 koşu median): **LCP 2272,98 ms**,
   performans **0.97**
 - Video kanıtı: **8,4 sn / 984.665 B** (VP9, 1280×800)
 - `0002` kanıt SHA-256: **UNCHANGED (12 dosya)**
