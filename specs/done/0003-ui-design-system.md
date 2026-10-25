@@ -10,7 +10,7 @@
 
 - **Spec No:** `0003`
 - **Başlık:** Arayüz Tasarım Sistemi ve Ana Sayfa Deneyimi (`ui-design-system`)
-- **Durum:** Onaylandı
+- **Durum:** Tamamlandı
 - **Branch:** `feature/0003-ui-design-system`
 - **İlgili doküman/kararlar:** `docs/architecture.md` (§2, §5 R6, §10 D3/D7/D8/D9/D11/D18, §11), `docs/frontend.md` (İSKELET), `docs/conventions.md` (§1, §2.3, §5), `docs/testing.md` (§1, §3, §4), `docs/domain.md` (§1, §3.14), `docs/git.md` (§1, §5), `specs/done/0002-room-catalog.md`, `specs/0003-clarification-brief.md`; Onaylı kararlar: `CLARIFY-1A`…`CLARIFY-9A` ve `B-01`…`B-17` (2026-10-25); rev.2: QA bulguları (B-13 hata matrisi test eşlemesi, 767/768/1023/1024 sınırları, tüm sayfalarda konsol hatası) işlendi; rev.3: CR-8 gerçek failure-path testleri ve tarayıcı kaynak-logu istisnası işlendi
 - **Tarih:** 2026-10-25 *(Son revizyon: 2026-10-25, rev.3)*
@@ -174,20 +174,21 @@ Kapadokya'daki butik otelin potansiyel misafirleri ve otel yönetimi, siteye gir
 
 ## 6. Definition of Done
 
-- [ ] Tüm AC'ler doğrulandı (test ve/veya görsel kanıt)
-- [ ] Pipeline yeşil (lint + build + test + kritik akış smoke)
-- [ ] Kod incelemesi onaylandı (Takım Yöneticisi)
-- [ ] Davranış değiştiyse dokümanlar güncellendi
-- [ ] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi
-- [ ] SCORECARD dolduruldu
+- [x] Tüm AC'ler doğrulandı (test ve/veya görsel kanıt)
+- [x] Pipeline yeşil (lint + build + test + kritik akış smoke) — CI 5/5, run `40227913825`
+- [x] Kod incelemesi onaylandı (Takım Yöneticisi) — CR-8 fix sonrası merge talimatı
+- [x] Davranış değiştiyse dokümanlar güncellendi
+- [x] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi
+- [x] SCORECARD dolduruldu
 
 ## 7. SCORECARD
 
-- **Spec revizyon sayısı:** 2
-- **Düzeltme turu sayısı:**
-- **Bulgu gerçek/gürültü oranı:**
-- **Regresyon sayısı:**
-- **Kaçan hata (escaped bug):**
+- **Spec revizyon sayısı:** 3
+- **Düzeltme turu sayısı:** 2 (ilk code review + CR-8 doğrulama turu)
+- **Bulgu gerçek/gürültü oranı:** 7/7 gerçek (CR-1, CR-3…CR-8); 0 gürültü
+- **Regresyon sayısı:** 0 (`0002` kanıt SHA-256 UNCHANGED, smoke 4/4)
+- **Kaçan hata (escaped bug):** 0
+- **Kapanış:** PR [#11](https://github.com/altananay/hotel-management-system/pull/11) → `integration` (squash `e15770c`); final CI run [40227913825](https://github.com/altananay/hotel-management-system/actions/runs/40227913825) **success**.
 
 ## 8. Ek A — TR/EN Copy Deck (`B-03`)
 
