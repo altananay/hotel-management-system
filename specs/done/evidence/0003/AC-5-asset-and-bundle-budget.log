@@ -1,6 +1,6 @@
 # Asset and bundle budget
 
-JS gzip-9 total: 206.202 B / limit 256.000 B
+JS gzip-9 total: 206.557 B / limit 256.000 B
 
 | Chunk | gzip-9 |
 |---|---:|
@@ -14,8 +14,8 @@ JS gzip-9 total: 206.202 B / limit 256.000 B
 | http://localhost:3000/_next/static/chunks/691.33e46f81feff2b78.js | 5.423 B |
 | http://localhost:3000/_next/static/chunks/640-9d5c2e66e740b362.js | 5.019 B |
 | http://localhost:3000/_next/static/chunks/619-ba102abea3e3d0e4.js | 3.385 B |
-| http://localhost:3000/_next/static/chunks/app/%5Blocale%5D/page-7c624da37bee5918.js | 2.158 B |
-| http://localhost:3000/_next/static/chunks/app/%5Blocale%5D/layout-ff3058d24491fe97.js | 2.131 B |
+| http://localhost:3000/_next/static/chunks/app/%5Blocale%5D/layout-3cfcbdfb1fb0ac3e.js | 2.460 B |
+| http://localhost:3000/_next/static/chunks/app/%5Blocale%5D/page-075abb1fb59739a8.js | 2.184 B |
 | http://localhost:3000/_next/static/chunks/webpack-60993da474c04ee5.js | 1.882 B |
 | http://localhost:3000/_next/static/chunks/main-app-6e5b46afabdb4795.js | 226 B |
 

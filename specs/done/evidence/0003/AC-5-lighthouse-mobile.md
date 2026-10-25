@@ -3,11 +3,11 @@
 - Lighthouse: 10.4.0
 - Chrome: Playwright Chromium 1161
 - Branch: `feature/0003-ui-design-system`
-- Build commit: `f5307a0` (uygulama kodu) + evidence/docs commit'leri
+- Build commit: `d4e9ee8` (bayrak + scroll tuning dahil)
 - URL: http://localhost:3000/tr
 - Preset: mobile, devtools throttling
 - Koşu sayısı: 3 (median)
-- LCP: 2284.56 ms (limit 2500 ms)
+- LCP: 2287.56 ms (limit 2500 ms)
 - CLS: 0.04235663171073437 (limit 0.1)
 - Performance score: 0.97
 - LCP öğesi: section#home-hero > div.absolute > picture > img.absolute
