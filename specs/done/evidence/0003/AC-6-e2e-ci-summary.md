@@ -16,7 +16,9 @@
 ## 2026-10-25 code review fixleri
 
 - **CR-1:** `origin/integration` feature branch'e merge edildi (`0305043`); conflict'ler
-  feature içeriği korunarak çözüldü. Push sonrası PR #11 `mergeable` doğrulanacak.
+  feature içeriği korunarak çözüldü. Push sonrası PR #11 **mergeable=true /
+  clean** oldu; CI run [40224276319](https://github.com/altananay/hotel-management-system/actions/runs/40224276319)
+  **success**.
 - **CR-3:** `appErrors()` kaynak-hatası filtresi kaldırıldı; tüm senaryolar ham
   `console.errors` ile doğrulanıyor. Font fallback testi Latin glyph'i olmayan
   geçerli bir WOFF2 fixture'ı (`e2e/fixtures/fonts/empty-latin.woff2`) sunar;
@@ -57,6 +59,20 @@ node scripts/sha256-manifest.mjs verify ../specs/done/evidence/0002 "$RUNNER_TEM
 
 ## CI
 
-- CI run linki: PR açıldığında `CI Quality Gate` run'ı ile eklenecek.
+- **CI run:** [40224276319](https://github.com/altananay/hotel-management-system/actions/runs/40224276319)
+  — head `8537442`, sonuç **success**.
+  - Backend (hotel-api & admin-api): **success**
+  - Frontend (web & admin-web): **success**
+  - E2E Smoke (Playwright Chromium): **success**
+  - CI Quality Gate: **success**
+  - GitGuardian Security Checks: **success**
+- **Neden ilk PR'da run oluşmadı:** Branch `releasable` tabanlıydı, PR base'i
+  `integration` idi. İki geçmiş ayrıştığı ve conflict oluştuğu için PR
+  `mergeable=false` / `dirty` kaldı; GitHub merge ref'i üretemedi ve
+  `pull_request` workflow'u tetiklenmedi. `origin/integration` merge edilip
+  conflict'ler feature içeriğiyle çözülünce PR `mergeable=true` / `clean`
+  oldu ve CI run başladı.
+- **PR kapsamı:** 140 dosya; `backend/`, `admin-web/` ve
+  `specs/done/evidence/0002/` değişmedi.
 - CI akışı: `@empty` → seed → `@seeded` smoke (geçici kanıt kökü) →
   SHA manifest → `@seeded` design → SHA doğrulama → 0003 kanıt artefaktı.

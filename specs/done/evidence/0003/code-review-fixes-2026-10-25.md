@@ -2,7 +2,7 @@
 
 - **Tarih:** 2026-10-25
 - **İncelenen head:** `8bbe705`
-- **Fix head:** `8cec9fc` (kod), ardından gelen kanıt commit'i
+- **Fix head:** `8537442` (kod + kanıt commit'leri)
 - **PR:** [#11](https://github.com/altananay/hotel-management-system/pull/11)
 - **Kapsam:** `code-review-2026-10-25.md` içindeki CR-1, CR-3, CR-4, CR-5, CR-6, CR-7.
   CR-2 Takım Yöneticisi kararıyla kapalıdır; değiştirilmedi.
@@ -90,5 +90,11 @@
 
 ## CI
 
-- PR #11 push sonrası `mergeable` ve `CI Quality Gate` sonucu bu rapora
-  eklenecektir.
+- **CI run:** [40224276319](https://github.com/altananay/hotel-management-system/actions/runs/40224276319)
+  — head `8537442`, **success** (Backend, Frontend, E2E, CI Quality Gate;
+  GitGuardian ayrıca success).
+- PR #11: `mergeable=true`, `mergeable_state=clean`, **140 dosya**;
+  `backend/`, `admin-web/` ve `specs/done/evidence/0002/` kapsam dışı.
+- İlk PR'da CI'nın çalışmama nedeni: `releasable` tabanlı branch ile
+  `integration` base'i arasındaki conflict, PR'ı `dirty` yapıp GitHub merge
+  ref'ini engelledi. Merge sonrası run tetiklendi.
