@@ -3,7 +3,7 @@
 - Lighthouse: 10.4.0
 - Chrome: Playwright Chromium 1161
 - Branch: `feature/0003-ui-design-system`
-- Build: local working tree (HEAD `6f71445` + 0003 uygulama değişiklikleri)
+- Build commit: `f5307a0` (uygulama kodu) + evidence/docs commit'leri
 - URL: http://localhost:3000/tr
 - Preset: mobile, devtools throttling
 - Koşu sayısı: 3 (median)
