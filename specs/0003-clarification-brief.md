@@ -1,6 +1,6 @@
 # Spec 0003 — Karar ve Analist Brief'i
 
-> **Amaç:** `specs/0003-ui-design-system.md` uygulanmaya başlamadan önce geliştiricinin varsayım yapmak zorunda kalacağı boşlukları tek yerde toplamak; her biri için karar + gerekçe sunmak.
+> **Amaç:** `specs/done/0003-ui-design-system.md` uygulanmaya başlamadan önce geliştiricinin varsayım yapmak zorunda kalacağı boşlukları tek yerde toplamak; her biri için karar + gerekçe sunmak.
 >
 > **Kapsam:** Yalnızca spec 0003'tür. Bu dosya bir spec, plan veya kod değildir; onaylanan maddeler analist tarafından spec rev.1'e metin olarak işlenir. Tüm maddeler karara bağlanmıştır; geliştirici onaylanmış kararlar dışında varsayım yapmamalıdır.
 >
@@ -10,7 +10,7 @@
 > **Tarih:** 2026-10-25
 > **İnceleme girdisi:** Spec 0003 (Taslak), `docs/frontend.md` (İSKELET), `docs/architecture.md` §10 D3/D11/D18, `docs/testing.md` §3–§4, mevcut `web`/`e2e` kodu.
 >
-> **Satır referansları:** Aksi belirtilmedikçe `specs/0003-ui-design-system.md` satır numaralarıdır.
+> **Satır referansları:** Aksi belirtilmedikçe `specs/done/0003-ui-design-system.md` satır numaralarıdır.
 
 ## 0. Karar özeti ve kullanım
 
@@ -390,7 +390,7 @@ Analist spec rev.1'i yazdıktan sonra şunları kontrol etmelidir:
 
 ### 4.4 Analistin teslimi
 
-- `specs/0003-ui-design-system.md` rev.1 (Durum: Onay bekliyor).
+- `specs/done/0003-ui-design-system.md` rev.1 (Durum: Onay bekliyor).
 - B-03 copy deck'i (spec eki veya ayrı dosya).
 - B-17 karar kaydı tablosu.
 - Takım Yöneticisi'ne "hangi madde nereye işlendi" kısa değişiklik özeti.
