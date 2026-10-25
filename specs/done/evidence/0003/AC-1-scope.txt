@@ -1,0 +1,51 @@
+0003 scope evidence (backend/admin-web untouched)
+
+ .env.example                                    |   2 +
+ .github/workflows/ci.yml                        |  31 +-
+ docs/frontend.md                                | 260 +++++++++--
+ docs/testing.md                                 |   3 +-
+ e2e/README.md                                   | 176 +++++---
+ e2e/package-lock.json                           | 241 +++++++++-
+ e2e/package.json                                |   5 +
+ e2e/playwright.config.ts                        |   2 +
+ e2e/tests/smoke.spec.ts                         |   3 +-
+ specs/done/README.md                            |   1 +
+ web/package-lock.json                           | 563 +++++++++++++++++++++++-
+ web/package.json                                |  11 +-
+ web/src/app/[locale]/layout.tsx                 |  81 +++-
+ web/src/app/[locale]/page.tsx                   | 146 ++----
+ web/src/app/[locale]/rooms/page.tsx             | 126 +++---
+ web/src/app/globals.css                         | 325 ++++++++++++++
+ web/src/components/ui/button.tsx                |  33 +-
+ web/src/components/ui/card.tsx                  |   2 +-
+ web/src/components/ui/skeleton.tsx              |   2 +-
+ web/src/features/room-catalog/room-showcase.tsx | 272 +++---------
+ web/src/lib/api-client.ts                       |  89 ++--
+ web/src/lib/config.ts                           |  11 +
+ web/src/lib/i18n/__tests__/i18n.test.ts         |  16 +
+ web/src/lib/i18n/en.json                        |  98 ++++-
+ web/src/lib/i18n/tr.json                        |  98 ++++-
+ web/src/test/setup.ts                           |  44 ++
+ 26 files changed, 2082 insertions(+), 559 deletions(-)
+
+
+Untracked:
+?? CREDITS.md
+?? e2e/helpers/
+?? e2e/scripts/
+?? e2e/tests/design/
+?? specs/done/evidence/0003/
+?? web/public/
+?? web/scripts/
+?? web/src/app/[locale]/credits/
+?? web/src/components/layout/
+?? web/src/components/ui/__tests__/
+?? web/src/components/ui/badge.tsx
+?? web/src/components/ui/room-card.tsx
+?? web/src/components/ui/section.tsx
+?? web/src/components/ui/state-panel.tsx
+?? web/src/features/home/
+?? web/src/lib/__tests__/
+?? web/src/lib/credits.ts
+?? web/src/lib/motion/
+?? web/src/lib/seo.ts
