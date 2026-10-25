@@ -3,7 +3,7 @@
 - Lighthouse: 10.4.0
 - Chrome: Playwright Chromium 1161
 - Branch: `feature/0003-ui-design-system`
-- Build commit: `cab0b24` (CR-8 failure-path fixleri dahil)
+- Build commit: `cab0b24` (web kodu; QA fix `5f8b4b3` web kaynağını değiştirmedi)
 - URL: http://localhost:3000/tr
 - Preset: mobile, devtools throttling
 - Koşu sayısı: 3 (median)
