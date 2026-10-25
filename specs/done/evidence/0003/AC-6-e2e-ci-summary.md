@@ -10,7 +10,7 @@
 - CLS (scroll): **0.0000**; Lighthouse CLS: **0.042**
 - Lighthouse mobil (devtools throttling, 3 koşu median): **LCP 2289,97 ms**,
   performans **0.96**
-- Video kanıtı: **4,1 sn / 527.052 B** (VP9, 1280×800)
+- Video kanıtı: **4,24 sn / 552.273 B** (VP9, 1280×800)
 - `0002` kanıt SHA-256: **UNCHANGED (12 dosya)**
 
 ## 2026-10-25 code review fixleri
@@ -46,6 +46,33 @@
   Tarayıcının kaçınılmaz kaynak logu spec `B-13`'te açık istisna olarak
   tanımlandı.
 
+## 2026-10-25 QA bulguları (QA-0003-1…3)
+
+- **QA-0003-1 (kanıt hijyeni):** Kanıt seti kod head `5f8b4b3` üzerinde
+  yeniden üretildi. `AC-1-asset-and-font-budget.log` ve
+  `AC-5-build-guard.log` LF checkout'ta `OFL-SourceSans3.txt` için **4.486 B**
+  yazar; `AC-1-scope.txt` güncel test satırları ve görsel boyutlarıyla
+  yenilendi. Kapanış CI run'ları #39 (`ae0f92d`) ve #40 (`ad4603f`) ayrı
+  ayrı success olarak aşağıda listelendi; QA fix run'ı `PENDING`.
+- **QA-0003-2 (yerel ortam):** `e2e/README.md` içine Windows'ta çalışan
+  backend jar'ı nedeniyle `spring-boot:repackage` kilidi notu ve
+  `-Dspring-boot.repackage.skip=true` önerisi eklendi.
+- **QA-0003-3 (mock veri):** `SAMPLE_ROOMS` gerçek seed ile hizalandı; her
+  odada **3 olanak** var. Design testi kart başına 3 olanak doğrular ve
+  `AC-3-rooms-*` ekran görüntüleri gerçek üretim dağılımına yakın veriyle
+  yeniden alındı.
+
+## Kanıt revizyonu
+
+- **Kod head:** `5f8b4b3` (QA fix commit'i)
+- Bu evidence seti `5f8b4b3` ağacında yeniden üretildi; sonraki commit yalnız
+  kanıt/rapor dosyalarını değiştirir.
+- `AC-1-asset-and-font-budget.log` / `AC-5-build-guard.log`: LF checkout,
+  `OFL-SourceSans3.txt` **4.486 B**.
+- `AC-1-scope.txt`: final koda göre güncellendi; `backend/` ve `admin-web/`
+  kapsam dışı.
+- CI: kapanış #39 ve #40 success; QA fix run'ı `PENDING`.
+
 ## Komutlar
 
 ```bash
@@ -66,13 +93,14 @@ node scripts/sha256-manifest.mjs verify ../specs/done/evidence/0002 "$RUNNER_TEM
 
 ## CI
 
-- **CI run:** [40227343692](https://github.com/altananay/hotel-management-system/actions/runs/40227343692)
-  — head `ae0f92d`, sonuç **success**.
-  - Backend (hotel-api & admin-api): **success**
-  - Frontend (web & admin-web): **success**
-  - E2E Smoke (Playwright Chromium): **success**
-  - CI Quality Gate: **success**
-  - GitGuardian Security Checks: **success**
+- **Kapanış CI run'ları:**
+  - [#39 — 40227343692](https://github.com/altananay/hotel-management-system/actions/runs/40227343692)
+    — head `ae0f92d`, sonuç **success**.
+  - [#40 — 40227913825](https://github.com/altananay/hotel-management-system/actions/runs/40227913825)
+    — head `ad4603f`, sonuç **success** (spec DoD'deki final run).
+  - Her iki run'da Backend, Frontend, E2E ve CI Quality Gate success;
+    GitGuardian ayrıca success.
+- **QA fix CI run:** `PENDING` (PR #13 head `5f8b4b3` + evidence commit'i).
 - **Neden ilk PR'da run oluşmadı:** Branch `releasable` tabanlıydı, PR base'i
   `integration` idi. İki geçmiş ayrıştığı ve conflict oluştuğu için PR
   `mergeable=false` / `dirty` kaldı; GitHub merge ref'i üretemedi ve

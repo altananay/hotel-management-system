@@ -1,16 +1,19 @@
 0003 scope evidence (backend/admin-web untouched)
+Code head: 5f8b4b3 (QA fix commit)
+Generated from the final working tree after QA evidence refresh; backend/ and admin-web/ are out of scope.
 
  .env.example                                       |   2 +
- .github/workflows/ci.yml                           |  30 +-
+ .github/workflows/ci.yml                           |  26 +-
  CREDITS.md                                         |  33 ++
- docs/frontend.md                                   | 268 +++++++++-
+ docs/frontend.md                                   | 270 +++++++++-
  docs/testing.md                                    |   3 +-
- e2e/README.md                                      | 177 ++++---
+ e2e/README.md                                      | 180 ++++---
+ e2e/fixtures/fonts/empty-latin.woff2               | Bin 0 -> 2092 bytes
  e2e/helpers/config.ts                              |   2 +
- e2e/helpers/console.ts                             |  30 ++
+ e2e/helpers/console.ts                             |  26 +
  e2e/helpers/copy.ts                                |  55 ++
  e2e/helpers/evidence.ts                            |  43 ++
- e2e/helpers/rooms.ts                               |  69 +++
+ e2e/helpers/rooms.ts                               |  94 ++++
  e2e/helpers/viewports.ts                           |  14 +
  e2e/package-lock.json                              | 263 +++++++++-
  e2e/package.json                                   |   5 +-
@@ -21,57 +24,63 @@
  e2e/tests/design/budget.spec.ts                    | 126 +++++
  e2e/tests/design/credits.spec.ts                   |  58 +++
  e2e/tests/design/hero-asset.spec.ts                |  97 ++++
- e2e/tests/design/hero.spec.ts                      | 136 +++++
+ e2e/tests/design/hero.spec.ts                      | 311 ++++++++++++
  e2e/tests/design/home.spec.ts                      | 189 +++++++
  e2e/tests/design/metadata.spec.ts                  |  78 +++
- e2e/tests/design/rooms-design.spec.ts              | 169 +++++++
+ e2e/tests/design/rooms-design.spec.ts              | 246 +++++++++
  e2e/tests/design/runtime.spec.ts                   |  77 +++
  e2e/tests/design/scroll-story-video.spec.ts        |  86 ++++
- e2e/tests/design/scroll-story.spec.ts              |  98 ++++
+ e2e/tests/design/scroll-story.spec.ts              | 102 ++++
  e2e/tests/smoke.spec.ts                            |   3 +-
  specs/0003-clarification-brief.md                  | 407 +++++++++++++++
- specs/0003-ui-design-system.md                     | 371 ++++++++++++++
+ specs/done/0003-ui-design-system.md                | 372 ++++++++++++++
  specs/done/README.md                               |   1 +
- .../evidence/0003/AC-1-asset-and-font-budget.log   |  15 +
+ .../evidence/0003/AC-1-asset-and-font-budget.log   |  17 +
  specs/done/evidence/0003/AC-1-font-fallback.log    |   1 +
+ .../evidence/0003/AC-1-font-glyph-fallback.log     |   1 +
  specs/done/evidence/0003/AC-1-runtime-requests.log |   5 +
- specs/done/evidence/0003/AC-1-scope.txt            | 139 +++++
- .../done/evidence/0003/AC-2-credits-en-desktop.png | Bin 0 -> 184460 bytes
- .../done/evidence/0003/AC-2-credits-tr-desktop.png | Bin 0 -> 180448 bytes
+ specs/done/evidence/0003/AC-1-scope.txt            | 141 ++++++
+ .../done/evidence/0003/AC-2-credits-en-desktop.png | Bin 0 -> 198890 bytes
+ .../done/evidence/0003/AC-2-credits-tr-desktop.png | Bin 0 -> 194765 bytes
  .../evidence/0003/AC-2-hero-crop-candidates.jpg    | Bin 0 -> 68114 bytes
  specs/done/evidence/0003/AC-2-hero-ffprobe.log     | 257 ++++++++++
- specs/done/evidence/0003/AC-2-home-en-desktop.png  | Bin 0 -> 1389701 bytes
- specs/done/evidence/0003/AC-2-home-nojs.png        | Bin 0 -> 1393899 bytes
- .../evidence/0003/AC-2-home-scroll-01-hero.png     | Bin 0 -> 796222 bytes
- .../evidence/0003/AC-2-home-scroll-02-story.png    | Bin 0 -> 134924 bytes
- .../0003/AC-2-home-scroll-03-experience.png        | Bin 0 -> 109392 bytes
- .../0003/AC-2-home-scroll-04-rooms-cta.png         | Bin 0 -> 145238 bytes
- .../done/evidence/0003/AC-2-home-scroll-story.webm | Bin 0 -> 567693 bytes
- specs/done/evidence/0003/AC-2-home-tr-desktop.png  | Bin 0 -> 1066457 bytes
- specs/done/evidence/0003/AC-2-home-tr-mobile.png   | Bin 0 -> 698415 bytes
- .../evidence/0003/AC-2-home-video-fallback.png     | Bin 0 -> 741629 bytes
+ specs/done/evidence/0003/AC-2-home-en-desktop.png  | Bin 0 -> 2007622 bytes
+ specs/done/evidence/0003/AC-2-home-nojs.png        | Bin 0 -> 1713290 bytes
+ .../evidence/0003/AC-2-home-scroll-01-hero.png     | Bin 0 -> 794916 bytes
+ .../evidence/0003/AC-2-home-scroll-02-story.png    | Bin 0 -> 473829 bytes
+ .../0003/AC-2-home-scroll-03-experience.png        | Bin 0 -> 435855 bytes
+ .../0003/AC-2-home-scroll-04-rooms-cta.png         | Bin 0 -> 141584 bytes
+ .../done/evidence/0003/AC-2-home-scroll-story.webm | Bin 0 -> 552273 bytes
+ specs/done/evidence/0003/AC-2-home-tr-desktop.png  | Bin 0 -> 2013079 bytes
+ specs/done/evidence/0003/AC-2-home-tr-mobile.png   | Bin 0 -> 1048739 bytes
+ .../evidence/0003/AC-2-home-video-fallback.png     | Bin 0 -> 716591 bytes
+ .../0003/AC-2-home-video-source-fallback.png       | Bin 0 -> 716578 bytes
  specs/done/evidence/0003/AC-2-metadata.md          |  10 +
- specs/done/evidence/0003/AC-3-rooms-empty.png      | Bin 0 -> 131746 bytes
- specs/done/evidence/0003/AC-3-rooms-en-desktop.png | Bin 0 -> 381645 bytes
- .../evidence/0003/AC-3-rooms-error-malformed.png   | Bin 0 -> 128585 bytes
- .../evidence/0003/AC-3-rooms-error-network.png     | Bin 0 -> 128585 bytes
- .../evidence/0003/AC-3-rooms-error-timeout.png     | Bin 0 -> 128585 bytes
- specs/done/evidence/0003/AC-3-rooms-error.png      | Bin 0 -> 128585 bytes
- specs/done/evidence/0003/AC-3-rooms-loading.png    | Bin 0 -> 136539 bytes
- specs/done/evidence/0003/AC-3-rooms-tr-desktop.png | Bin 0 -> 372239 bytes
- specs/done/evidence/0003/AC-3-rooms-tr-mobile.png  | Bin 0 -> 297418 bytes
+ specs/done/evidence/0003/AC-3-rooms-empty.png      | Bin 0 -> 131735 bytes
+ specs/done/evidence/0003/AC-3-rooms-en-desktop.png | Bin 0 -> 392308 bytes
+ .../evidence/0003/AC-3-rooms-error-malformed.png   | Bin 0 -> 128572 bytes
+ .../evidence/0003/AC-3-rooms-error-network.png     | Bin 0 -> 128572 bytes
+ .../evidence/0003/AC-3-rooms-error-timeout.png     | Bin 0 -> 128572 bytes
+ specs/done/evidence/0003/AC-3-rooms-error.png      | Bin 0 -> 128572 bytes
+ specs/done/evidence/0003/AC-3-rooms-loading.png    | Bin 0 -> 136503 bytes
+ specs/done/evidence/0003/AC-3-rooms-tr-desktop.png | Bin 0 -> 384318 bytes
+ specs/done/evidence/0003/AC-3-rooms-tr-mobile.png  | Bin 0 -> 314252 bytes
  specs/done/evidence/0003/AC-4-axe-report.md        |  12 +
- .../evidence/0003/AC-4-keyboard-focus-header.png   | Bin 0 -> 796654 bytes
- .../evidence/0003/AC-4-mobile-menu-keyboard.png    | Bin 0 -> 27235 bytes
- .../evidence/0003/AC-4-reduced-motion-home.png     | Bin 0 -> 1394124 bytes
- .../evidence/0003/AC-5-asset-and-bundle-budget.log |  28 +
- specs/done/evidence/0003/AC-5-build-guard.log      |  15 +
+ .../evidence/0003/AC-4-keyboard-focus-header.png   | Bin 0 -> 795981 bytes
+ .../evidence/0003/AC-4-mobile-menu-keyboard.png    | Bin 0 -> 27404 bytes
+ .../evidence/0003/AC-4-reduced-motion-home.png     | Bin 0 -> 1708094 bytes
+ .../evidence/0003/AC-5-asset-and-bundle-budget.log |  30 ++
+ specs/done/evidence/0003/AC-5-build-guard.log      |  17 +
  .../done/evidence/0003/AC-5-lighthouse-mobile.html | 282 +++++++++++
  specs/done/evidence/0003/AC-5-lighthouse-mobile.md |  20 +
  specs/done/evidence/0003/AC-5-runtime-requests.log |   5 +
  specs/done/evidence/0003/AC-5-scroll-cls.log       |   1 +
  .../evidence/0003/AC-6-0002-evidence-sha256.txt    |   7 +
- specs/done/evidence/0003/AC-6-e2e-ci-summary.md    |  37 ++
+ specs/done/evidence/0003/AC-6-e2e-ci-summary.md    | 113 +++++
+ specs/done/evidence/0003/code-review-2026-10-25.md | 146 ++++++
+ .../evidence/0003/code-review-fixes-2026-10-25.md  | 121 +++++
+ .../0003/code-review-verification-2026-10-25.md    |  59 +++
+ .../evidence/0003/qa-verification-2026-10-25.md    |  86 ++++
  web/package-lock.json                              | 563 ++++++++++++++++++++-
  web/package.json                                   |  11 +-
  web/public/fonts/OFL-CormorantGaramond.txt         |  93 ++++
@@ -89,12 +98,12 @@
  web/public/media/story/home-story-portrait.webp    | Bin 0 -> 137098 bytes
  web/scripts/build-fonts.py                         | 117 +++++
  web/scripts/check-assets.mjs                       | 138 +++++
- web/scripts/check-design-system.mjs                | 128 +++++
+ web/scripts/check-design-system.mjs                | 139 +++++
  web/src/app/[locale]/credits/page.tsx              | 117 +++++
- web/src/app/[locale]/layout.tsx                    |  81 ++-
+ web/src/app/[locale]/layout.tsx                    |  77 ++-
  web/src/app/[locale]/page.tsx                      | 146 ++----
  web/src/app/[locale]/rooms/page.tsx                | 126 +++--
- web/src/app/globals.css                            | 325 ++++++++++++
+ web/src/app/globals.css                            | 346 +++++++++++++
  .../layout/__tests__/mobile-nav.test.tsx           |  58 +++
  .../layout/__tests__/site-header.test.tsx          |  49 ++
  web/src/components/layout/flags.tsx                |  33 ++
@@ -114,10 +123,10 @@
  web/src/components/ui/state-panel.tsx              |  93 ++++
  .../home/__tests__/home-hero-media.test.tsx        | 109 ++++
  .../features/home/__tests__/home-sections.test.tsx |  60 +++
- web/src/features/home/hero-video.tsx               | 119 +++++
+ web/src/features/home/hero-video.tsx               | 129 +++++
  web/src/features/home/home-contact.tsx             |  87 ++++
  web/src/features/home/home-experience.tsx          | 133 +++++
- web/src/features/home/home-hero-media.tsx          |  31 ++
+ web/src/features/home/home-hero-media.tsx          |  32 ++
  web/src/features/home/home-hero.tsx                |  62 +++
  web/src/features/home/home-motion.tsx              | 294 +++++++++++
  web/src/features/home/home-rooms-cta.tsx           |  74 +++
@@ -137,5 +146,4 @@
  web/src/lib/motion/use-motion-preference.ts        |  59 +++
  web/src/lib/seo.ts                                 |  89 ++++
  web/src/test/setup.ts                              |  44 ++
- 137 files changed, 8769 insertions(+), 561 deletions(-)
-
+ 144 files changed, 9587 insertions(+), 558 deletions(-)
