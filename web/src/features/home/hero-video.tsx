@@ -5,8 +5,14 @@ import { useEffect, useRef, useState } from "react";
 const HERO_WEBM = "/media/hero/home-hero.webm";
 const HERO_MP4 = "/media/hero/home-hero.mp4";
 
+interface NetworkInformationLike {
+  saveData?: boolean;
+  addEventListener?: (type: "change", listener: () => void) => void;
+  removeEventListener?: (type: "change", listener: () => void) => void;
+}
+
 interface NavigatorWithConnection extends Navigator {
-  connection?: { saveData?: boolean };
+  connection?: NetworkInformationLike;
 }
 
 function canUseVideo(media: MediaQueryList, reduced: MediaQueryList): boolean {
@@ -27,6 +33,7 @@ export function HomeHeroVideo() {
     let cancelled = false;
     const desktop = window.matchMedia("(min-width: 768px)");
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const connection = (navigator as NavigatorWithConnection).connection;
 
     const preflight = async () => {
       if (!canUseVideo(desktop, reduced)) {
@@ -60,12 +67,14 @@ export function HomeHeroVideo() {
 
     desktop.addEventListener("change", handleChange);
     reduced.addEventListener("change", handleChange);
+    connection?.addEventListener?.("change", handleChange);
 
     return () => {
       cancelled = true;
       window.cancelAnimationFrame(frame);
       desktop.removeEventListener("change", handleChange);
       reduced.removeEventListener("change", handleChange);
+      connection?.removeEventListener?.("change", handleChange);
     };
   }, []);
 

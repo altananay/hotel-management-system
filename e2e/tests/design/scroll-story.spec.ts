@@ -59,7 +59,10 @@ test.describe("Design — scroll story (AC-2, AC-4, AC-6, B-04, B-12)", () => {
     "shouldUseOnlyDecorativeParallaxWithinFortyPixels",
     { tag: ["@design", "@seeded"] },
     async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 800 });
       await openHome(page);
+      await page.waitForFunction(() => window.__hotelMotionLoaded?.gsap === true);
+      await expect(page.locator("#home-story")).toHaveAttribute("data-motion", "pinned");
       await scrollTo(page, "home-story");
       const offsets = await page.locator("[data-parallax]").evaluateAll((elements) =>
         elements.map((element) => {
@@ -71,6 +74,7 @@ test.describe("Design — scroll story (AC-2, AC-4, AC-6, B-04, B-12)", () => {
           return matrix.m42;
         }),
       );
+      expect(offsets.some((offset) => Math.abs(offset) > 0.5)).toBe(true);
       for (const offset of offsets) {
         expect(Math.abs(offset)).toBeLessThanOrEqual(40);
       }

@@ -56,6 +56,7 @@
   --color-border-strong: #b6a58f;
   --color-focus: #8a461d;
   --color-overlay: rgb(20 16 12 / 0.55);
+  --color-scrim: #14100c;
 
   --color-danger-surface: #fdf1ef;
   --color-danger-fg: #7c2d20;
@@ -269,9 +270,21 @@
 
   .paper-grain {
     background-image:
-      radial-gradient(circle at 18% 12%, rgb(155 90 44 / 0.055), transparent 28%),
-      radial-gradient(circle at 82% 68%, rgb(29 25 22 / 0.045), transparent 34%),
-      radial-gradient(circle at 50% 110%, rgb(155 90 44 / 0.05), transparent 40%);
+      radial-gradient(
+        circle at 18% 12%,
+        color-mix(in srgb, var(--color-accent) 5.5%, transparent),
+        transparent 28%
+      ),
+      radial-gradient(
+        circle at 82% 68%,
+        color-mix(in srgb, var(--color-surface-inverse) 4.5%, transparent),
+        transparent 34%
+      ),
+      radial-gradient(
+        circle at 50% 110%,
+        color-mix(in srgb, var(--color-accent) 5%, transparent),
+        transparent 40%
+      );
   }
 
   .arch-mask {
@@ -283,25 +296,33 @@
     background:
       linear-gradient(
         to top,
-        rgb(20 16 12 / 0.78) 0%,
-        rgb(20 16 12 / 0.46) 38%,
-        rgb(20 16 12 / 0.18) 68%,
-        rgb(20 16 12 / 0.34) 100%
+        color-mix(in srgb, var(--color-scrim) 78%, transparent) 0%,
+        color-mix(in srgb, var(--color-scrim) 46%, transparent) 38%,
+        color-mix(in srgb, var(--color-scrim) 18%, transparent) 68%,
+        color-mix(in srgb, var(--color-scrim) 34%, transparent) 100%
       ),
       linear-gradient(
         to right,
-        rgb(20 16 12 / 0.62) 0%,
-        rgb(20 16 12 / 0.22) 46%,
+        color-mix(in srgb, var(--color-scrim) 62%, transparent) 0%,
+        color-mix(in srgb, var(--color-scrim) 22%, transparent) 46%,
         transparent 78%
       );
   }
 
   .fine-grid {
     background-image:
-      linear-gradient(to right, rgb(216 205 189 / 0.4) 1px, transparent 1px),
-      linear-gradient(to bottom, rgb(216 205 189 / 0.4) 1px, transparent 1px);
+      linear-gradient(
+        to right,
+        color-mix(in srgb, var(--color-border) 40%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--color-border) 40%, transparent) 1px,
+        transparent 1px
+      );
     background-size: 4.5rem 4.5rem;
-    mask-image: linear-gradient(to bottom, black, transparent 78%);
+    mask-image: linear-gradient(to bottom, var(--color-scrim), transparent 78%);
   }
 
   .no-scrollbar {

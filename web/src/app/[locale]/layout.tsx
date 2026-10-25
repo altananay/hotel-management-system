@@ -67,10 +67,6 @@ export default async function LocaleLayout({
     type: "font/woff2",
     crossOrigin: "anonymous",
   });
-  ReactDOM.preload("/media/hero/home-hero-poster-960.webp", {
-    as: "image",
-    fetchPriority: "high",
-  });
 
   return (
     <html lang={locale}>

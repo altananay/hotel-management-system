@@ -33,7 +33,8 @@ function main() {
   }
 
   const css = fs.readFileSync(cssPath, "utf8");
-  const theme = /@theme\s*\{([\s\S]*?)\n\}/.exec(css)?.[1] ?? "";
+  const themeMatch = /@theme\s*\{([\s\S]*?)\n\}/.exec(css);
+  const theme = themeMatch?.[1] ?? "";
   const tokens = [...theme.matchAll(/^\s*--([a-z0-9-]+):/gm)]
     .map((match) => match[1])
     .filter((name) => !name.endsWith("--line-height") && !name.endsWith("--letter-spacing"));
@@ -49,6 +50,16 @@ function main() {
     }
   }
   console.log(`tokens: ${tokens.length} checked`);
+
+  const outsideTheme = themeMatch
+    ? css.slice(0, themeMatch.index) + css.slice(themeMatch.index + themeMatch[0].length)
+    : css;
+  const rawColorPattern = /(?:rgba?|hsla?)\(|#[0-9a-fA-F]{3,8}\b/;
+  outsideTheme.split(/\r?\n/).forEach((line) => {
+    if (rawColorPattern.test(line)) {
+      fail(`src/app/globals.css uses a raw colour outside @theme: ${line.trim()}`);
+    }
+  });
 
   for (const heading of [
     "Tasarım Token'ları",

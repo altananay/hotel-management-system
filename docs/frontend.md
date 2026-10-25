@@ -43,6 +43,7 @@ Bu dilimde yalnız açık tema vardır.
 | `--color-border-strong` | `#b6a58f` | Güçlü kenarlık |
 | `--color-focus` | `#8a461d` | Odak halkası |
 | `--color-overlay` | `rgb(20 16 12 / 0.55)` | Modal / hero overlay |
+| `--color-scrim` | `#14100c` | Hero vignette ve dekoratif maske taban rengi |
 | `--color-danger-surface` | `#fdf1ef` | Hata zemini |
 | `--color-danger-fg` | `#7c2d20` | Hata metni |
 | `--color-danger-border` | `#e7b4a7` | Hata kenarlığı |
@@ -182,7 +183,7 @@ ile çizilir.
 
 - Dosyalar: `web/public/media/hero/home-hero.webm` (VP9) ve `.mp4` (H.264).
 - 1920×1080, 8–12 sn, 30 fps, sessiz; WebM/MP4 ayrı ayrı ≤ 8.388.608 B.
-- Poster: 1920×1080 WebP q80, ≤ 307.200 B; `home-hero-poster` her zaman DOM'da. Mobil/tablet için sırasıyla 960×540 ve 1280×720 responsive türevleri kullanılır; 1920×1080 ana dosya korunur.
+- Poster: 1920×1080 WebP q80, ≤ 307.200 B; `home-hero-poster` her zaman DOM'da. Mobil/tablet için sırasıyla 960×540 ve 1280×720 responsive türevleri kullanılır; 1920×1080 ana dosya korunur. Poster `srcSet`/`sizes` ile seçilir; ana sayfa HTML'inde `loading="eager"` + `fetchPriority="high"` taşır. Ayrı `<link rel="preload">` kullanılmaz: Next rota prefetch'i ipucunu rooms/credits sayfalarına taşıyıp gereksiz poster indiriyordu; preload scanner `<img>` etiketini zaten erken keşfeder.
 - Video `preload="none"`; ilk boyamadan sonra eklenir ve `canplay` olunca görünür.
 - Video yalnız ≥768 px, `prefers-reduced-motion: no-preference` ve save-data
   kapalıyken DOM'a eklenir.

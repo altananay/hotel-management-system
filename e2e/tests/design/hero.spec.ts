@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { WEB_BASE_URL } from "../../helpers/config";
 import { collectConsole } from "../../helpers/console";
 import { capture } from "../../helpers/evidence";
+import { mockRooms } from "../../helpers/rooms";
 import { DESKTOP, MOBILE } from "../../helpers/viewports";
 
 async function openHome(page: import("@playwright/test").Page) {
@@ -67,6 +68,54 @@ test.describe("Design — hero media (AC-2, AC-4, B-05, B-13)", () => {
   );
 
   test(
+    "shouldOnlyRequestTheResponsivePosterOnTheHomeRoute",
+    { tag: ["@design", "@seeded"] },
+    async ({ browser }) => {
+      for (const viewport of [DESKTOP, MOBILE]) {
+        const context = await browser.newContext({ viewport });
+        const page = await context.newPage();
+        const homeRequests: string[] = [];
+        page.on("request", (request) => {
+          if (request.url().includes("/media/hero/home-hero-poster")) {
+            homeRequests.push(request.url());
+          }
+        });
+        await page.goto(`${WEB_BASE_URL}/tr`, { waitUntil: "networkidle" });
+        await page.waitForTimeout(500);
+        expect(homeRequests).toHaveLength(1);
+        const currentSrc = await page
+          .getByTestId("home-hero-poster")
+          .evaluate((image) => (image as HTMLImageElement).currentSrc);
+        expect(currentSrc).toContain(
+          viewport.width < 768 ? "home-hero-poster-960.webp" : "home-hero-poster-1280.webp",
+        );
+
+        for (const route of ["/tr/rooms", "/tr/credits"]) {
+          const other = await context.newPage();
+          if (route.endsWith("/rooms")) {
+            await mockRooms(other);
+          }
+          const otherRequests: string[] = [];
+          other.on("request", (request) => {
+            if (request.url().includes("/media/hero/home-hero-poster")) {
+              otherRequests.push(request.url());
+            }
+          });
+          await other.goto(`${WEB_BASE_URL}${route}`, { waitUntil: "networkidle" });
+          await other.waitForTimeout(1000);
+          const imagePreloads = await other.evaluate(
+            () => document.querySelectorAll('link[rel="preload"][as="image"]').length,
+          );
+          expect(imagePreloads, `image preloads on ${route}`).toBe(0);
+          expect(otherRequests, `poster requests on ${route}`).toEqual([]);
+          await other.close();
+        }
+        await context.close();
+      }
+    },
+  );
+
+  test(
     "shouldNotMountVideoUnderReducedMotion",
     { tag: ["@design", "@seeded"] },
     async ({ page }) => {
@@ -101,25 +150,83 @@ test.describe("Design — hero media (AC-2, AC-4, B-05, B-13)", () => {
   );
 
   test(
-    "shouldKeepThePosterAndNoApplicationConsoleErrorWhenVideoReturns404",
+    "shouldReactToSaveDataChangesAtRuntime",
+    { tag: ["@design", "@seeded"] },
+    async ({ browser }) => {
+      const context = await browser.newContext({ viewport: DESKTOP });
+      await context.addInitScript(() => {
+        const target = new EventTarget();
+        let saveData = false;
+        const connection = {
+          get saveData() {
+            return saveData;
+          },
+          addEventListener: target.addEventListener.bind(target),
+          removeEventListener: target.removeEventListener.bind(target),
+        };
+        Object.defineProperty(navigator, "connection", {
+          configurable: true,
+          value: connection,
+        });
+        (window as Window & { __setSaveData?: (value: boolean) => void }).__setSaveData = (
+          value,
+        ) => {
+          saveData = value;
+          target.dispatchEvent(new Event("change"));
+        };
+      });
+      const page = await context.newPage();
+      await openHome(page);
+      await expect(page.getByTestId("home-hero-video")).toHaveCount(1);
+
+      await page.evaluate(() =>
+        (window as Window & { __setSaveData?: (value: boolean) => void }).__setSaveData?.(true),
+      );
+      await expect(page.getByTestId("home-hero-video")).toHaveCount(0);
+      await expect(page.getByTestId("home-hero-poster")).toBeVisible();
+
+      await page.evaluate(() =>
+        (window as Window & { __setSaveData?: (value: boolean) => void }).__setSaveData?.(false),
+      );
+      await expect(page.getByTestId("home-hero-video")).toHaveCount(1);
+      await context.close();
+    },
+  );
+
+  test(
+    "shouldKeepThePosterAndNoConsoleErrorsWhenTheVideoPreflightReturns404",
     { tag: ["@design", "@seeded"] },
     async ({ page }) => {
       const console = collectConsole(page);
-      await page.route("**/media/hero/home-hero.mp4", (route) =>
-        route.fulfill({ status: 404, body: "" }),
-      );
+      // A real 404 makes Chromium log a resource error that application code cannot suppress.
+      // The fetch shim exercises the same `response.ok === false` branch without network noise.
+      await page.addInitScript(() => {
+        const originalFetch = window.fetch.bind(window);
+        window.fetch = (input, init) => {
+          const url =
+            typeof input === "string"
+              ? input
+              : input instanceof URL
+                ? input.href
+                : input.url;
+          if (url.endsWith("/media/hero/home-hero.mp4") && init?.method === "HEAD") {
+            return Promise.resolve(new Response(null, { status: 404 }));
+          }
+          return originalFetch(input, init);
+        };
+      });
       await openHome(page);
       await page.waitForTimeout(1200);
 
       await expect(page.getByTestId("home-hero-poster")).toBeVisible();
       await expect(page.getByTestId("home-hero-video")).toHaveCount(0);
-      expect(console.appErrors()).toEqual([]);
+      expect(console.errors).toEqual([]);
       await capture(page, "0003", "AC-2-home-video-fallback.png", { fullPage: false });
     },
   );
 
   test(
-    "shouldKeepThePosterAndNoApplicationConsoleErrorWhenAutoplayIsRejected",
+    "shouldKeepThePosterAndNoConsoleErrorsWhenAutoplayIsRejected",
     { tag: ["@design", "@seeded"] },
     async ({ page }) => {
       const console = collectConsole(page);
@@ -130,7 +237,7 @@ test.describe("Design — hero media (AC-2, AC-4, B-05, B-13)", () => {
       await openHome(page);
       await expect(page.getByTestId("home-hero-poster")).toBeVisible();
       await expect(page.getByTestId("home-hero-video")).toHaveCount(0);
-      expect(console.appErrors()).toEqual([]);
+      expect(console.errors).toEqual([]);
     },
   );
 });

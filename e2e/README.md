@@ -1,17 +1,17 @@
-﻿# UÃ§tan Uca (E2E) Testleri (`e2e/`)
+# Uçtan Uca (E2E) Testleri (`e2e/`)
 
-Bu dizin, `web` (`:3000`) public sitesinin ve `admin-web` (`:3001`) uygulamasÄ±nÄ±n
-aÃ§Ä±lÄ±ÅŸÄ±nÄ±, TR/EN dil geÃ§iÅŸini, zorunlu ekran durumlarÄ±nÄ± ve `0003` tasarÄ±m
-deneyimini Playwright ile doÄŸrular.
+Bu dizin, `web` (`:3000`) public sitesinin ve `admin-web` (`:3001`) uygulamasının
+açılışını, TR/EN dil geçişini, zorunlu ekran durumlarını ve `0003` tasarım
+deneyimini Playwright ile doğrular.
 
-## KanÄ±t kÃ¶kÃ¼ ve izolasyon
+## Kanıt kökü ve izolasyon
 
-- `E2E_EVIDENCE_DIR` kanÄ±t kÃ¶kÃ¼nÃ¼ belirler. VarsayÄ±lan: `specs/done/evidence`.
+- `E2E_EVIDENCE_DIR` kanıt kökünü belirler. Varsayılan: `specs/done/evidence`.
 - Ortak helper her spec'i kendi alt dizinine yazar:
-  - `0002` smoke testleri â†’ `<kÃ¶k>/0002/`
-  - `0003` design testleri â†’ `<kÃ¶k>/0003/`
-- `0002` arÅŸivi deÄŸiÅŸtirilmez. `0002` regresyon koÅŸumunu **geÃ§ici bir kÃ¶kle**
-  Ã§alÄ±ÅŸtÄ±rÄ±n; bÃ¶ylece arÅŸivdeki PNG'ler yeniden yazÄ±lmaz:
+  - `0002` smoke testleri → `<kök>/0002/`
+  - `0003` design testleri → `<kök>/0003/`
+- `0002` arşivi değiştirilmez. `0002` regresyon koşumunu **geçici bir kökle**
+  çalıştırın; böylece arşivdeki PNG'ler yeniden yazılmaz:
 
   ```bash
   E2E_EVIDENCE_DIR=$RUNNER_TEMP/evidence-0002 npx playwright test tests/smoke.spec.ts --grep @empty
@@ -19,8 +19,8 @@ deneyimini Playwright ile doÄŸrular.
   E2E_EVIDENCE_DIR=$RUNNER_TEMP/evidence-0002 npx playwright test tests/smoke.spec.ts --grep @seeded
   ```
 
-- `0003` design testleri varsayÄ±lan kÃ¶ke yazar. `0002` izolasyonu SHA-256
-  manifestiyle kanÄ±tlanÄ±r:
+- `0003` design testleri varsayılan köke yazar. `0002` izolasyonu SHA-256
+  manifestiyle kanıtlanır:
 
   ```bash
   node scripts/sha256-manifest.mjs capture ../specs/done/evidence/0002 "$RUNNER_TEMP/0002-before.json"
@@ -30,21 +30,21 @@ deneyimini Playwright ile doÄŸrular.
 
 ## Etiketler
 
-- `@empty` â€” seed Ã¶ncesi gerÃ§ek boÅŸ vitrin (0002).
-- `@seeded` â€” seed sonrasÄ± smoke + design testleri.
-- `@design` â€” 0003 ana sayfa, hero, scroll, a11y, metadata, credits, rooms,
-  runtime, budget ve video kanÄ±tlarÄ±.
+- `@empty` — seed öncesi gerçek boş vitrin (0002).
+- `@seeded` — seed sonrası smoke + design testleri.
+- `@design` — 0003 ana sayfa, hero, scroll, a11y, metadata, credits, rooms,
+  runtime, budget ve video kanıtları.
 
-CI `--grep @seeded` ile hem `0002` smoke hem `0003` design testlerini koÅŸar.
+CI `--grep @seeded` ile hem `0002` smoke hem `0003` design testlerini koşar.
 
 ## Viewport ve tercihler
 
-- Mobil: `390Ã—844`
-- Desktop: `1280Ã—800`
-- Tablet sÄ±nÄ±rlarÄ±: `767`, `768`, `1023`, `1024`
+- Mobil: `390×844`
+- Desktop: `1280×800`
+- Tablet sınırları: `767`, `768`, `1023`, `1024`
 - `prefers-reduced-motion: reduce`: Playwright `reducedMotion` / `emulateMedia`.
 - `save-data`: `context.addInitScript` ile `navigator.connection.saveData = true`.
-- JavaScript kapalÄ±: `browser.newContext({ javaScriptEnabled: false })`.
+- JavaScript kapalı: `browser.newContext({ javaScriptEnabled: false })`.
 
 ## Design testleri
 
@@ -55,28 +55,28 @@ npx playwright test tests/design --grep @seeded
 
 Kapsam:
 
-- `home.spec.ts` â€” ortak chrome, copy deck, locale, JS kapalÄ±, konsol.
-- `hero.spec.ts` â€” poster/video, viewport, reduced-motion, save-data, fallback.
-- `hero-asset.spec.ts` â€” ffprobe ile codec/Ã§Ã¶zÃ¼nÃ¼rlÃ¼k/sÃ¼re/fps/sessizlik.
-- `scroll-story.spec.ts` â€” tam 2 pin, 1023/1024 sÄ±nÄ±rÄ±, parallax, scroll kanÄ±tÄ±.
-- `scroll-story-video.spec.ts` â€” `.webm` video kanÄ±tÄ± (â‰¤15 sn, â‰¤5 MB).
-- `a11y.spec.ts` â€” skip link, klavye, mobil menÃ¼, landmark, axe.
-- `metadata.spec.ts` â€” title/description/canonical/hreflang/OG.
-- `credits.spec.ts` â€” `CREDITS.md` kaynaklÄ± sayfa.
-- `rooms-design.spec.ts` â€” 0002 sÃ¶zleÅŸmesi, Ã¼Ã§ durum, hata matrisi, font fallback.
-- `runtime.spec.ts` â€” Ã¼Ã§Ã¼ncÃ¼ taraf istek yokluÄŸu, motion kÃ¼tÃ¼phanesi yÃ¼kleme.
-- `budget.spec.ts` â€” JS gzip-9, asset bÃ¼tÃ§eleri, scroll CLS.
+- `home.spec.ts` — ortak chrome, copy deck, locale, JS kapalı, konsol.
+- `hero.spec.ts` — poster/video, viewport, reduced-motion, save-data, fallback.
+- `hero-asset.spec.ts` — ffprobe ile codec/çözünürlük/süre/fps/sessizlik.
+- `scroll-story.spec.ts` — tam 2 pin, 1023/1024 sınırı, parallax, scroll kanıtı.
+- `scroll-story-video.spec.ts` — `.webm` video kanıtı (≤15 sn, ≤5 MB).
+- `a11y.spec.ts` — skip link, klavye, mobil menü, landmark, axe.
+- `metadata.spec.ts` — title/description/canonical/hreflang/OG.
+- `credits.spec.ts` — `CREDITS.md` kaynaklı sayfa.
+- `rooms-design.spec.ts` — 0002 sözleşmesi, üç durum, hata matrisi, font fallback.
+- `runtime.spec.ts` — üçüncü taraf istek yokluğu, motion kütüphanesi yükleme.
+- `budget.spec.ts` — JS gzip-9, asset bütçeleri, scroll CLS.
 
-## Video kanÄ±tÄ±
+## Video kanıtı
 
-`scroll-story-video.spec.ts` Playwright `video` kaydÄ±nÄ± 1280Ã—800'de alÄ±r ve
-`ffmpeg-static` ile VP9 `.webm`'e dÃ¶nÃ¼ÅŸtÃ¼rÃ¼r. Ã‡Ä±ktÄ±
-`specs/done/evidence/0003/AC-2-home-scroll-story.webm` olur; sÃ¼re â‰¤15 sn,
-boyut â‰¤5.242.880 B'dir. `ffprobe-static` sÃ¼re/akÄ±ÅŸ kontrolÃ¼nde kullanÄ±lÄ±r.
+`scroll-story-video.spec.ts` Playwright `video` kaydını 1280×800'de alır ve
+`ffmpeg-static` ile VP9 `.webm`'e dönüştürür. Çıktı
+`specs/done/evidence/0003/AC-2-home-scroll-story.webm` olur; süre ≤15 sn,
+boyut ≤5.242.880 B'dir. `ffprobe-static` süre/akış kontrolünde kullanılır.
 
 ## Lighthouse
 
-`0003` iÃ§in Lighthouse CI gate'i yoktur. KanÄ±t Ã¼retimi:
+`0003` için Lighthouse CI gate'i yoktur. Kanıt üretimi:
 
 ```bash
 cd e2e
@@ -87,18 +87,18 @@ npx lighthouse@10.4.0 http://localhost:3000/tr \
   --chrome-path="$CHROME_PATH" --chrome-flags="--headless --no-sandbox"
 ```
 
-3 koÅŸunun median LCP/CLS deÄŸeri `AC-5-lighthouse-mobile.md` ve
-`AC-5-lighthouse-mobile.html` olarak saklanÄ±r.
+3 koşunun median LCP/CLS değeri `AC-5-lighthouse-mobile.md` ve
+`AC-5-lighthouse-mobile.html` olarak saklanır.
 
-## Ä°ki aÅŸamalÄ± 0002 akÄ±ÅŸÄ±
+## İki aşamalı 0002 akışı
 
-AyrÄ±ntÄ±lÄ± altyapÄ±, migration, seed ve backend/frontend baÅŸlatma adÄ±mlarÄ± iÃ§in
-Ã¶nceki bÃ¶lÃ¼mdeki komutlar geÃ§erlidir:
+Ayrıntılı altyapı, migration, seed ve backend/frontend başlatma adımları için
+önceki bölümdeki komutlar geçerlidir:
 
-1. AltyapÄ± + migration (seed'siz)
+1. Altyapı + migration (seed'siz)
 2. Backend/frontend build + start
-3. `@empty` (geÃ§ici kanÄ±t kÃ¶kÃ¼)
+3. `@empty` (geçici kanıt kökü)
 4. Seed (`-Pseed -Dseed.env=local|ci`)
-5. `@seeded` smoke (geÃ§ici kanÄ±t kÃ¶kÃ¼)
-6. `@seeded` design (varsayÄ±lan kanÄ±t kÃ¶kÃ¼)
-7. SHA-256 manifest doÄŸrulamasÄ±
+5. `@seeded` smoke (geçici kanıt kökü)
+6. `@seeded` design (varsayılan kanıt kökü)
+7. SHA-256 manifest doğrulaması

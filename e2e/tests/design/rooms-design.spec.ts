@@ -1,9 +1,20 @@
+import fs from "node:fs";
+import path from "node:path";
 import { expect, test } from "@playwright/test";
 import { WEB_BASE_URL } from "../../helpers/config";
 import { collectConsole } from "../../helpers/console";
 import { capture, writeEvidence } from "../../helpers/evidence";
 import { mockRooms } from "../../helpers/rooms";
 import { MOBILE } from "../../helpers/viewports";
+
+const REPO_ROOT = path.resolve(__dirname, "../../..");
+const LOF_FONT_WITHOUT_LATIN_GLYPHS = path.join(
+  REPO_ROOT,
+  "e2e",
+  "fixtures",
+  "fonts",
+  "empty-latin.woff2",
+);
 
 test.describe("Design — room showcase (AC-3, AC-6, B-13, B-16)", () => {
   test(
@@ -149,20 +160,46 @@ test.describe("Design — room showcase (AC-3, AC-6, B-13, B-16)", () => {
   );
 
   test(
-    "shouldFallbackToASystemFontWithoutApplicationConsoleErrors",
+    "shouldFallbackToASystemFontWithoutConsoleErrors",
     { tag: ["@design", "@seeded"] },
     async ({ page }) => {
       const console = collectConsole(page);
       await mockRooms(page);
-      await page.route("**/fonts/**", (route) => route.abort());
+      const font = fs.readFileSync(LOF_FONT_WITHOUT_LATIN_GLYPHS);
+      await page.route("**/fonts/**", (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: "font/woff2",
+          body: font,
+        }),
+      );
       await page.goto(`${WEB_BASE_URL}/tr/rooms`, { waitUntil: "networkidle" });
       await expect(page.getByTestId("rooms-page")).toBeVisible();
       await expect(page.getByTestId("room-card-name").first()).toBeVisible();
-      expect(console.appErrors()).toEqual([]);
+      const fallback = await page.evaluate(() => {
+        const measure = (family: string) => {
+          const span = document.createElement("span");
+          span.style.cssText = `position:absolute;visibility:hidden;white-space:nowrap;font-size:16px;font-family:${family}`;
+          span.textContent = "Kapadokya Taş Konak";
+          document.body.appendChild(span);
+          const width = span.getBoundingClientRect().width;
+          span.remove();
+          return width;
+        };
+        const bodyFamily = getComputedStyle(document.body).fontFamily;
+        return {
+          withCustomFace: measure(bodyFamily),
+          withoutCustomFace: measure(bodyFamily.replace(/"Source Sans 3",\s*/, "")),
+          status: document.fonts.status,
+        };
+      });
+      expect(fallback.status).toBe("loaded");
+      expect(fallback.withCustomFace).toBeCloseTo(fallback.withoutCustomFace, 2);
+      expect(console.errors).toEqual([]);
       writeEvidence(
         "0003",
         "AC-1-font-fallback.log",
-        "Font requests aborted; the page remained readable with the system fallback and produced no application console errors.",
+        "A valid WOFF2 fixture without Latin glyphs was served for every font request; the rendered width matched the same stack without Source Sans 3, proving the system fallback, and no console errors were produced.",
       );
     },
   );

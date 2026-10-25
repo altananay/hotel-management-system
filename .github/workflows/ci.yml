@@ -1,4 +1,4 @@
-﻿name: CI
+name: CI
 
 on:
   pull_request:
@@ -97,7 +97,7 @@ jobs:
         run: |
           docker compose -f infra/docker-compose.yml up -d --wait
           # Tek seferlik bucket init'i: `up --wait`, exit eden job'u hata sayar (docker/compose#10596);
-          # bu yÃ¼zden ayrÄ± `run` ile Ã§alÄ±ÅŸtÄ±rÄ±lÄ±r ve kendi exit koduyla doÄŸrulanÄ±r.
+          # bu yüzden ayrı `run` ile çalıştırılır ve kendi exit koduyla doğrulanır.
           docker compose -f infra/docker-compose.yml --profile init run --rm minio-init
           docker compose -f infra/docker-compose.yml ps
 

@@ -174,14 +174,14 @@ test.describe("Design — home, chrome and language (AC-2, AC-4, AC-6)", () => {
   );
 
   test(
-    "shouldNavigateAllDesignPagesWithoutApplicationConsoleErrors",
+    "shouldNavigateAllDesignPagesWithoutConsoleErrors",
     { tag: ["@design", "@seeded"] },
     async ({ page }) => {
       await mockRooms(page);
       const console = collectConsole(page);
       for (const route of SIX_ROUTES) {
         await page.goto(`${WEB_BASE_URL}${route}`, { waitUntil: "networkidle" });
-        expect(console.appErrors(), `console errors on ${route}`).toEqual([]);
+        expect(console.errors, `console errors on ${route}`).toEqual([]);
         console.clear();
       }
     },
