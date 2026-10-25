@@ -9,7 +9,7 @@
 - CLS (scroll): **0.0000**; Lighthouse CLS: **0.042**
 - Lighthouse mobil (devtools throttling, 3 koşu median): **LCP 2272,98 ms**,
   performans **0.97**
-- Video kanıtı: **8,4 sn / 984.665 B** (VP9, 1280×800)
+- Video kanıtı: **4,0 sn / 471.733 B** (VP9, 1280×800)
 - `0002` kanıt SHA-256: **UNCHANGED (12 dosya)**
 
 ## Komutlar
