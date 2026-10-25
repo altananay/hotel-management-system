@@ -1,0 +1,15 @@
+font cormorant-garamond-600.woff2: 53.628 B
+font source-sans-3-400.woff2: 36.440 B
+font source-sans-3-600.woff2: 36.340 B
+font total: 126.408 B / limit 204.800 B
+licence Cormorant Garamond: 4.387 B
+licence Source Sans 3: 4.579 B
+hero WebM: 3.196.693 B / limit 8.388.608 B
+hero MP4: 3.606.393 B / limit 8.388.608 B
+hero poster: 111.972 B / limit 307.200 B
+hero poster 1280: 63.228 B / limit 307.200 B
+hero poster 960: 44.276 B / limit 307.200 B
+OG image: 145.592 B / limit 307.200 B
+CREDITS.md: present
+SELF-TEST PASS: synthetic oversized font exceeds its budget by 1 B
+Asset budget check passed.

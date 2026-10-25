@@ -1,0 +1,28 @@
+# Asset and bundle budget
+
+JS gzip-9 total: 206.202 B / limit 256.000 B
+
+| Chunk | gzip-9 |
+|---|---:|
+| http://localhost:3000/_next/static/chunks/4bd1b696-c023c6e3521b1417.js | 54.241 B |
+| http://localhost:3000/_next/static/chunks/255-b1e2483a7e02feee.js | 46.587 B |
+| http://localhost:3000/_next/static/chunks/41.31b8cf38b060e97c.js | 23.051 B |
+| http://localhost:3000/_next/static/chunks/c15bf2b0.ea334255f1a140fc.js | 19.848 B |
+| http://localhost:3000/_next/static/chunks/580.823131c95794fd63.js | 17.440 B |
+| http://localhost:3000/_next/static/chunks/267-1ad5520fc8deb072.js | 16.638 B |
+| http://localhost:3000/_next/static/chunks/605.596b13dcde22bed6.js | 8.173 B |
+| http://localhost:3000/_next/static/chunks/691.33e46f81feff2b78.js | 5.423 B |
+| http://localhost:3000/_next/static/chunks/640-9d5c2e66e740b362.js | 5.019 B |
+| http://localhost:3000/_next/static/chunks/619-ba102abea3e3d0e4.js | 3.385 B |
+| http://localhost:3000/_next/static/chunks/app/%5Blocale%5D/page-7c624da37bee5918.js | 2.158 B |
+| http://localhost:3000/_next/static/chunks/app/%5Blocale%5D/layout-ff3058d24491fe97.js | 2.131 B |
+| http://localhost:3000/_next/static/chunks/webpack-60993da474c04ee5.js | 1.882 B |
+| http://localhost:3000/_next/static/chunks/main-app-6e5b46afabdb4795.js | 226 B |
+
+| Asset | Bytes | Limit |
+|---|---:|---:|
+| font total | 126.408 B | 204.800 B |
+| hero WebM | 3.196.693 B | 8.388.608 B |
+| hero MP4 | 3.606.393 B | 8.388.608 B |
+| hero poster | 111.972 B | 307.200 B |
+| OG image | 145.592 B | 307.200 B |
