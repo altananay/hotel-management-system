@@ -1,1 +1,326 @@
 @import "tailwindcss";
+
+/* --------------------------------------------------------------------------
+   Self-hosted typography (SIL OFL, Latin Extended subset)
+   -------------------------------------------------------------------------- */
+@font-face {
+  font-family: "Cormorant Garamond";
+  src: url("/fonts/cormorant-garamond-600.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  unicode-range: U+0000-024F, U+2000-206F, U+20AC, U+20BA, U+2122, U+2192;
+}
+
+@font-face {
+  font-family: "Source Sans 3";
+  src: url("/fonts/source-sans-3-400.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  unicode-range: U+0000-024F, U+2000-206F, U+20AC, U+20BA, U+2122, U+2192;
+}
+
+@font-face {
+  font-family: "Source Sans 3";
+  src: url("/fonts/source-sans-3-600.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  unicode-range: U+0000-024F, U+2000-206F, U+20AC, U+20BA, U+2122, U+2192;
+}
+
+/* --------------------------------------------------------------------------
+   Design tokens — the single source for the public web app
+   -------------------------------------------------------------------------- */
+@theme {
+  /* Colour: warm limestone paper, deep stone ink, restrained copper accent */
+  --color-surface: #f4efe6;
+  --color-surface-raised: #fbf8f2;
+  --color-surface-muted: #ece4d7;
+  --color-surface-inverse: #1d1916;
+  --color-surface-inverse-raised: #2a241f;
+
+  --color-fg: #241f1a;
+  --color-fg-muted: #6d6256;
+  --color-fg-subtle: #8c8072;
+  --color-fg-inverse: #f7f1e7;
+  --color-fg-inverse-muted: #cabfae;
+
+  --color-accent: #9b5a2c;
+  --color-accent-strong: #7a3f1b;
+  --color-accent-soft: #ead7c3;
+  --color-accent-contrast: #fffaf2;
+
+  --color-border: #d8cdbd;
+  --color-border-strong: #b6a58f;
+  --color-focus: #8a461d;
+  --color-overlay: rgb(20 16 12 / 0.55);
+
+  --color-danger-surface: #fdf1ef;
+  --color-danger-fg: #7c2d20;
+  --color-danger-border: #e7b4a7;
+
+  /* Typography */
+  --font-display: "Cormorant Garamond", "Iowan Old Style", "Palatino Linotype",
+    Georgia, serif;
+  --font-body: "Source Sans 3", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+
+  --text-display-xl: clamp(2.75rem, 7.4vw, 6.5rem);
+  --text-display-xl--line-height: 0.92;
+  --text-display-xl--letter-spacing: -0.025em;
+  --text-display-lg: clamp(2.5rem, 5vw, 4.25rem);
+  --text-display-lg--line-height: 0.98;
+  --text-display-lg--letter-spacing: -0.02em;
+  --text-display-md: clamp(2rem, 3.5vw, 3rem);
+  --text-display-md--line-height: 1.04;
+  --text-display-md--letter-spacing: -0.015em;
+  --text-heading: clamp(1.5rem, 2.4vw, 2.125rem);
+  --text-heading--line-height: 1.16;
+  --text-body: 1.0625rem;
+  --text-body--line-height: 1.72;
+  --text-small: 0.9375rem;
+  --text-small--line-height: 1.62;
+  --text-eyebrow: 0.75rem;
+  --text-eyebrow--line-height: 1;
+  --text-eyebrow--letter-spacing: 0.18em;
+
+  /* Space */
+  --spacing-section: clamp(5rem, 10vw, 9rem);
+  --spacing-section-sm: clamp(3.5rem, 7vw, 6rem);
+  --spacing-gutter: clamp(1.25rem, 4vw, 2.5rem);
+  --spacing-stack: 1.5rem;
+  --spacing-stack-sm: 0.75rem;
+  --container-page: 78rem;
+
+  /* Shape */
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-arch: 999px 999px 1rem 1rem;
+
+  /* Elevation */
+  --shadow-card: 0 18px 44px -30px rgb(36 31 26 / 0.38);
+  --shadow-elevated: 0 34px 80px -42px rgb(36 31 26 / 0.48);
+  --shadow-inset: inset 0 1px 0 rgb(255 250 242 / 0.08);
+
+  /* Motion */
+  --duration-fast: 150ms;
+  --duration-base: 260ms;
+  --duration-slow: 600ms;
+  --duration-reveal: 850ms;
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* --------------------------------------------------------------------------
+   Base
+   -------------------------------------------------------------------------- */
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-border);
+  }
+
+  html {
+    background-color: var(--color-surface);
+    color: var(--color-fg);
+    scroll-behavior: auto;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    min-height: 100svh;
+    background-color: var(--color-surface);
+    color: var(--color-fg);
+    font-family: var(--font-body);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: var(--color-accent);
+    color: var(--color-accent-contrast);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 3px;
+  }
+
+  [id] {
+    scroll-margin-top: 6rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Small custom utilities
+   -------------------------------------------------------------------------- */
+@utility transition-soft {
+  transition-property: color, background-color, border-color, opacity;
+  transition-duration: var(--duration-base);
+  transition-timing-function: var(--ease-standard);
+}
+
+@utility transition-fast {
+  transition-property: color, background-color, border-color, opacity;
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--ease-standard);
+}
+
+@utility ease-standard {
+  transition-timing-function: var(--ease-standard);
+}
+
+@utility ease-emphasized {
+  transition-timing-function: var(--ease-emphasized);
+}
+
+@utility text-pretty {
+  text-wrap: pretty;
+}
+
+@utility text-balance {
+  text-wrap: balance;
+}
+
+@layer components {
+  .skip-link {
+    position: fixed;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 100;
+    transform: translateY(-200%);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-surface-inverse);
+    color: var(--color-fg-inverse);
+    padding: 0.75rem 1rem;
+    font-size: var(--text-small);
+    font-weight: 600;
+    transition: transform var(--duration-fast) var(--ease-standard);
+  }
+
+  .skip-link:focus-visible {
+    transform: translateY(0);
+    outline-color: var(--color-accent-contrast);
+  }
+
+  .site-container {
+    width: 100%;
+    max-width: var(--container-page);
+    margin-inline: auto;
+    padding-inline: var(--spacing-gutter);
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-size: var(--text-eyebrow);
+    font-weight: 600;
+    letter-spacing: var(--text-eyebrow--letter-spacing);
+    line-height: 1;
+    text-transform: uppercase;
+    color: var(--color-accent-strong);
+  }
+
+  .eyebrow::before {
+    content: "";
+    display: inline-block;
+    width: 2.25rem;
+    height: 1px;
+    background-color: currentColor;
+    opacity: 0.65;
+  }
+
+  .rule {
+    border: 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .paper-grain {
+    background-image:
+      radial-gradient(circle at 18% 12%, rgb(155 90 44 / 0.055), transparent 28%),
+      radial-gradient(circle at 82% 68%, rgb(29 25 22 / 0.045), transparent 34%),
+      radial-gradient(circle at 50% 110%, rgb(155 90 44 / 0.05), transparent 40%);
+  }
+
+  .arch-mask {
+    border-radius: var(--radius-arch);
+    overflow: hidden;
+  }
+
+  .hero-vignette {
+    background:
+      linear-gradient(
+        to top,
+        rgb(20 16 12 / 0.78) 0%,
+        rgb(20 16 12 / 0.46) 38%,
+        rgb(20 16 12 / 0.18) 68%,
+        rgb(20 16 12 / 0.34) 100%
+      ),
+      linear-gradient(
+        to right,
+        rgb(20 16 12 / 0.62) 0%,
+        rgb(20 16 12 / 0.22) 46%,
+        transparent 78%
+      );
+  }
+
+  .fine-grid {
+    background-image:
+      linear-gradient(to right, rgb(216 205 189 / 0.4) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(216 205 189 / 0.4) 1px, transparent 1px);
+    background-size: 4.5rem 4.5rem;
+    mask-image: linear-gradient(to bottom, black, transparent 78%);
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Unlayered so the sticky pin wins over the Section primitive's `relative` utility. */
+@media (min-width: 1024px) {
+  [data-motion-track][data-pinned="true"] {
+    height: 200svh;
+  }
+
+  [data-motion-scene][data-motion="pinned"] {
+    position: sticky;
+    top: 5rem;
+  }
+}
