@@ -1,0 +1,141 @@
+0003 scope evidence (backend/admin-web untouched)
+
+ .env.example                                       |   2 +
+ .github/workflows/ci.yml                           |  30 +-
+ CREDITS.md                                         |  33 ++
+ docs/frontend.md                                   | 268 +++++++++-
+ docs/testing.md                                    |   3 +-
+ e2e/README.md                                      | 177 ++++---
+ e2e/helpers/config.ts                              |   2 +
+ e2e/helpers/console.ts                             |  30 ++
+ e2e/helpers/copy.ts                                |  55 ++
+ e2e/helpers/evidence.ts                            |  43 ++
+ e2e/helpers/rooms.ts                               |  69 +++
+ e2e/helpers/viewports.ts                           |  14 +
+ e2e/package-lock.json                              | 263 +++++++++-
+ e2e/package.json                                   |   5 +-
+ e2e/playwright.config.ts                           |   2 +
+ e2e/scripts/build-hero-media.mjs                   |  91 ++++
+ e2e/scripts/sha256-manifest.mjs                    |  81 +++
+ e2e/tests/design/a11y.spec.ts                      | 156 ++++++
+ e2e/tests/design/budget.spec.ts                    | 126 +++++
+ e2e/tests/design/credits.spec.ts                   |  58 +++
+ e2e/tests/design/hero-asset.spec.ts                |  97 ++++
+ e2e/tests/design/hero.spec.ts                      | 136 +++++
+ e2e/tests/design/home.spec.ts                      | 189 +++++++
+ e2e/tests/design/metadata.spec.ts                  |  78 +++
+ e2e/tests/design/rooms-design.spec.ts              | 169 +++++++
+ e2e/tests/design/runtime.spec.ts                   |  77 +++
+ e2e/tests/design/scroll-story-video.spec.ts        |  86 ++++
+ e2e/tests/design/scroll-story.spec.ts              |  98 ++++
+ e2e/tests/smoke.spec.ts                            |   3 +-
+ specs/0003-clarification-brief.md                  | 407 +++++++++++++++
+ specs/0003-ui-design-system.md                     | 371 ++++++++++++++
+ specs/done/README.md                               |   1 +
+ .../evidence/0003/AC-1-asset-and-font-budget.log   |  15 +
+ specs/done/evidence/0003/AC-1-font-fallback.log    |   1 +
+ specs/done/evidence/0003/AC-1-runtime-requests.log |   5 +
+ specs/done/evidence/0003/AC-1-scope.txt            | 139 +++++
+ .../done/evidence/0003/AC-2-credits-en-desktop.png | Bin 0 -> 184460 bytes
+ .../done/evidence/0003/AC-2-credits-tr-desktop.png | Bin 0 -> 180448 bytes
+ .../evidence/0003/AC-2-hero-crop-candidates.jpg    | Bin 0 -> 68114 bytes
+ specs/done/evidence/0003/AC-2-hero-ffprobe.log     | 257 ++++++++++
+ specs/done/evidence/0003/AC-2-home-en-desktop.png  | Bin 0 -> 1389701 bytes
+ specs/done/evidence/0003/AC-2-home-nojs.png        | Bin 0 -> 1393899 bytes
+ .../evidence/0003/AC-2-home-scroll-01-hero.png     | Bin 0 -> 796222 bytes
+ .../evidence/0003/AC-2-home-scroll-02-story.png    | Bin 0 -> 134924 bytes
+ .../0003/AC-2-home-scroll-03-experience.png        | Bin 0 -> 109392 bytes
+ .../0003/AC-2-home-scroll-04-rooms-cta.png         | Bin 0 -> 145238 bytes
+ .../done/evidence/0003/AC-2-home-scroll-story.webm | Bin 0 -> 567693 bytes
+ specs/done/evidence/0003/AC-2-home-tr-desktop.png  | Bin 0 -> 1066457 bytes
+ specs/done/evidence/0003/AC-2-home-tr-mobile.png   | Bin 0 -> 698415 bytes
+ .../evidence/0003/AC-2-home-video-fallback.png     | Bin 0 -> 741629 bytes
+ specs/done/evidence/0003/AC-2-metadata.md          |  10 +
+ specs/done/evidence/0003/AC-3-rooms-empty.png      | Bin 0 -> 131746 bytes
+ specs/done/evidence/0003/AC-3-rooms-en-desktop.png | Bin 0 -> 381645 bytes
+ .../evidence/0003/AC-3-rooms-error-malformed.png   | Bin 0 -> 128585 bytes
+ .../evidence/0003/AC-3-rooms-error-network.png     | Bin 0 -> 128585 bytes
+ .../evidence/0003/AC-3-rooms-error-timeout.png     | Bin 0 -> 128585 bytes
+ specs/done/evidence/0003/AC-3-rooms-error.png      | Bin 0 -> 128585 bytes
+ specs/done/evidence/0003/AC-3-rooms-loading.png    | Bin 0 -> 136539 bytes
+ specs/done/evidence/0003/AC-3-rooms-tr-desktop.png | Bin 0 -> 372239 bytes
+ specs/done/evidence/0003/AC-3-rooms-tr-mobile.png  | Bin 0 -> 297418 bytes
+ specs/done/evidence/0003/AC-4-axe-report.md        |  12 +
+ .../evidence/0003/AC-4-keyboard-focus-header.png   | Bin 0 -> 796654 bytes
+ .../evidence/0003/AC-4-mobile-menu-keyboard.png    | Bin 0 -> 27235 bytes
+ .../evidence/0003/AC-4-reduced-motion-home.png     | Bin 0 -> 1394124 bytes
+ .../evidence/0003/AC-5-asset-and-bundle-budget.log |  28 +
+ specs/done/evidence/0003/AC-5-build-guard.log      |  15 +
+ .../done/evidence/0003/AC-5-lighthouse-mobile.html | 282 +++++++++++
+ specs/done/evidence/0003/AC-5-lighthouse-mobile.md |  20 +
+ specs/done/evidence/0003/AC-5-runtime-requests.log |   5 +
+ specs/done/evidence/0003/AC-5-scroll-cls.log       |   1 +
+ .../evidence/0003/AC-6-0002-evidence-sha256.txt    |   7 +
+ specs/done/evidence/0003/AC-6-e2e-ci-summary.md    |  37 ++
+ web/package-lock.json                              | 563 ++++++++++++++++++++-
+ web/package.json                                   |  11 +-
+ web/public/fonts/OFL-CormorantGaramond.txt         |  93 ++++
+ web/public/fonts/OFL-SourceSans3.txt               |  93 ++++
+ web/public/fonts/cormorant-garamond-600.woff2      | Bin 0 -> 53628 bytes
+ web/public/fonts/source-sans-3-400.woff2           | Bin 0 -> 36440 bytes
+ web/public/fonts/source-sans-3-600.woff2           | Bin 0 -> 36340 bytes
+ .../media/experience/home-experience-panorama.webp | Bin 0 -> 78102 bytes
+ web/public/media/hero/home-hero-poster-1280.webp   | Bin 0 -> 63228 bytes
+ web/public/media/hero/home-hero-poster-960.webp    | Bin 0 -> 44276 bytes
+ web/public/media/hero/home-hero-poster.webp        | Bin 0 -> 111972 bytes
+ web/public/media/hero/home-hero.mp4                | Bin 0 -> 3606393 bytes
+ web/public/media/hero/home-hero.webm               | Bin 0 -> 3196693 bytes
+ web/public/media/og/home-og.jpg                    | Bin 0 -> 145592 bytes
+ web/public/media/story/home-story-portrait.webp    | Bin 0 -> 137098 bytes
+ web/scripts/build-fonts.py                         | 117 +++++
+ web/scripts/check-assets.mjs                       | 138 +++++
+ web/scripts/check-design-system.mjs                | 128 +++++
+ web/src/app/[locale]/credits/page.tsx              | 117 +++++
+ web/src/app/[locale]/layout.tsx                    |  81 ++-
+ web/src/app/[locale]/page.tsx                      | 146 ++----
+ web/src/app/[locale]/rooms/page.tsx                | 126 +++--
+ web/src/app/globals.css                            | 325 ++++++++++++
+ .../layout/__tests__/mobile-nav.test.tsx           |  58 +++
+ .../layout/__tests__/site-header.test.tsx          |  49 ++
+ web/src/components/layout/flags.tsx                |  33 ++
+ web/src/components/layout/locale-switcher.tsx      |  98 ++++
+ web/src/components/layout/mobile-nav.tsx           | 139 +++++
+ web/src/components/layout/site-footer.tsx          |  93 ++++
+ web/src/components/layout/site-header.tsx          |  82 +++
+ web/src/components/layout/skip-link.tsx            |  15 +
+ web/src/components/ui/__tests__/room-card.test.tsx |  47 ++
+ .../components/ui/__tests__/state-panel.test.tsx   |  34 ++
+ web/src/components/ui/badge.tsx                    |  31 ++
+ web/src/components/ui/button.tsx                   |  33 +-
+ web/src/components/ui/card.tsx                     |   2 +-
+ web/src/components/ui/room-card.tsx                | 178 +++++++
+ web/src/components/ui/section.tsx                  |  51 ++
+ web/src/components/ui/skeleton.tsx                 |   2 +-
+ web/src/components/ui/state-panel.tsx              |  93 ++++
+ .../home/__tests__/home-hero-media.test.tsx        | 109 ++++
+ .../features/home/__tests__/home-sections.test.tsx |  60 +++
+ web/src/features/home/hero-video.tsx               | 119 +++++
+ web/src/features/home/home-contact.tsx             |  87 ++++
+ web/src/features/home/home-experience.tsx          | 133 +++++
+ web/src/features/home/home-hero-media.tsx          |  31 ++
+ web/src/features/home/home-hero.tsx                |  62 +++
+ web/src/features/home/home-motion.tsx              | 294 +++++++++++
+ web/src/features/home/home-rooms-cta.tsx           |  74 +++
+ web/src/features/home/home-story.tsx               | 115 +++++
+ web/src/features/room-catalog/room-showcase.tsx    | 272 +++-------
+ web/src/lib/__tests__/api-client.test.ts           |  97 ++++
+ web/src/lib/__tests__/credits.test.ts              |  51 ++
+ web/src/lib/__tests__/design-system.test.ts        |  61 +++
+ web/src/lib/__tests__/seo.test.ts                  |  69 +++
+ web/src/lib/api-client.ts                          |  89 +++-
+ web/src/lib/config.ts                              |  11 +
+ web/src/lib/credits.ts                             | 109 ++++
+ web/src/lib/i18n/__tests__/i18n.test.ts            |  16 +
+ web/src/lib/i18n/en.json                           |  98 +++-
+ web/src/lib/i18n/tr.json                           |  98 +++-
+ .../__tests__/use-motion-preference.test.tsx       |  53 ++
+ web/src/lib/motion/use-motion-preference.ts        |  59 +++
+ web/src/lib/seo.ts                                 |  89 ++++
+ web/src/test/setup.ts                              |  44 ++
+ 137 files changed, 8769 insertions(+), 561 deletions(-)
+

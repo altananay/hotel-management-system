@@ -1,0 +1,257 @@
+{
+  "webm": {
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "vp9",
+        "codec_long_name": "Google VP9",
+        "profile": "Profile 0",
+        "codec_type": "video",
+        "codec_time_base": "1/30",
+        "codec_tag_string": "[0][0][0][0]",
+        "codec_tag": "0x0000",
+        "width": 1920,
+        "height": 1080,
+        "coded_width": 1920,
+        "coded_height": 1080,
+        "has_b_frames": 0,
+        "sample_aspect_ratio": "1:1",
+        "display_aspect_ratio": "16:9",
+        "pix_fmt": "yuv420p",
+        "level": -99,
+        "color_range": "tv",
+        "color_transfer": "bt709",
+        "color_primaries": "bt709",
+        "chroma_location": "left",
+        "field_order": "progressive",
+        "refs": 1,
+        "r_frame_rate": "30/1",
+        "avg_frame_rate": "30/1",
+        "time_base": "1/1000",
+        "start_pts": 0,
+        "start_time": "0.000000",
+        "disposition": {
+          "default": 0,
+          "dub": 0,
+          "original": 0,
+          "comment": 0,
+          "lyrics": 0,
+          "karaoke": 0,
+          "forced": 0,
+          "hearing_impaired": 0,
+          "visual_impaired": 0,
+          "clean_effects": 0,
+          "attached_pic": 0,
+          "timed_thumbnails": 0
+        },
+        "tags": {
+          "ENCODER": "Lavc60.31.102 libvpx-vp9",
+          "DURATION": "00:00:10.000000000"
+        }
+      }
+    ],
+    "format": {
+      "filename": "D:\\projects\\hotel-management-system\\web\\public\\media\\hero\\home-hero.webm",
+      "nb_streams": 1,
+      "nb_programs": 0,
+      "format_name": "matroska,webm",
+      "format_long_name": "Matroska / WebM",
+      "start_time": "0.000000",
+      "duration": "10.000000",
+      "size": "3196693",
+      "bit_rate": "2557354",
+      "probe_score": 100,
+      "tags": {
+        "COMPATIBLE_BRANDS": "iso5iso6mp41",
+        "MAJOR_BRAND": "iso5",
+        "MINOR_VERSION": "512",
+        "ENCODER": "Lavf60.16.100"
+      }
+    }
+  },
+  "mp4": {
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "h264",
+        "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+        "profile": "High",
+        "codec_type": "video",
+        "codec_time_base": "1/60",
+        "codec_tag_string": "avc1",
+        "codec_tag": "0x31637661",
+        "width": 1920,
+        "height": 1080,
+        "coded_width": 1920,
+        "coded_height": 1088,
+        "has_b_frames": 2,
+        "sample_aspect_ratio": "1:1",
+        "display_aspect_ratio": "16:9",
+        "pix_fmt": "yuv420p",
+        "level": 50,
+        "color_range": "tv",
+        "color_transfer": "bt709",
+        "color_primaries": "bt709",
+        "chroma_location": "left",
+        "refs": 1,
+        "is_avc": "true",
+        "nal_length_size": "4",
+        "r_frame_rate": "30/1",
+        "avg_frame_rate": "30/1",
+        "time_base": "1/15360",
+        "start_pts": 0,
+        "start_time": "0.000000",
+        "duration_ts": 153600,
+        "duration": "10.000000",
+        "bit_rate": "2881584",
+        "bits_per_raw_sample": "8",
+        "nb_frames": "300",
+        "disposition": {
+          "default": 1,
+          "dub": 0,
+          "original": 0,
+          "comment": 0,
+          "lyrics": 0,
+          "karaoke": 0,
+          "forced": 0,
+          "hearing_impaired": 0,
+          "visual_impaired": 0,
+          "clean_effects": 0,
+          "attached_pic": 0,
+          "timed_thumbnails": 0
+        },
+        "tags": {
+          "language": "und",
+          "handler_name": "VideoHandler",
+          "encoder": "Lavc60.31.102 libx264"
+        }
+      }
+    ],
+    "format": {
+      "filename": "D:\\projects\\hotel-management-system\\web\\public\\media\\hero\\home-hero.mp4",
+      "nb_streams": 1,
+      "nb_programs": 0,
+      "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+      "format_long_name": "QuickTime / MOV",
+      "start_time": "0.000000",
+      "duration": "10.000000",
+      "size": "3606393",
+      "bit_rate": "2885114",
+      "probe_score": 100,
+      "tags": {
+        "major_brand": "isom",
+        "minor_version": "512",
+        "compatible_brands": "isomiso2avc1mp41",
+        "encoder": "Lavf60.16.100"
+      }
+    }
+  },
+  "poster": {
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "webp",
+        "codec_long_name": "WebP",
+        "codec_type": "video",
+        "codec_time_base": "0/1",
+        "codec_tag_string": "[0][0][0][0]",
+        "codec_tag": "0x0000",
+        "width": 1920,
+        "height": 1080,
+        "coded_width": 1920,
+        "coded_height": 1080,
+        "has_b_frames": 0,
+        "pix_fmt": "yuv420p",
+        "level": -99,
+        "color_range": "tv",
+        "color_space": "bt470bg",
+        "refs": 1,
+        "r_frame_rate": "25/1",
+        "avg_frame_rate": "0/0",
+        "time_base": "1/25",
+        "disposition": {
+          "default": 0,
+          "dub": 0,
+          "original": 0,
+          "comment": 0,
+          "lyrics": 0,
+          "karaoke": 0,
+          "forced": 0,
+          "hearing_impaired": 0,
+          "visual_impaired": 0,
+          "clean_effects": 0,
+          "attached_pic": 0,
+          "timed_thumbnails": 0
+        }
+      }
+    ],
+    "format": {
+      "filename": "D:\\projects\\hotel-management-system\\web\\public\\media\\hero\\home-hero-poster.webp",
+      "nb_streams": 1,
+      "nb_programs": 0,
+      "format_name": "webp_pipe",
+      "format_long_name": "piped webp sequence",
+      "size": "111972",
+      "probe_score": 99
+    }
+  },
+  "og": {
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "mjpeg",
+        "codec_long_name": "Motion JPEG",
+        "profile": "192",
+        "codec_type": "video",
+        "codec_time_base": "0/1",
+        "codec_tag_string": "[0][0][0][0]",
+        "codec_tag": "0x0000",
+        "width": 1200,
+        "height": 630,
+        "coded_width": 1200,
+        "coded_height": 630,
+        "has_b_frames": 0,
+        "pix_fmt": "yuvj444p",
+        "level": -99,
+        "color_range": "pc",
+        "color_space": "bt470bg",
+        "chroma_location": "center",
+        "refs": 1,
+        "r_frame_rate": "25/1",
+        "avg_frame_rate": "0/0",
+        "time_base": "1/25",
+        "start_pts": 0,
+        "start_time": "0.000000",
+        "duration_ts": 1,
+        "duration": "0.040000",
+        "bits_per_raw_sample": "8",
+        "disposition": {
+          "default": 0,
+          "dub": 0,
+          "original": 0,
+          "comment": 0,
+          "lyrics": 0,
+          "karaoke": 0,
+          "forced": 0,
+          "hearing_impaired": 0,
+          "visual_impaired": 0,
+          "clean_effects": 0,
+          "attached_pic": 0,
+          "timed_thumbnails": 0
+        }
+      }
+    ],
+    "format": {
+      "filename": "D:\\projects\\hotel-management-system\\web\\public\\media\\og\\home-og.jpg",
+      "nb_streams": 1,
+      "nb_programs": 0,
+      "format_name": "image2",
+      "format_long_name": "image2 sequence",
+      "start_time": "0.000000",
+      "duration": "0.040000",
+      "size": "145592",
+      "bit_rate": "29118400",
+      "probe_score": 50
+    }
+  }
+}

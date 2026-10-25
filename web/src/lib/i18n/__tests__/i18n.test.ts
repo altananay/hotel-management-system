@@ -3,6 +3,16 @@ import en from "../en.json";
 import { resolveErrorMessage } from "../index";
 import tr from "../tr.json";
 
+function keysOf(value: Record<string, unknown>, prefix = ""): string[] {
+  return Object.entries(value).flatMap(([key, child]) => {
+    const path = prefix ? `${prefix}.${key}` : key;
+    if (child && typeof child === "object" && !Array.isArray(child)) {
+      return keysOf(child as Record<string, unknown>, path);
+    }
+    return [path];
+  });
+}
+
 describe("resolveErrorMessage and i18n dictionary hygiene (CR-12, AC-4, QA-16)", () => {
   it("shouldReturnDefaultMessage_whenCodeIsAPrototypeProperty", () => {
     expect(resolveErrorMessage("tr", "constructor")).toBe(
@@ -59,5 +69,11 @@ describe("resolveErrorMessage and i18n dictionary hygiene (CR-12, AC-4, QA-16)",
       expect(tr).toHaveProperty(key);
       expect(en).toHaveProperty(key);
     }
+  });
+
+  it("shouldKeepTurkishAndEnglishKeyParityAndRemoveTheOldHighlights", () => {
+    expect(keysOf(en).sort()).toEqual(keysOf(tr).sort());
+    expect(tr.home).not.toHaveProperty("highlights");
+    expect(en.home).not.toHaveProperty("highlights");
   });
 });

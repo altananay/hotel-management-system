@@ -1,10 +1,11 @@
 import fs from "fs";
 import path from "path";
 import { expect, test } from "@playwright/test";
+import { evidenceDir } from "../helpers/evidence";
 
 const WEB_BASE_URL = process.env.E2E_WEB_URL ?? "http://localhost:3000";
 const ADMIN_WEB_BASE_URL = process.env.E2E_ADMIN_WEB_URL ?? "http://localhost:3001";
-const EVIDENCE_DIR = path.resolve(__dirname, "../../specs/done/evidence/0002");
+const EVIDENCE_DIR = evidenceDir("0002");
 
 test.beforeAll(() => {
   fs.mkdirSync(EVIDENCE_DIR, { recursive: true });

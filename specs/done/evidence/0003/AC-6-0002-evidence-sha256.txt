@@ -1,0 +1,7 @@
+# 0002 evidence SHA-256 manifest
+
+Directory: D:\projects\hotel-management-system\specs\done\evidence\0002
+Files: 12
+Result: UNCHANGED
+
+All 0002 evidence files are byte-identical.

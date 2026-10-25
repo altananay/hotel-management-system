@@ -139,7 +139,7 @@ jobs:
         run: |
           npm ci
           npx playwright install --with-deps chromium
-          npx playwright test --grep @empty
+          E2E_EVIDENCE_DIR="$RUNNER_TEMP/evidence-0002" npx playwright test tests/smoke.spec.ts --grep @empty
 
       - name: Verify seed guard rejects missing or invalid seed environment
         working-directory: backend/hotel-api
@@ -192,9 +192,29 @@ jobs:
         working-directory: backend/hotel-api
         run: ./mvnw -B flyway:migrate -Pseed -Dseed.env=ci
 
-      - name: Run @seeded smoke tests
+      - name: Run @seeded smoke tests against a temporary evidence root
         working-directory: e2e
-        run: npx playwright test --grep @seeded
+        run: E2E_EVIDENCE_DIR="$RUNNER_TEMP/evidence-0002" npx playwright test tests/smoke.spec.ts --grep @seeded
+
+      - name: Capture 0002 evidence SHA-256 manifest
+        working-directory: e2e
+        run: node scripts/sha256-manifest.mjs capture ../specs/done/evidence/0002 "$RUNNER_TEMP/0002-before.json"
+
+      - name: Run @seeded design tests
+        working-directory: e2e
+        run: npx playwright test tests/design --grep @seeded
+
+      - name: Verify 0002 evidence is byte-identical after the 0003 run
+        working-directory: e2e
+        run: node scripts/sha256-manifest.mjs verify ../specs/done/evidence/0002 "$RUNNER_TEMP/0002-before.json" ../specs/done/evidence/0003/AC-6-0002-evidence-sha256.txt
+
+      - name: Upload 0003 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 0003-evidence
+          path: specs/done/evidence/0003
+          if-no-files-found: warn
 
       - name: Tear down infrastructure
         if: always()
