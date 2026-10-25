@@ -1,1 +1,1 @@
-Font requests aborted; the page remained readable with the system fallback and produced no application console errors.
+A valid WOFF2 fixture without Latin glyphs was served for every font request; the rendered width matched the same stack without Source Sans 3, proving the system fallback, and no console errors were produced.
