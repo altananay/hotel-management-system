@@ -29,6 +29,8 @@ export function HomeExperience({ dict }: { dict: Dictionary }) {
       >
       <div
         aria-hidden="true"
+        data-parallax
+        data-parallax-amplitude="24"
         className="fine-grid pointer-events-none absolute inset-0 opacity-30"
       />
 

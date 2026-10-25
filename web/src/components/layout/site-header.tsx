@@ -21,7 +21,7 @@ export function SiteHeader({ locale, dict }: SiteHeaderProps) {
       data-testid="site-header"
       className="sticky top-0 z-40 border-b border-border/80 bg-surface/92 backdrop-blur-md"
     >
-      <div className="site-container flex h-20 items-center justify-between gap-6">
+      <div className="site-container flex h-20 items-center justify-between gap-3 sm:gap-6">
         <Link
           href={`/${locale}`}
           data-testid="web-site-title"
@@ -31,7 +31,7 @@ export function SiteHeader({ locale, dict }: SiteHeaderProps) {
             aria-hidden="true"
             className="hidden h-9 w-px bg-border-strong/70 sm:block"
           />
-          <span className="font-display text-[1.08rem] leading-none tracking-tight text-fg transition-fast group-hover:text-accent-strong sm:text-[1.35rem] lg:text-[1.55rem]">
+          <span className="font-display whitespace-nowrap text-[1rem] leading-none tracking-tight text-fg transition-fast group-hover:text-accent-strong sm:text-[1.35rem] lg:text-[1.55rem]">
             {dict.siteTitle}
           </span>
         </Link>

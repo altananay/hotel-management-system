@@ -316,7 +316,7 @@
 /* Unlayered so the sticky pin wins over the Section primitive's `relative` utility. */
 @media (min-width: 1024px) {
   [data-motion-track][data-pinned="true"] {
-    height: 200svh;
+    height: 115svh;
   }
 
   [data-motion-scene][data-motion="pinned"] {

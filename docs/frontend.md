@@ -170,8 +170,10 @@ Kurallar:
 | `home-rooms-cta` | `static` | — |
 | `home-contact` | `static` | — |
 
-Toplam pinli sahne **tam 2**'dir. Parallax yalnız dekoratif arka plan
-katmanındadır ve en fazla **±40 px**'dir; metin parallax'ı yoktur.
+Toplam pinli sahne **tam 2**'dir. Pin, `data-motion="pinned"` + CSS sticky ile
+kısa bir track (`115svh`) üzerinde tutulur; böylece tek scroll jestiyle sahne
+geçilebilir. Parallax yalnız dekoratif arka plan katmanındadır ve en fazla
+**±40 px**'dir (dekoratif sayı 20 px, grid 24 px); metin parallax'ı yoktur.
 
 ### 4.3 Hero video
 

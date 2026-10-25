@@ -35,6 +35,8 @@ export function HomeStory({ dict }: { dict: Dictionary }) {
             <p className="eyebrow text-accent-soft">{story.eyebrow}</p>
             <p
               aria-hidden="true"
+              data-parallax
+              data-parallax-amplitude="20"
               className="mt-10 font-display text-[7rem] leading-none text-fg-inverse/8 lg:text-[9rem]"
             >
               01

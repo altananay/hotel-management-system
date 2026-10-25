@@ -42,6 +42,8 @@ describe("SiteHeader (AC-2, AC-4)", () => {
     expect(screen.getByTestId("site-nav-home")).not.toHaveAttribute("aria-current");
     expect(screen.getByTestId("site-nav-rooms")).toHaveAttribute("aria-current", "page");
     expect(screen.getByTestId("locale-switch-en")).toHaveAttribute("href", "/en/rooms");
+    expect(screen.getByTestId("locale-switch-tr").querySelector("svg")).not.toBeNull();
+    expect(screen.getByTestId("locale-switch-en").querySelector("svg")).not.toBeNull();
     expect(screen.getByTestId("mobile-nav-toggle")).toBeInTheDocument();
   });
 });

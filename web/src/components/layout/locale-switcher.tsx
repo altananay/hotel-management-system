@@ -1,4 +1,5 @@
 ﻿import Link from "next/link";
+import { FlagGb, FlagTr } from "./flags";
 
 export interface LocaleSwitcherProps {
   locale: "tr" | "en";
@@ -63,14 +64,15 @@ export function LocaleSwitcher({
           className={
             locale === "tr"
               ? isDark
-                ? "rounded-full bg-fg-inverse px-2.5 py-1 text-eyebrow font-semibold text-surface-inverse"
-                : "rounded-full bg-surface-inverse px-2.5 py-1 text-eyebrow font-semibold text-fg-inverse"
+                ? "rounded-full bg-fg-inverse px-2 py-1 sm:px-2.5 text-eyebrow font-semibold text-surface-inverse"
+                : "rounded-full bg-surface-inverse px-2 py-1 sm:px-2.5 text-eyebrow font-semibold text-fg-inverse"
               : isDark
-                ? "rounded-full px-2.5 py-1 text-eyebrow font-semibold text-fg-inverse-muted hover:text-fg-inverse"
-                : "rounded-full px-2.5 py-1 text-eyebrow font-semibold text-fg-muted hover:text-fg"
+                ? "rounded-full px-2 py-1 sm:px-2.5 text-eyebrow font-semibold text-fg-inverse-muted hover:text-fg-inverse"
+                : "rounded-full px-2 py-1 sm:px-2.5 text-eyebrow font-semibold text-fg-muted hover:text-fg"
           }
         >
-          {trLabel}
+          <FlagTr />
+          <span>{trLabel}</span>
         </Link>
         <Link
           href={localeHref(pathname, "en")}
@@ -79,14 +81,15 @@ export function LocaleSwitcher({
           className={
             locale === "en"
               ? isDark
-                ? "rounded-full bg-fg-inverse px-2.5 py-1 text-eyebrow font-semibold text-surface-inverse"
-                : "rounded-full bg-surface-inverse px-2.5 py-1 text-eyebrow font-semibold text-fg-inverse"
+                ? "rounded-full bg-fg-inverse px-2 py-1 sm:px-2.5 text-eyebrow font-semibold text-surface-inverse"
+                : "rounded-full bg-surface-inverse px-2 py-1 sm:px-2.5 text-eyebrow font-semibold text-fg-inverse"
               : isDark
-                ? "rounded-full px-2.5 py-1 text-eyebrow font-semibold text-fg-inverse-muted hover:text-fg-inverse"
-                : "rounded-full px-2.5 py-1 text-eyebrow font-semibold text-fg-muted hover:text-fg"
+                ? "rounded-full px-2 py-1 sm:px-2.5 text-eyebrow font-semibold text-fg-inverse-muted hover:text-fg-inverse"
+                : "rounded-full px-2 py-1 sm:px-2.5 text-eyebrow font-semibold text-fg-muted hover:text-fg"
           }
         >
-          {enLabel}
+          <FlagGb />
+          <span>{enLabel}</span>
         </Link>
       </span>
     </nav>

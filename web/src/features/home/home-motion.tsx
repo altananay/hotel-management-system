@@ -146,9 +146,9 @@ export function HomeMotion() {
         }
         const tween = gsap.fromTo(
           layer,
-          { y: -40 },
+          { y: -Number(layer.dataset.parallaxAmplitude ?? 40) },
           {
-            y: 40,
+            y: Number(layer.dataset.parallaxAmplitude ?? 40),
             ease: "none",
             scrollTrigger: {
               trigger: track,
@@ -168,7 +168,7 @@ export function HomeMotion() {
 
       ScrollTrigger.refresh();
 
-      const lenis = new Lenis({ duration: 1.1, smoothWheel: true });
+      const lenis = new Lenis({ duration: 0.9, smoothWheel: true });
       lenis.on("scroll", ScrollTrigger.update);
       const tick = (time: number) => {
         lenis.raf(time * 1000);
