@@ -1,73 +1,104 @@
-# Uçtan Uca (E2E) Smoke Testleri (`e2e/`)
+﻿# UÃ§tan Uca (E2E) Testleri (`e2e/`)
 
-Bu dizin, `web` (`:3000`) oda vitrininin (`/[locale]/rooms`) ve `admin-web` (`:3001`) uygulamasının açılışını, TR/EN dil geçişini ve zorunlu ekran durumlarını (**yükleme**, **boş**, **hata**, **dolu**) iki aşamalı (`@empty` ve `@seeded`) olarak doğrulayan kök Playwright projesini içerir (`docs/architecture.md` §11, `docs/testing.md` §3).
+Bu dizin, `web` (`:3000`) public sitesinin ve `admin-web` (`:3001`) uygulamasÄ±nÄ±n
+aÃ§Ä±lÄ±ÅŸÄ±nÄ±, TR/EN dil geÃ§iÅŸini, zorunlu ekran durumlarÄ±nÄ± ve `0003` tasarÄ±m
+deneyimini Playwright ile doÄŸrular.
 
-## İki Aşamalı Yerel Doğrulama Akışı (`@empty` → Seed → `@seeded`)
+## KanÄ±t kÃ¶kÃ¼ ve izolasyon
 
-Tüm komutlar **depo kökünden** çalıştırılır. `(cd <dizin> && <komut>)` alt-kabuğu komut bitince otomatik olarak eski dizine döner; uzun süren süreçleri (backend/frontend) ayrı terminallerde başlatın.
+- `E2E_EVIDENCE_DIR` kanÄ±t kÃ¶kÃ¼nÃ¼ belirler. VarsayÄ±lan: `specs/done/evidence`.
+- Ortak helper her spec'i kendi alt dizinine yazar:
+  - `0002` smoke testleri â†’ `<kÃ¶k>/0002/`
+  - `0003` design testleri â†’ `<kÃ¶k>/0003/`
+- `0002` arÅŸivi deÄŸiÅŸtirilmez. `0002` regresyon koÅŸumunu **geÃ§ici bir kÃ¶kle**
+  Ã§alÄ±ÅŸtÄ±rÄ±n; bÃ¶ylece arÅŸivdeki PNG'ler yeniden yazÄ±lmaz:
 
-1. **Veritabanını temizleyin ve altyapıyı başlatın (gerçek boş durum doğrulaması için):**
+  ```bash
+  E2E_EVIDENCE_DIR=$RUNNER_TEMP/evidence-0002 npx playwright test tests/smoke.spec.ts --grep @empty
+  # seed...
+  E2E_EVIDENCE_DIR=$RUNNER_TEMP/evidence-0002 npx playwright test tests/smoke.spec.ts --grep @seeded
+  ```
 
-   ```bash
-   cp .env.example .env   # kökte .env yoksa; varsa atlayın
-   docker compose --env-file .env -f infra/docker-compose.yml down -v
-   docker compose --env-file .env -f infra/docker-compose.yml up -d --wait
-   docker compose --env-file .env -f infra/docker-compose.yml --profile init run --rm minio-init
-   ```
+- `0003` design testleri varsayÄ±lan kÃ¶ke yazar. `0002` izolasyonu SHA-256
+  manifestiyle kanÄ±tlanÄ±r:
 
-2. **Standart veritabanı şema geçişlerini (seed'siz, `migrator` ile) çalıştırın:**
+  ```bash
+  node scripts/sha256-manifest.mjs capture ../specs/done/evidence/0002 "$RUNNER_TEMP/0002-before.json"
+  npx playwright test tests/design --grep @seeded
+  node scripts/sha256-manifest.mjs verify ../specs/done/evidence/0002 "$RUNNER_TEMP/0002-before.json" ../specs/done/evidence/0003/AC-6-0002-evidence-sha256.txt
+  ```
 
-   ```bash
-   (cd backend/hotel-api && ./mvnw flyway:migrate)
-   (cd backend/admin-api && ./mvnw flyway:migrate)
-   ```
+## Etiketler
 
-   > **Özel Postgres portu:** `.env` içinde `POSTGRES_PORT=5433` gibi 5432 dışı bir değer varsa Maven `.env`'i okumaz. Bu durumda komutları şu override'larla çalıştırın:
-   >
-   > ```bash
-   > (cd backend/hotel-api && ./mvnw flyway:migrate "-DHOTEL_CORE_DB_URL=jdbc:postgresql://localhost:5433/hotel_core")
-   > (cd backend/admin-api && ./mvnw flyway:migrate "-DHOTEL_ADMIN_DB_URL=jdbc:postgresql://localhost:5433/hotel_admin")
-   > ```
+- `@empty` â€” seed Ã¶ncesi gerÃ§ek boÅŸ vitrin (0002).
+- `@seeded` â€” seed sonrasÄ± smoke + design testleri.
+- `@design` â€” 0003 ana sayfa, hero, scroll, a11y, metadata, credits, rooms,
+  runtime, budget ve video kanÄ±tlarÄ±.
 
-3. **Backend uygulamalarını başlatın (ayrı terminaller; yerel `.env` override'ları için `local` profili):**
+CI `--grep @seeded` ile hem `0002` smoke hem `0003` design testlerini koÅŸar.
 
-   ```bash
-   (cd backend/hotel-api && ./mvnw spring-boot:run -Dspring-boot.run.profiles=local)
-   (cd backend/admin-api && ./mvnw spring-boot:run -Dspring-boot.run.profiles=local)
-   ```
+## Viewport ve tercihler
 
-4. **Frontend uygulamalarını (`web :3000` ve `admin-web :3001`) başlatın (ayrı terminaller):**
+- Mobil: `390Ã—844`
+- Desktop: `1280Ã—800`
+- Tablet sÄ±nÄ±rlarÄ±: `767`, `768`, `1023`, `1024`
+- `prefers-reduced-motion: reduce`: Playwright `reducedMotion` / `emulateMedia`.
+- `save-data`: `context.addInitScript` ile `navigator.connection.saveData = true`.
+- JavaScript kapalÄ±: `browser.newContext({ javaScriptEnabled: false })`.
 
-   ```bash
-   (cd web && npm ci && npm run build && npm run start)
-   (cd admin-web && npm ci && npm run build && npm run start)
-   ```
+## Design testleri
 
-5. **Aşama 1 (`@empty`): Seed öncesi gerçek uçtan boş vitrin durumunu doğrulayın:**
+```bash
+cd e2e
+npx playwright test tests/design --grep @seeded
+```
 
-   ```bash
-   (cd e2e && npm ci && npx playwright install chromium && npx playwright test --grep @empty)
-   ```
+Kapsam:
 
-6. **Örnek katalog verisini (`migrator` kimliğiyle) yükleyin:**
+- `home.spec.ts` â€” ortak chrome, copy deck, locale, JS kapalÄ±, konsol.
+- `hero.spec.ts` â€” poster/video, viewport, reduced-motion, save-data, fallback.
+- `hero-asset.spec.ts` â€” ffprobe ile codec/Ã§Ã¶zÃ¼nÃ¼rlÃ¼k/sÃ¼re/fps/sessizlik.
+- `scroll-story.spec.ts` â€” tam 2 pin, 1023/1024 sÄ±nÄ±rÄ±, parallax, scroll kanÄ±tÄ±.
+- `scroll-story-video.spec.ts` â€” `.webm` video kanÄ±tÄ± (â‰¤15 sn, â‰¤5 MB).
+- `a11y.spec.ts` â€” skip link, klavye, mobil menÃ¼, landmark, axe.
+- `metadata.spec.ts` â€” title/description/canonical/hreflang/OG.
+- `credits.spec.ts` â€” `CREDITS.md` kaynaklÄ± sayfa.
+- `rooms-design.spec.ts` â€” 0002 sÃ¶zleÅŸmesi, Ã¼Ã§ durum, hata matrisi, font fallback.
+- `runtime.spec.ts` â€” Ã¼Ã§Ã¼ncÃ¼ taraf istek yokluÄŸu, motion kÃ¼tÃ¼phanesi yÃ¼kleme.
+- `budget.spec.ts` â€” JS gzip-9, asset bÃ¼tÃ§eleri, scroll CLS.
 
-   ```bash
-   (cd backend/hotel-api && ./mvnw flyway:migrate -Pseed -Dseed.env=local)
-   ```
+## Video kanÄ±tÄ±
 
-   > **Özel Postgres portu:** `.env` içinde `POSTGRES_PORT=5433` varsa seed komutuna şu override'ı ekleyin:
-   >
-   > ```bash
-   > (cd backend/hotel-api && ./mvnw flyway:migrate -Pseed -Dseed.env=local \
-   >   "-DHOTEL_CORE_DB_URL=jdbc:postgresql://localhost:5433/hotel_core")
-   > ```
+`scroll-story-video.spec.ts` Playwright `video` kaydÄ±nÄ± 1280Ã—800'de alÄ±r ve
+`ffmpeg-static` ile VP9 `.webm`'e dÃ¶nÃ¼ÅŸtÃ¼rÃ¼r. Ã‡Ä±ktÄ±
+`specs/done/evidence/0003/AC-2-home-scroll-story.webm` olur; sÃ¼re â‰¤15 sn,
+boyut â‰¤5.242.880 B'dir. `ffprobe-static` sÃ¼re/akÄ±ÅŸ kontrolÃ¼nde kullanÄ±lÄ±r.
 
-   > `seed` profili ortam guard'ı taşır: `-Dseed.env=local|ci` ve `localhost`/`127.0.0.1` JDBC host'u zorunludur; aksi halde fail-fast eder. Seed SQL ayrıca hedef veritabanında `local-ci-seed` local/CI database comment marker'ını arar (bkz. `infra/README.md`).
+## Lighthouse
 
-7. **Aşama 2 (`@seeded`): Dolu vitrin (TR/EN + dil geçişi), yükleme/hata ve `admin-web` smoke testlerini çalıştırın:**
+`0003` iÃ§in Lighthouse CI gate'i yoktur. KanÄ±t Ã¼retimi:
 
-   ```bash
-   (cd e2e && npx playwright test --grep @seeded)
-   ```
+```bash
+cd e2e
+CHROME_PATH="$(node -e "console.log(require('playwright').chromium.executablePath())")"
+npx lighthouse@10.4.0 http://localhost:3000/tr \
+  --only-categories=performance --form-factor=mobile --screenEmulation.mobile \
+  --throttling-method=devtools --output=json --output=html \
+  --chrome-path="$CHROME_PATH" --chrome-flags="--headless --no-sandbox"
+```
 
-Test koşumu sırasında görsel kanıtlar `specs/done/evidence/0002/` dizinine üretilir (`specs/done/evidence/0001/` arşivi değiştirilmez).
+3 koÅŸunun median LCP/CLS deÄŸeri `AC-5-lighthouse-mobile.md` ve
+`AC-5-lighthouse-mobile.html` olarak saklanÄ±r.
+
+## Ä°ki aÅŸamalÄ± 0002 akÄ±ÅŸÄ±
+
+AyrÄ±ntÄ±lÄ± altyapÄ±, migration, seed ve backend/frontend baÅŸlatma adÄ±mlarÄ± iÃ§in
+Ã¶nceki bÃ¶lÃ¼mdeki komutlar geÃ§erlidir:
+
+1. AltyapÄ± + migration (seed'siz)
+2. Backend/frontend build + start
+3. `@empty` (geÃ§ici kanÄ±t kÃ¶kÃ¼)
+4. Seed (`-Pseed -Dseed.env=local|ci`)
+5. `@seeded` smoke (geÃ§ici kanÄ±t kÃ¶kÃ¼)
+6. `@seeded` design (varsayÄ±lan kanÄ±t kÃ¶kÃ¼)
+7. SHA-256 manifest doÄŸrulamasÄ±
