@@ -4,13 +4,13 @@
 - 0002 smoke (`@empty` 1 + `@seeded` 3): **4/4 passed**
   - 0002 kanıt kökü geçici dizin kullanıldı; arşiv değişmedi.
   - Bu turda `@seeded` **3/3** yeniden koşuldu; `@empty` CI'da temiz DB ile koşar.
-- 0003 design (`@design @seeded`): **38/38 passed**
+- 0003 design (`@design @seeded`): **40/40 passed**
 - Axe: altı rotada kritik/ciddi ihlal **0**
-- JS bütçesi: **206.819 B / 256.000 B** (gzip-9)
+- JS bütçesi: **206.826 B / 256.000 B** (gzip-9)
 - CLS (scroll): **0.0000**; Lighthouse CLS: **0.042**
-- Lighthouse mobil (devtools throttling, 3 koşu median): **LCP 2316,31 ms**,
+- Lighthouse mobil (devtools throttling, 3 koşu median): **LCP 2289,97 ms**,
   performans **0.96**
-- Video kanıtı: **3,9 sn / 468.529 B** (VP9, 1280×800)
+- Video kanıtı: **4,1 sn / 527.052 B** (VP9, 1280×800)
 - `0002` kanıt SHA-256: **UNCHANGED (12 dosya)**
 
 ## 2026-10-25 code review fixleri
@@ -38,6 +38,14 @@
 - **CR-7:** `navigator.connection` `change` olayı dinlenir; save-data açılınca
   video sökülür, kapanınca yeniden değerlendirilir. Runtime E2E her iki yönü
   doğrular.
+- **CR-8:** Font failure-path testi gerçek `route.abort("failed")` ile üç font
+  isteğini düşürür; font face'ler `error` durumuna geçer, metin sistem
+  fallback'iyle ölçülür ve yalnız beklenen `net::ERR_FAILED` kaynak logları
+  kabul edilir. Video için gerçek preflight 404 ve gerçek kaynak 404'leri
+  (WebM + MP4) ayrı test edilir; `<source>` error olayı, posterin kalması ve
+  videonun kaldırılması doğrulanır. Glyph fallback testi ayrı adlandırıldı.
+  Tarayıcının kaçınılmaz kaynak logu spec `B-13`'te açık istisna olarak
+  tanımlandı.
 
 ## Komutlar
 

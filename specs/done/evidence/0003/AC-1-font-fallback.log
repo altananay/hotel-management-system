@@ -1,1 +1,1 @@
-A valid WOFF2 fixture without Latin glyphs was served for every font request; the rendered width matched the same stack without Source Sans 3, proving the system fallback, and no console errors were produced.
+All 3 font requests failed with net::ERR_FAILED; font faces entered the error state, the rendered width matched the same stack without Source Sans 3, and the only console messages were the browser's expected resource errors (no application/page errors).

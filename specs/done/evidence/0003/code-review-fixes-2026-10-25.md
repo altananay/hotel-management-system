@@ -22,16 +22,34 @@
 
 - `e2e/helpers/console.ts` içindeki `appErrors()` ve `RESOURCE_ERROR` filtresi
   tamamen kaldırıldı. Testler artık ham `console.errors` dizisini doğrular.
-- Video preflight 404 testi, Chromium'un gerçek 404 kaynak logunu üretmeyecek
-  şekilde `fetch` shim'i ile aynı `response.ok === false` dalını çalıştırır;
-  poster kalır ve konsol temiz kalır.
-- Font fallback testi artık istek abort etmez. Latin glyph'i olmayan geçerli
-  WOFF2 fixture'ı (`e2e/fixtures/fonts/empty-latin.woff2`) tüm font
-  isteklerine servis edilir. Ölçülen metin genişliği, aynı font yığınının
-  `Source Sans 3` olmadan genişliğiyle eşleşir; bu sistem fallback'ini kanıtlar
-  ve konsol hatası üretmez.
+- Video preflight 404 için gerçek 404 ağ testi CR-8'de eklendi; bu bölümde
+  yalnız geniş kaynak-hatası filtresinin kaldırılması ele alındı.
+- Font glyph fallback testi geçerli, Latin glyph'i olmayan WOFF2 fixture'ı
+  (`e2e/fixtures/fonts/empty-latin.woff2`) ile ayrı tutuldu. Gerçek font
+  yükleme hatası testi CR-8'de `route.abort("failed")` ile eklendi.
 - Test adları "application console error" yerine "console error" olarak
   güncellendi.
+
+### CR-8 — Gerçek failure-path kanıtları
+
+- **Font:** `shouldFallbackToASystemFontWhenFontRequestsFail` testi üç font
+  isteğini gerçekten `route.abort("failed")` ile düşürür. Font face'ler
+  `error` durumuna geçer, metin genişliği `Source Sans 3`'süz yığınla
+  eşleşir ve ham konsolda yalnız üç beklenen `net::ERR_FAILED` kaynak logu
+  bulunur; `pageerror`/uygulama hatası yoktur.
+- **Glyph fallback:** Geçerli fixture testi
+  `shouldFallbackToASystemFontWhenTheCustomFontLacksLatinGlyphs` olarak
+  yeniden adlandırıldı; `AC-1-font-glyph-fallback.log` yazar.
+- **Video preflight 404:** Gerçek `HEAD` isteği 404 döner; yanıt gerçekten
+  `HEAD/404` olarak doğrulanır, poster kalır, video mount edilmez ve yalnız
+  beklenen tek 404 kaynak logu kabul edilir.
+- **Video kaynak hatası:** `HEAD` 200 ile preflight geçer; WebM ve MP4
+  kaynakları gerçek 404 döner. `<source>` error olayı yakalanır, video
+  DOM'dan kaldırılır, poster kalır; iki beklenen 404 kaynak logu dışında
+  uygulama hatası yoktur. Son `<source>` üzerindeki `onError` fallback'i
+  deterministik kılar.
+- Tarayıcının kaçınılmaz kaynak logu spec `B-13` ve `docs/frontend.md` hata
+  matrisinde açık istisna olarak tanımlandı.
 
 ### CR-4 — Parallax testi
 
@@ -79,12 +97,12 @@
 |---|---|
 | `web` lint + tsc + guard | PASS |
 | Vitest | **39/39** |
-| 0003 design E2E | **38/38** |
+| 0003 design E2E | **40/40** |
 | 0002 smoke `@seeded` | **3/3** |
 | 0002 kanıt SHA-256 | **UNCHANGED (12 dosya)** |
 | Axe kritik/ciddi | **0** |
-| JS gzip-9 | **206.819 B / 256.000 B** |
-| Lighthouse mobil LCP (3 koşu median) | **2316,31 ms** |
+| JS gzip-9 | **206.826 B / 256.000 B** |
+| Lighthouse mobil LCP (3 koşu median) | **2289,97 ms** |
 | Lighthouse CLS | **0.042** |
 | Guard raw-color self-test | FAIL (beklenen) → PASS |
 
