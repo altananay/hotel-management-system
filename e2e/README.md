@@ -92,6 +92,11 @@ npx lighthouse@10.4.0 http://localhost:3000/tr \
 
 ## İki aşamalı 0002 akışı
 
+> **Windows notu:** Yerelde `mvn verify` çalıştırırken backend `java -jar` ile
+> açıksa Spring Boot `repackage` aşaması jar dosyasını kilitleyebilir. Ya
+> backend'i durdurun ya da `-Dspring-boot.repackage.skip=true` kullanın; CI'da
+> uygulama çalışmadığı için bu durum oluşmaz.
+
 Ayrıntılı altyapı, migration, seed ve backend/frontend başlatma adımları için
 önceki bölümdeki komutlar geçerlidir:
 

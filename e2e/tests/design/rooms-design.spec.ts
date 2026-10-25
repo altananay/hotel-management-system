@@ -50,6 +50,9 @@ test.describe("Design — room showcase (AC-3, AC-6, B-13, B-16)", () => {
       await expect(page.getByTestId("site-footer")).toBeVisible();
       await expect(page.getByTestId("rooms-list")).toBeVisible();
       await expect(page.getByTestId("room-card")).toHaveCount(3);
+      for (const card of await page.getByTestId("room-card").all()) {
+        await expect(card.getByTestId("room-card-amenity")).toHaveCount(3);
+      }
 
       for (const testId of [
         "rooms-list",
