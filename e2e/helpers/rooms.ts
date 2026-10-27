@@ -16,14 +16,14 @@ export const SAMPLE_ROOMS = {
           nameEn: "Private Carved-Stone Jacuzzi",
         },
         {
-          code: "wifi",
-          nameTr: "Yüksek Hızlı Kablosuz İnternet",
-          nameEn: "High-Speed Wireless Internet",
-        },
-        {
           code: "espresso_bar",
           nameTr: "Özel Seçki Kahve ve Çay Köşesi",
           nameEn: "Artisan Espresso & Tea Bar",
+        },
+        {
+          code: "wifi",
+          nameTr: "Yüksek Hızlı Kablosuz İnternet",
+          nameEn: "High-Speed Wireless Internet",
         },
       ],
     },
@@ -36,14 +36,14 @@ export const SAMPLE_ROOMS = {
       maxGuests: 3,
       amenities: [
         {
-          code: "terrace_view",
-          nameTr: "Panoramik Vadi ve Balon Terası",
-          nameEn: "Panoramic Valley & Balloon Terrace",
-        },
-        {
           code: "stone_fireplace",
           nameTr: "Geleneksel Taş Şömine",
           nameEn: "Traditional Stone Fireplace",
+        },
+        {
+          code: "terrace_view",
+          nameTr: "Panoramik Vadi ve Balon Terası",
+          nameEn: "Panoramic Valley & Balloon Terrace",
         },
         {
           code: "wifi",
@@ -61,14 +61,14 @@ export const SAMPLE_ROOMS = {
       maxGuests: 4,
       amenities: [
         {
-          code: "stone_fireplace",
-          nameTr: "Geleneksel Taş Şömine",
-          nameEn: "Traditional Stone Fireplace",
-        },
-        {
           code: "cave_jacuzzi",
           nameTr: "Özel Taş Oyma Jakuzi",
           nameEn: "Private Carved-Stone Jacuzzi",
+        },
+        {
+          code: "stone_fireplace",
+          nameTr: "Geleneksel Taş Şömine",
+          nameEn: "Traditional Stone Fireplace",
         },
         {
           code: "terrace_view",

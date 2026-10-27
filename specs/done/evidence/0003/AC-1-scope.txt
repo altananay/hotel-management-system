@@ -1,5 +1,5 @@
 0003 scope evidence (backend/admin-web untouched)
-Code head: 5f8b4b3 (QA fix commit)
+Code head: 65fda1f (QA amenity-order fix commit)
 Generated from the final working tree after QA evidence refresh; backend/ and admin-web/ are out of scope.
 
  .env.example                                       |   2 +
@@ -27,48 +27,48 @@ Generated from the final working tree after QA evidence refresh; backend/ and ad
  e2e/tests/design/hero.spec.ts                      | 311 ++++++++++++
  e2e/tests/design/home.spec.ts                      | 189 +++++++
  e2e/tests/design/metadata.spec.ts                  |  78 +++
- e2e/tests/design/rooms-design.spec.ts              | 246 +++++++++
+ e2e/tests/design/rooms-design.spec.ts              | 266 ++++++++++
  e2e/tests/design/runtime.spec.ts                   |  77 +++
  e2e/tests/design/scroll-story-video.spec.ts        |  86 ++++
  e2e/tests/design/scroll-story.spec.ts              | 102 ++++
  e2e/tests/smoke.spec.ts                            |   3 +-
  specs/0003-clarification-brief.md                  | 407 +++++++++++++++
- specs/done/0003-ui-design-system.md                | 372 ++++++++++++++
+ specs/done/0003-ui-design-system.md                | 373 ++++++++++++++
  specs/done/README.md                               |   1 +
  .../evidence/0003/AC-1-asset-and-font-budget.log   |  17 +
  specs/done/evidence/0003/AC-1-font-fallback.log    |   1 +
  .../evidence/0003/AC-1-font-glyph-fallback.log     |   1 +
  specs/done/evidence/0003/AC-1-runtime-requests.log |   5 +
- specs/done/evidence/0003/AC-1-scope.txt            | 141 ++++++
+ specs/done/evidence/0003/AC-1-scope.txt            | 149 ++++++
  .../done/evidence/0003/AC-2-credits-en-desktop.png | Bin 0 -> 198890 bytes
  .../done/evidence/0003/AC-2-credits-tr-desktop.png | Bin 0 -> 194765 bytes
  .../evidence/0003/AC-2-hero-crop-candidates.jpg    | Bin 0 -> 68114 bytes
  specs/done/evidence/0003/AC-2-hero-ffprobe.log     | 257 ++++++++++
  specs/done/evidence/0003/AC-2-home-en-desktop.png  | Bin 0 -> 2007622 bytes
- specs/done/evidence/0003/AC-2-home-nojs.png        | Bin 0 -> 1713290 bytes
- .../evidence/0003/AC-2-home-scroll-01-hero.png     | Bin 0 -> 794916 bytes
+ specs/done/evidence/0003/AC-2-home-nojs.png        | Bin 0 -> 2017881 bytes
+ .../evidence/0003/AC-2-home-scroll-01-hero.png     | Bin 0 -> 797495 bytes
  .../evidence/0003/AC-2-home-scroll-02-story.png    | Bin 0 -> 473829 bytes
- .../0003/AC-2-home-scroll-03-experience.png        | Bin 0 -> 435855 bytes
- .../0003/AC-2-home-scroll-04-rooms-cta.png         | Bin 0 -> 141584 bytes
- .../done/evidence/0003/AC-2-home-scroll-story.webm | Bin 0 -> 552273 bytes
+ .../0003/AC-2-home-scroll-03-experience.png        | Bin 0 -> 435833 bytes
+ .../0003/AC-2-home-scroll-04-rooms-cta.png         | Bin 0 -> 142433 bytes
+ .../done/evidence/0003/AC-2-home-scroll-story.webm | Bin 0 -> 546651 bytes
  specs/done/evidence/0003/AC-2-home-tr-desktop.png  | Bin 0 -> 2013079 bytes
  specs/done/evidence/0003/AC-2-home-tr-mobile.png   | Bin 0 -> 1048739 bytes
  .../evidence/0003/AC-2-home-video-fallback.png     | Bin 0 -> 716591 bytes
  .../0003/AC-2-home-video-source-fallback.png       | Bin 0 -> 716578 bytes
  specs/done/evidence/0003/AC-2-metadata.md          |  10 +
  specs/done/evidence/0003/AC-3-rooms-empty.png      | Bin 0 -> 131735 bytes
- specs/done/evidence/0003/AC-3-rooms-en-desktop.png | Bin 0 -> 392308 bytes
+ specs/done/evidence/0003/AC-3-rooms-en-desktop.png | Bin 0 -> 392434 bytes
  .../evidence/0003/AC-3-rooms-error-malformed.png   | Bin 0 -> 128572 bytes
  .../evidence/0003/AC-3-rooms-error-network.png     | Bin 0 -> 128572 bytes
  .../evidence/0003/AC-3-rooms-error-timeout.png     | Bin 0 -> 128572 bytes
  specs/done/evidence/0003/AC-3-rooms-error.png      | Bin 0 -> 128572 bytes
- specs/done/evidence/0003/AC-3-rooms-loading.png    | Bin 0 -> 136503 bytes
- specs/done/evidence/0003/AC-3-rooms-tr-desktop.png | Bin 0 -> 384318 bytes
- specs/done/evidence/0003/AC-3-rooms-tr-mobile.png  | Bin 0 -> 314252 bytes
+ specs/done/evidence/0003/AC-3-rooms-loading.png    | Bin 0 -> 136536 bytes
+ specs/done/evidence/0003/AC-3-rooms-tr-desktop.png | Bin 0 -> 385078 bytes
+ specs/done/evidence/0003/AC-3-rooms-tr-mobile.png  | Bin 0 -> 314321 bytes
  specs/done/evidence/0003/AC-4-axe-report.md        |  12 +
  .../evidence/0003/AC-4-keyboard-focus-header.png   | Bin 0 -> 795981 bytes
- .../evidence/0003/AC-4-mobile-menu-keyboard.png    | Bin 0 -> 27404 bytes
- .../evidence/0003/AC-4-reduced-motion-home.png     | Bin 0 -> 1708094 bytes
+ .../evidence/0003/AC-4-mobile-menu-keyboard.png    | Bin 0 -> 27235 bytes
+ .../evidence/0003/AC-4-reduced-motion-home.png     | Bin 0 -> 2013079 bytes
  .../evidence/0003/AC-5-asset-and-bundle-budget.log |  30 ++
  specs/done/evidence/0003/AC-5-build-guard.log      |  17 +
  .../done/evidence/0003/AC-5-lighthouse-mobile.html | 282 +++++++++++
@@ -76,10 +76,11 @@ Generated from the final working tree after QA evidence refresh; backend/ and ad
  specs/done/evidence/0003/AC-5-runtime-requests.log |   5 +
  specs/done/evidence/0003/AC-5-scroll-cls.log       |   1 +
  .../evidence/0003/AC-6-0002-evidence-sha256.txt    |   7 +
- specs/done/evidence/0003/AC-6-e2e-ci-summary.md    | 113 +++++
+ specs/done/evidence/0003/AC-6-e2e-ci-summary.md    | 120 +++++
  specs/done/evidence/0003/code-review-2026-10-25.md | 146 ++++++
  .../evidence/0003/code-review-fixes-2026-10-25.md  | 121 +++++
  .../0003/code-review-verification-2026-10-25.md    |  59 +++
+ .../0003/qa-fix-verification-2026-10-26.md         |  52 ++
  .../evidence/0003/qa-verification-2026-10-25.md    |  86 ++++
  web/package-lock.json                              | 563 ++++++++++++++++++++-
  web/package.json                                   |  11 +-
@@ -146,4 +147,4 @@ Generated from the final working tree after QA evidence refresh; backend/ and ad
  web/src/lib/motion/use-motion-preference.ts        |  59 +++
  web/src/lib/seo.ts                                 |  89 ++++
  web/src/test/setup.ts                              |  44 ++
- 144 files changed, 9587 insertions(+), 558 deletions(-)
+ 145 files changed, 9675 insertions(+), 558 deletions(-)

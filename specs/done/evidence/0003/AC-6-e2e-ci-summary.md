@@ -10,7 +10,7 @@
 - CLS (scroll): **0.0000**; Lighthouse CLS: **0.042**
 - Lighthouse mobil (devtools throttling, 3 koşu median): **LCP 2289,97 ms**,
   performans **0.96**
-- Video kanıtı: **4,24 sn / 552.273 B** (VP9, 1280×800)
+- Video kanıtı: **4,00 sn / 546.651 B** (VP9, 1280×800)
 - `0002` kanıt SHA-256: **UNCHANGED (12 dosya)**
 
 ## 2026-10-25 code review fixleri
@@ -60,14 +60,18 @@
   backend jar'ı nedeniyle `spring-boot:repackage` kilidi notu ve
   `-Dspring-boot.repackage.skip=true` önerisi eklendi.
 - **QA-0003-3 (mock veri):** `SAMPLE_ROOMS` gerçek seed ile hizalandı; her
-  odada **3 olanak** var. Design testi kart başına 3 olanak doğrular ve
-  `AC-3-rooms-*` ekran görüntüleri gerçek üretim dağılımına yakın veriyle
+  odada **3 olanak** ve `code` ASC sırası var. Design testi kart başına
+  olanak metin sırasını birebir doğrular; `AC-3-rooms-*` ekran görüntüleri
   yeniden alındı.
+- **QA-0003-3 sıra fix:** 2026-10-27'de mock sırası düzeltildi; kod head
+  `65fda1f`; CI run
+  [40594795547](https://github.com/altananay/hotel-management-system/actions/runs/40594795547)
+  (`8353ee0`) success.
 
 ## Kanıt revizyonu
 
-- **Kod head:** `5f8b4b3` (QA fix commit'i)
-- Bu evidence seti `5f8b4b3` ağacında yeniden üretildi; sonraki commit yalnız
+- **Kod head:** `65fda1f` (QA sıra fix commit'i; QA-1 ilk kanıt turu `5f8b4b3`)
+- Bu evidence seti `65fda1f` ağacında yeniden üretildi; sonraki commit yalnız
   kanıt/rapor dosyalarını değiştirir.
 - `AC-1-asset-and-font-budget.log` / `AC-5-build-guard.log`: LF checkout,
   `OFL-SourceSans3.txt` **4.486 B**.
@@ -75,7 +79,9 @@
   kapsam dışı.
 - CI: kapanış #39 ve #40 success; QA fix run'ı
   [40232356949](https://github.com/altananay/hotel-management-system/actions/runs/40232356949)
-  (`45e6fc8`) success.
+  (`45e6fc8`) ve sıra fix run'ı
+  [40594795547](https://github.com/altananay/hotel-management-system/actions/runs/40594795547)
+  (`8353ee0`) success.
 
 ## Komutlar
 
@@ -106,6 +112,8 @@ node scripts/sha256-manifest.mjs verify ../specs/done/evidence/0002 "$RUNNER_TEM
     GitGuardian ayrıca success.
 - **QA fix CI run:** [40232356949](https://github.com/altananay/hotel-management-system/actions/runs/40232356949)
   — head `45e6fc8`, sonuç **success**.
+- **QA amenity-order fix CI run:** [40594795547](https://github.com/altananay/hotel-management-system/actions/runs/40594795547)
+  — head `8353ee0`, sonuç **success**.
 - **Neden ilk PR'da run oluşmadı:** Branch `releasable` tabanlıydı, PR base'i
   `integration` idi. İki geçmiş ayrıştığı ve conflict oluştuğu için PR
   `mergeable=false` / `dirty` kaldı; GitHub merge ref'i üretemedi ve
