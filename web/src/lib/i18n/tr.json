@@ -4,18 +4,102 @@
   "languageLabel": "Dil",
   "switchTr": "TR",
   "switchEn": "EN",
+  "nav": {
+    "home": "Ana Sayfa",
+    "rooms": "Odalar",
+    "ariaLabel": "Ana menü"
+  },
+  "skipToContent": "İçeriğe geç",
+  "mobileMenu": {
+    "open": "Menüyü aç",
+    "close": "Menüyü kapat"
+  },
   "home": {
     "badge": "NEVŞEHİR · KAPADOKYA MİRAS KONAKLAMA",
     "heroTitle": "Tarihi Tüf Kayalara Oyulmuş Zamansız Bir Kapadokya Deneyimi",
     "heroDescription": "Binlerce yıllık vadi manzarasına uyanacağınız kemerli mağara süitlerimiz ve doğal taş odalarımızla Kapadokya'nın büyüleyici ruhunu keşfedin.",
     "exploreRoomsCta": "Oda Koleksiyonunu Keşfet",
-    "highlights": {
-      "architectureTitle": "Özgün Taş ve Mağara Mimarisi",
-      "architectureDesc": "Geleneksel Kapadokya taş işçiliğiyle restore edilmiş, her biri kendine özgü dokuya sahip yaşam alanları.",
-      "terraceTitle": "Panoramik Vadi ve Balon Manzarası",
-      "terraceDesc": "Gün doğumunda gökyüzünü süsleyen sıcak hava balonlarını özel terasınızdan izleme ayrıcalığı.",
-      "hospitalityTitle": "Seçkin Konfor ve Dinginlik",
-      "hospitalityDesc": "Taş şömine, oyma jakuzi ve el dokuması halılarla tamamlanan huzurlu konaklama deneyimi."
+    "scrollHint": "Keşfetmek için kaydırın",
+    "story": {
+      "eyebrow": "HİKÂYEMİZ",
+      "title": "Taşın Hafızası, Konuğun Huzuru",
+      "paragraph1": "Kapadokya'nın binlerce yıllık tüf kayaları, bu kez bir konak olarak nefes alıyor. Her kemer, her niş ve her taş yüzey, bölgenin ustaları tarafından elde işlenerek bugünkü sakin formuna kavuştu.",
+      "paragraph2": "Odalarımızda doğal taşın serinliği, el dokuması tekstillerin sıcaklığıyla buluşuyor. Sabah, vadiden yükselen ışıkla; akşam, taş şöminenin çıtırtısıyla ritmini değiştiren bir gün sizi bekliyor.",
+      "paragraph3": "Burada konaklamak, Kapadokya'nın ritmine karışmak demek: yavaş, derin ve hatırlanan."
+    },
+    "experience": {
+      "eyebrow": "DENEYİM",
+      "title": "Kapadokya'yı Hissetmenin Dört Yolu",
+      "intro": "Konaklamanızı bir kaçıştan çok, bölgenin dokusuna dokunan bir deneyime dönüştüren ayrıntılar.",
+      "cards": {
+        "shelter": {
+          "title": "Taşın İçinde Bir Sığınak",
+          "description": "Geleneksel Kapadokya taş işçiliğiyle restore edilmiş, her biri kendine özgü dokuya sahip yaşam alanları."
+        },
+        "terrace": {
+          "title": "Vadi Terası ve Balon Manzarası",
+          "description": "Gün doğumunda gökyüzünü dolduran balonları, vadinin sessizliğine eşlik eden bir fincan kahveyle izleyin."
+        },
+        "comfort": {
+          "title": "Taş Oyma Jakuzi ve Şömine",
+          "description": "Tüf kayanın içine oyulmuş özel jakuzinizde günün yorgunluğunu bırakın; akşamı taş şöminenin başında tamamlayın."
+        },
+        "breakfast": {
+          "title": "Kapadokya Kahvaltısı",
+          "description": "Bölgenin köy ürünleri, ev yapımı reçeller ve taze ekmekle başlayan, uzun ve telaşsız bir sabah."
+        }
+      }
+    },
+    "roomsCta": {
+      "eyebrow": "ODALAR",
+      "title": "Her Biri Kendi Hikâyesini Taşıyan Odalar",
+      "body": "Kemerli mağara süitlerinden vadi manzaralı taş odalara uzanan koleksiyonumuzu keşfedin.",
+      "button": "Oda Koleksiyonunu Keşfet"
+    },
+    "contact": {
+      "eyebrow": "KONUM",
+      "title": "Kapadokya'nın Kalbinde",
+      "body": "Nevşehir'in tarihi dokusunda, vadiye bakan sakin bir konum. Yol tarifi ve konaklama sorularınız için resepsiyonumuzla iletişime geçebilirsiniz.",
+      "addressLabel": "Adres",
+      "phoneLabel": "Telefon",
+      "emailLabel": "E-posta",
+      "address": "Örnek Mahallesi, Taş Konak Caddesi No: 1, Nevşehir / Kapadokya",
+      "phone": "+90 000 000 00 00",
+      "email": "ornek@example.com"
+    }
+  },
+  "footer": {
+    "tagline": "Kapadokya'nın taş mirasında, sade ve hatırlanan bir konaklama.",
+    "copyright": "© 2026 Kapadokya Taş Konak Otel. Tüm hakları saklıdır.",
+    "creditsLabel": "Kaynaklar ve Lisanslar",
+    "contactLabel": "İletişim"
+  },
+  "credits": {
+    "title": "Kaynaklar ve Lisanslar",
+    "intro": "Bu sitede kullanılan görsel ve tipografik kaynakların lisans bilgileri aşağıdadır.",
+    "mediaHeading": "Görsel Medya",
+    "typographyHeading": "Tipografi",
+    "contentNoteHeading": "İçerik Notu",
+    "contentNote": "İletişim bilgileri temsilîdir; gerçek adres, telefon ve e-posta ile değiştirilmelidir.",
+    "videoEntry": "Hero video — Pexels, video 30653318; Pexels License.",
+    "fontCormorant": "Cormorant Garamond — SIL Open Font License 1.1.",
+    "fontSourceSans": "Source Sans 3 — SIL Open Font License 1.1."
+  },
+  "meta": {
+    "home": {
+      "title": "Kapadokya Taş Konak Otel | Butik Mağara ve Taş Odalar",
+      "description": "Nevşehir Kapadokya'da tarihi tüf kayalara oyulmuş butik taş konak. Kemerli mağara süitleri, vadi terası ve sakin bir konaklama deneyimi.",
+      "ogAlt": "Kapadokya Taş Konak Otel — taş kemerler ve vadi manzarası"
+    },
+    "rooms": {
+      "title": "Oda ve Süit Koleksiyonu | Kapadokya Taş Konak Otel",
+      "description": "Kemerli mağara süitleri ve vadi manzaralı taş odalar. Kapadokya Taş Konak Otel'in oda koleksiyonunu ve olanaklarını keşfedin.",
+      "ogAlt": "Kapadokya Taş Konak Otel oda koleksiyonu"
+    },
+    "credits": {
+      "title": "Kaynaklar ve Lisanslar | Kapadokya Taş Konak Otel",
+      "description": "Kapadokya Taş Konak Otel web sitesinde kullanılan görsel medya ve tipografi kaynaklarının lisans bilgileri.",
+      "ogAlt": "Kapadokya Taş Konak Otel kaynaklar ve lisanslar"
     }
   },
   "rooms": {
