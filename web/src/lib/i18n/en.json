@@ -4,18 +4,102 @@
   "languageLabel": "Language",
   "switchTr": "TR",
   "switchEn": "EN",
+  "nav": {
+    "home": "Home",
+    "rooms": "Rooms",
+    "ariaLabel": "Main menu"
+  },
+  "skipToContent": "Skip to content",
+  "mobileMenu": {
+    "open": "Open menu",
+    "close": "Close menu"
+  },
   "home": {
     "badge": "NEVŞEHİR · CAPPADOCIA HERITAGE STAY",
     "heroTitle": "A Timeless Cappadocia Sanctuary Carved Into Ancient Tuff Stone",
     "heroDescription": "Discover the enchanting spirit of Cappadocia in our vaulted cave suites and handcrafted stone rooms overlooking millennia-old valleys at sunrise.",
     "exploreRoomsCta": "Explore Room Collection",
-    "highlights": {
-      "architectureTitle": "Authentic Cave & Stone Craft",
-      "architectureDesc": "Restored with traditional Cappadocian masonry, offering living spaces with distinct historical character.",
-      "terraceTitle": "Panoramic Valley & Balloon Views",
-      "terraceDesc": "Watch sunrise hot-air balloons drift across the horizon from tranquil private terraces.",
-      "hospitalityTitle": "Refined Comfort & Serenity",
-      "hospitalityDesc": "Thoughtfully appointed with stone fireplaces, carved jacuzzis, and hand-woven Anatolian rugs."
+    "scrollHint": "Scroll to discover",
+    "story": {
+      "eyebrow": "OUR STORY",
+      "title": "The Memory of Stone, the Calm of the Guest",
+      "paragraph1": "Cappadocia's millennia-old tuff rock breathes anew as a mansion. Every arch, niche, and stone surface was shaped by local craftsmen into the calm form it holds today.",
+      "paragraph2": "In our rooms, the coolness of natural stone meets the warmth of hand-woven textiles. Days here change rhythm with the light rising over the valley and the crackle of a stone fireplace at dusk.",
+      "paragraph3": "To stay here is to join Cappadocia's rhythm: slow, deep, and remembered."
+    },
+    "experience": {
+      "eyebrow": "EXPERIENCE",
+      "title": "Four Ways to Feel Cappadocia",
+      "intro": "Details that turn your stay into an experience touching the very texture of the region.",
+      "cards": {
+        "shelter": {
+          "title": "A Sanctuary Within Stone",
+          "description": "Living spaces restored with traditional Cappadocian masonry, each with its own distinct texture."
+        },
+        "terrace": {
+          "title": "Valley Terrace & Balloon Views",
+          "description": "Watch the sunrise balloons fill the sky with a cup of coffee beside the silence of the valley."
+        },
+        "comfort": {
+          "title": "Carved Jacuzzi & Stone Fireplace",
+          "description": "Leave the day's tiredness in your private jacuzzi carved into tuff rock, then complete the evening by the stone fireplace."
+        },
+        "breakfast": {
+          "title": "Cappadocia Breakfast",
+          "description": "A long, unhurried morning that begins with village produce, homemade preserves, and fresh bread."
+        }
+      }
+    },
+    "roomsCta": {
+      "eyebrow": "ROOMS",
+      "title": "Rooms That Carry Their Own Story",
+      "body": "Discover our collection, from arched cave suites to stone rooms overlooking the valley.",
+      "button": "Explore Room Collection"
+    },
+    "contact": {
+      "eyebrow": "LOCATION",
+      "title": "In the Heart of Cappadocia",
+      "body": "A quiet location overlooking the valley within Nevşehir's historic texture. Contact our front desk for directions and stay enquiries.",
+      "addressLabel": "Address",
+      "phoneLabel": "Phone",
+      "emailLabel": "Email",
+      "address": "Sample District, Stone Mansion Street No: 1, Nevşehir / Cappadocia",
+      "phone": "+90 000 000 00 00",
+      "email": "ornek@example.com"
+    }
+  },
+  "footer": {
+    "tagline": "A quiet, memorable stay within Cappadocia's stone heritage.",
+    "copyright": "© 2026 Cappadocia Stone Mansion Hotel. All rights reserved.",
+    "creditsLabel": "Credits & Licenses",
+    "contactLabel": "Contact"
+  },
+  "credits": {
+    "title": "Credits & Licenses",
+    "intro": "License information for the visual and typographic assets used on this site is listed below.",
+    "mediaHeading": "Visual Media",
+    "typographyHeading": "Typography",
+    "contentNoteHeading": "Content Note",
+    "contentNote": "Contact details are placeholders and must be replaced with the real address, phone, and email.",
+    "videoEntry": "Hero video — Pexels, video 30653318; Pexels License.",
+    "fontCormorant": "Cormorant Garamond — SIL Open Font License 1.1.",
+    "fontSourceSans": "Source Sans 3 — SIL Open Font License 1.1."
+  },
+  "meta": {
+    "home": {
+      "title": "Cappadocia Stone Mansion Hotel | Boutique Cave & Stone Rooms",
+      "description": "A boutique stone mansion carved into ancient tuff in Nevşehir, Cappadocia. Arched cave suites, valley terraces, and a quietly refined stay.",
+      "ogAlt": "Cappadocia Stone Mansion Hotel — stone arches and valley views"
+    },
+    "rooms": {
+      "title": "Rooms & Suites | Cappadocia Stone Mansion Hotel",
+      "description": "Arched cave suites and valley-view stone rooms. Explore the room collection and amenities of Cappadocia Stone Mansion Hotel.",
+      "ogAlt": "Cappadocia Stone Mansion Hotel room collection"
+    },
+    "credits": {
+      "title": "Credits & Licenses | Cappadocia Stone Mansion Hotel",
+      "description": "License information for the visual media and typography used on the Cappadocia Stone Mansion Hotel website.",
+      "ogAlt": "Cappadocia Stone Mansion Hotel credits and licenses"
     }
   },
   "rooms": {
