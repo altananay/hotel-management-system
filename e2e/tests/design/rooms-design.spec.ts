@@ -50,8 +50,28 @@ test.describe("Design — room showcase (AC-3, AC-6, B-13, B-16)", () => {
       await expect(page.getByTestId("site-footer")).toBeVisible();
       await expect(page.getByTestId("rooms-list")).toBeVisible();
       await expect(page.getByTestId("room-card")).toHaveCount(3);
-      for (const card of await page.getByTestId("room-card").all()) {
-        await expect(card.getByTestId("room-card-amenity")).toHaveCount(3);
+      const expectedAmenities = [
+        [
+          "Özel Taş Oyma Jakuzi",
+          "Özel Seçki Kahve ve Çay Köşesi",
+          "Yüksek Hızlı Kablosuz İnternet",
+        ],
+        [
+          "Geleneksel Taş Şömine",
+          "Panoramik Vadi ve Balon Terası",
+          "Yüksek Hızlı Kablosuz İnternet",
+        ],
+        [
+          "Özel Taş Oyma Jakuzi",
+          "Geleneksel Taş Şömine",
+          "Panoramik Vadi ve Balon Terası",
+        ],
+      ];
+      const cards = await page.getByTestId("room-card").all();
+      for (const [index, card] of cards.entries()) {
+        await expect(card.getByTestId("room-card-amenity")).toHaveText(
+          expectedAmenities[index],
+        );
       }
 
       for (const testId of [
