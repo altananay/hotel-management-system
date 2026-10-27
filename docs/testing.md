@@ -22,9 +22,10 @@
 ## 3. Arayüz: Görsel Kanıt + Smoke
 
 - Her mini-spec kriteri için ekran görüntüsü alınır: `specs/done/evidence/<####>/AC-n-<english-name>.png` (isimler İngilizce kebab-case; içerik Türkçe)
+- **Video kanıtı:** Hareket/scroll içeren kriterler için `specs/done/evidence/<####>/AC-n-<english-name>.webm`; süre ≤ 15 sn, boyut ≤ 5 MB. Video `recordVideo` ile alınır, `ffmpeg` ile transcode edilir; `ffprobe` ile süre/akış doğrulanır.
 - **Kritik akışlara smoke test** yazılır (Playwright). Örnek zincir: "rezervasyon oluştur → fake ödeme → onay e-postası".
 - Bileşen/birim testleri: **Vitest** (+ Testing Library); API mock'ları MSW ile.
-- Her ekranda **yükleme / boş / hata** durumunun kanıtı zorunludur (bkz. `docs/frontend.md`).
+- Her ekranda **yükleme / boş / hata** durumunun kanıtı zorunludur (bkz. `docs/frontend.md`). Statik home/credits sayfaları bu zorunluluktan muaftır.
 - CI'da **lint + build** zorunludur; ayrıntılar `docs/frontend.md`.
 
 ## 4. Kanıtın Saklanması

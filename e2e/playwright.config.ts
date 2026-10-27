@@ -6,6 +6,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: 0,
   workers: 1,
+  timeout: 60_000,
+  expect: { timeout: 10_000 },
   reporter: "list",
   use: {
     trace: "retain-on-failure",

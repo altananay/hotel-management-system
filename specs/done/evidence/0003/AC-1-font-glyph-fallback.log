@@ -1,0 +1,1 @@
+A valid WOFF2 fixture without Latin glyphs was served for every font request; all faces loaded, the rendered width matched the same stack without Source Sans 3, proving glyph fallback, and no console errors were produced.
