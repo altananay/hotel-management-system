@@ -13,7 +13,7 @@
 - **Durum:** Tamamlandı
 - **Branch:** `feature/0003-ui-design-system`
 - **İlgili doküman/kararlar:** `docs/architecture.md` (§2, §5 R6, §10 D3/D7/D8/D9/D11/D18, §11), `docs/frontend.md` (İSKELET), `docs/conventions.md` (§1, §2.3, §5), `docs/testing.md` (§1, §3, §4), `docs/domain.md` (§1, §3.14), `docs/git.md` (§1, §5), `specs/done/0002-room-catalog.md`, `specs/0003-clarification-brief.md`; Onaylı kararlar: `CLARIFY-1A`…`CLARIFY-9A` ve `B-01`…`B-17` (2026-10-25); rev.2: QA bulguları (B-13 hata matrisi test eşlemesi, 767/768/1023/1024 sınırları, tüm sayfalarda konsol hatası) işlendi; rev.3: CR-8 gerçek failure-path testleri ve tarayıcı kaynak-logu istisnası işlendi
-- **Tarih:** 2026-10-25 *(Son revizyon: 2026-10-25, rev.3)*
+- **Tarih:** 2026-10-25 *(Son revizyon: 2026-10-25, rev.3 — Kapanış: 2026-10-26)*
 - **Sahip:** Analist (`analyst`)
 - **Onaylayan (Takım Yöneticisi):** Takım Yöneticisi (Onaylandı — 2026-10-25)
 
@@ -174,21 +174,22 @@ Kapadokya'daki butik otelin potansiyel misafirleri ve otel yönetimi, siteye gir
 
 ## 6. Definition of Done
 
-- [x] Tüm AC'ler doğrulandı (test ve/veya görsel kanıt)
-- [x] Pipeline yeşil (lint + build + test + kritik akış smoke) — CI 5/5, run `40227913825`
-- [x] Kod incelemesi onaylandı (Takım Yöneticisi) — CR-8 fix sonrası merge talimatı
-- [x] Davranış değiştiyse dokümanlar güncellendi
-- [x] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi
-- [x] SCORECARD dolduruldu
+- [x] Tüm AC'ler doğrulandı (test ve/veya görsel kanıt) — QA 2026-10-25: web 39/39, design 40/40, 0002 smoke 4/4, axe kritik/ciddi 0; QA fix 2026-10-26: design 40/40, smoke 3/3, 0002 kanıtları değişmedi. Kanıt: `qa-verification-2026-10-25.md`, `qa-fix-verification-2026-10-26.md`.
+- [x] Pipeline yeşil (lint + build + test + kritik akış smoke) — kapanış CI run [#40 40227913825](https://github.com/altananay/hotel-management-system/actions/runs/40227913825) ve QA fix CI run [#44 40232356949](https://github.com/altananay/hotel-management-system/actions/runs/40232356949) **success**.
+- [x] Kod incelemesi onaylandı (Takım Yöneticisi) — CR-1, CR-3…CR-8 fix turu (`code-review-fixes-2026-10-25.md`; CR-2 kapsam kararıyla kapalı) ve QA-0003 fix doğrulaması (`qa-fix-verification-2026-10-26.md`) sonrası kapanış talimatı (2026-10-26). Ara doğrulama: `code-review-verification-2026-10-25.md` (CR-8'in açıldığı tur).
+- [x] Davranış değiştiyse dokümanlar güncellendi — `docs/frontend.md`, `CREDITS.md`, `e2e/README.md`, `docs/testing.md` §3, `specs/done/README.md`, `.github/workflows/ci.yml`, `.env.example`.
+- [x] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi — `specs/done/0003-ui-design-system.md`, `specs/done/evidence/0003/` (PNG + `.webm` + loglar/raporlar).
+- [x] SCORECARD dolduruldu.
 
 ## 7. SCORECARD
 
 - **Spec revizyon sayısı:** 3
-- **Düzeltme turu sayısı:** 2 (ilk code review + CR-8 doğrulama turu)
-- **Bulgu gerçek/gürültü oranı:** 7/7 gerçek (CR-1, CR-3…CR-8); 0 gürültü
-- **Regresyon sayısı:** 0 (`0002` kanıt SHA-256 UNCHANGED, smoke 4/4)
+- **Düzeltme turu sayısı:** 3 (1) CR-1/CR-3…CR-7 kod inceleme fix turu; 2) CR-8 failure-path fix/doğrulama turu; 3) QA-0003-1…3 fix turu)
+- **Bulgu gerçek/gürültü oranı:** 10/10 gerçek (CR-1, CR-3…CR-8 = 7; QA-0003-1…3 = 3); 0 gürültü. CR-2 Takım Yöneticisi kapsam kararıyla kapalı.
+- **Regresyon sayısı:** 0 (0002 smoke 4/4; 0002 kanıtları SHA-256/`git diff` ile 12 dosya değişmedi)
 - **Kaçan hata (escaped bug):** 0
-- **Kapanış:** PR [#11](https://github.com/altananay/hotel-management-system/pull/11) → `integration` (squash `e15770c`); final CI run [40227913825](https://github.com/altananay/hotel-management-system/actions/runs/40227913825) **success**.
+- **Kapanış:** PR [#11](https://github.com/altananay/hotel-management-system/pull/11) → `integration` (squash `e15770c`); QA fix PR [#13](https://github.com/altananay/hotel-management-system/pull/13) (`7fe7797`); final CI run [#44 40232356949](https://github.com/altananay/hotel-management-system/actions/runs/40232356949) **success**.
+- **Kalan düşük öncelikli not:** Yok — QA-0003-3 mock `amenities` sıralaması 2026-10-27'de `code` ASC olarak düzeltildi; design testi metin sırasını doğruluyor, `AC-3` görselleri yenilendi (`qa-fix-verification-2026-10-26.md` §3.1).
 
 ## 8. Ek A — TR/EN Copy Deck (`B-03`)
 
