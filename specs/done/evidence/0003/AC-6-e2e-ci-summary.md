@@ -64,12 +64,14 @@
   olanak metin sırasını birebir doğrular; `AC-3-rooms-*` ekran görüntüleri
   yeniden alındı.
 - **QA-0003-3 sıra fix:** 2026-10-27'de mock sırası düzeltildi; kod head
-  `65fda1f`; CI run `PENDING`.
+  `65fda1f`; CI run
+  [40594795547](https://github.com/altananay/hotel-management-system/actions/runs/40594795547)
+  (`8353ee0`) success.
 
 ## Kanıt revizyonu
 
 - **Kod head:** `65fda1f` (QA sıra fix commit'i; QA-1 ilk kanıt turu `5f8b4b3`)
-- Bu evidence seti `5f8b4b3` ağacında yeniden üretildi; sonraki commit yalnız
+- Bu evidence seti `65fda1f` ağacında yeniden üretildi; sonraki commit yalnız
   kanıt/rapor dosyalarını değiştirir.
 - `AC-1-asset-and-font-budget.log` / `AC-5-build-guard.log`: LF checkout,
   `OFL-SourceSans3.txt` **4.486 B**.
@@ -77,7 +79,9 @@
   kapsam dışı.
 - CI: kapanış #39 ve #40 success; QA fix run'ı
   [40232356949](https://github.com/altananay/hotel-management-system/actions/runs/40232356949)
-  (`45e6fc8`) success.
+  (`45e6fc8`) ve sıra fix run'ı
+  [40594795547](https://github.com/altananay/hotel-management-system/actions/runs/40594795547)
+  (`8353ee0`) success.
 
 ## Komutlar
 
@@ -108,6 +112,8 @@ node scripts/sha256-manifest.mjs verify ../specs/done/evidence/0002 "$RUNNER_TEM
     GitGuardian ayrıca success.
 - **QA fix CI run:** [40232356949](https://github.com/altananay/hotel-management-system/actions/runs/40232356949)
   — head `45e6fc8`, sonuç **success**.
+- **QA amenity-order fix CI run:** [40594795547](https://github.com/altananay/hotel-management-system/actions/runs/40594795547)
+  — head `8353ee0`, sonuç **success**.
 - **Neden ilk PR'da run oluşmadı:** Branch `releasable` tabanlıydı, PR base'i
   `integration` idi. İki geçmiş ayrıştığı ve conflict oluştuğu için PR
   `mergeable=false` / `dirty` kaldı; GitHub merge ref'i üretemedi ve
