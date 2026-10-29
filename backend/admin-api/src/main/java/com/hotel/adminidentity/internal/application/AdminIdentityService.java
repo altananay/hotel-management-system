@@ -33,6 +33,7 @@ public class AdminIdentityService implements AdminIdentityApi {
     private final AdminLoginAttemptRepository attemptRepository;
     private final Argon2PasswordHasher passwordHasher;
     private final AdminSessionService sessionService;
+    private final AdminJwtService jwtService;
     private final AdminAuditApi auditApi;
     private final AdminBootstrapService bootstrapService;
     private final Clock clock;
@@ -42,6 +43,7 @@ public class AdminIdentityService implements AdminIdentityApi {
             AdminLoginAttemptRepository attemptRepository,
             Argon2PasswordHasher passwordHasher,
             AdminSessionService sessionService,
+            AdminJwtService jwtService,
             AdminAuditApi auditApi,
             AdminBootstrapService bootstrapService,
             Clock clock) {
@@ -49,6 +51,7 @@ public class AdminIdentityService implements AdminIdentityApi {
         this.attemptRepository = attemptRepository;
         this.passwordHasher = passwordHasher;
         this.sessionService = sessionService;
+        this.jwtService = jwtService;
         this.auditApi = auditApi;
         this.bootstrapService = bootstrapService;
         this.clock = clock;
@@ -114,6 +117,11 @@ public class AdminIdentityService implements AdminIdentityApi {
     @Override
     public void logout(String rawSessionToken, AdminClientContext context) {
         sessionService.logout(rawSessionToken, context);
+    }
+
+    @Override
+    public String issueJwt(AdminSessionView session) {
+        return jwtService.issue(session);
     }
 
     @Override

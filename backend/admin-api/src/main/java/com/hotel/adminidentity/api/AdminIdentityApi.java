@@ -9,6 +9,8 @@ public interface AdminIdentityApi {
 
     AdminSessionView validateSession(String rawSessionToken, AdminClientContext context);
 
+    String issueJwt(AdminSessionView session);
+
     void logout(String rawSessionToken, AdminClientContext context);
 
     AdminBootstrapOutcome bootstrap(AdminBootstrapCommand command);
