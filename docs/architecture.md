@@ -52,11 +52,17 @@ Personel ─► admin-web (Next.js, shadcn)        │
 | **adminidentity** | Admin hesapları, roller, oturumlar, JWT üretimi, JWKS yayını | Admin kullanıcıları, roller, oturumlar |
 | **adminaudit** | "Kim ne zaman ne yaptı" kaydı (platform olayları + iş işlemlerinin aktörü) | Audit kayıtları |
 | **preferences** | Kayıtlı filtreler, kullanıcı tercihleri | Tercihler |
-| **gateway** | hotel-api admin API'sine pass-through: kimlik iliştirme, zaman aşımı, hata eşleme | Veri sahibi değil |
+| **gateway** | hotel-api admin API'sine pass-through: zaman aşımı ve hata eşleme | Veri sahibi değil |
 
 Kurallar: gateway yalnızca **taşır**; dönüştürme dışında mantık eklemek yasaktır (§8.11). Admin-web'e özel bir birleştirme (aggregation) ihtiyacı doğarsa önce bu doküman güncellenir.
 
-**Modül bağımlılık listesi (kapalı):** `adminidentity`, `adminaudit`, `preferences` ve `gateway` arasında **onaylanmış çapraz bağımlılık yoktur; liste boştur.** Yeni bir çapraz bağımlılık gerektiğinde önce bu doküman güncellenir, ardından `AdminApiModularityTest`'teki kapalı izin listesine işlenir (§5 R3'teki kapalı liste felsefesinin aynısı).
+**Modül bağımlılık listesi (kapalı):**
+
+| Kaynak → Hedef | Tür | Kapsam |
+|---|---|---|
+| `adminidentity → adminaudit` | senkron | Login/logout/oturum iptali/bootstrap audit kaydı |
+
+Bu liste dışındaki çapraz bağımlılıklar yasaktır. `adminaudit → adminidentity` yönü özellikle yasaktır. Yeni bir çapraz bağımlılık gerektiğinde önce bu doküman güncellenir, ardından `AdminApiModularityTest`'teki kapalı izin listesine işlenir (§5 R3'teki kapalı liste felsefesinin aynısı).
 
 Ayrıca: admin-api'nin kendi REST yüzeyi de `/admin-api/**` ön ekini kullanır; admin-web yalnızca bu ön eki bilir. Gateway, gelen `/admin-api/**` isteğini hotel-api'nin aynı adlı yüzeyine iletir.
 
@@ -114,8 +120,9 @@ Yaprak modüller: `catalog`, `pricing`, `payment`. `catalog` asla `booking`'e ba
 
 ## 6. Güvenlik
 
-- **Admin JWT:** admin-api üretir (RS256, kısa ömürlü); `aud=hotel-admin-api`; `roles` claim. hotel-api, admin-api'nin JWKS public anahtarıyla doğrular. Anahtar yalnız admin-api'de yaşar.
-- **admin-web ↔ admin-api:** opak oturum çerezi (HttpOnly, Secure, SameSite=Lax) + CSRF double-submit + Origin kontrolü. Tarayıcıda token tutulmaz; adres aynı origin'dir (dev: Next rewrites; prod: reverse proxy).
+- **Admin JWT:** admin-api üretir (RS256, 5 dk, her istekte yeniden); `iss=admin-api`, `aud=hotel-admin-api`, `roles` array, `sub`, `iat`, `exp`, `jti`, `kid`. hotel-api, admin-api'nin JWKS public anahtarıyla doğrular; JWKS `/admin-api/.well-known/jwks.json`. Anahtar yalnız admin-api'de yaşar; local/CI aktif anahtar `ADMIN_JWT_ACTIVE_KEY_PATH` altında git dışı dosyadadır. Önceki public anahtar `ADMIN_JWT_PREVIOUS_PUBLIC_KEY_PATH` ile en fazla 6 dk (5 dk TTL + 60 sn skew) yayında kalır. hotel-api JWKS'i 5 dk önbellekler; bilinmeyen `kid`de yeniler; JWKS erişilemezse 503 döner.
+- **admin-web ↔ admin-api:** opak `ADMIN_SESSION` oturum çerezi (HttpOnly, `SameSite=Lax`, `Path=/`, prod'da Secure) + okunabilir `XSRF-TOKEN` + `X-XSRF-TOKEN` double-submit + Origin allowlist. Oturum 30 dk idle + 8 saat mutlak; DB'de yalnız token özeti. Login öncesi CSRF 15 dk, login sonrası oturum ömrüne bağlıdır. CSRF doğrulaması gateway'e geçmeden yapılır; token tarayıcıda JWT olarak tutulmaz.
+- **Kimlik iliştirme:** Oturum doğrulama ve JWT üretimi admin-api kök kimlik filtresindedir; gateway yalnız Bearer JWT'yi taşır. Gateway istemci `Cookie`, `Authorization`, `Origin`/`Referer`, `X-Forwarded-*` ve iç `X-*` başlıklarını upstream'e taşımaz; `X-Request-Id`'yi kendisi üretir. Timeout 3 sn → 504, bağlantı hatası → 502.
 - **Müşteri JWT'si V1'de yok** (müşteri hesabı yok — D4). Public akış anonimdir.
 - **Webhook'lar:** JWT'siz; sağlayıcı imzası + idempotency + replay koruması zorunlu.
 - **PCI:** kart verisi alınmaz/saklanmaz; yalnız hosted checkout.
