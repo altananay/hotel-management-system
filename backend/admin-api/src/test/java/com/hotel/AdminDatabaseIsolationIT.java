@@ -79,6 +79,8 @@ class AdminDatabaseIsolationIT {
         registry.add("spring.datasource.username", () -> "app");
         registry.add("spring.datasource.password", () -> "app_local_dev");
         registry.add("spring.flyway.enabled", () -> "false");
+        registry.add("admin.jwt.allow-generated-dev-key", () -> "true");
+        registry.add("admin.jwt.active-key-path", () -> "target/test-admin-jwt.pem");
     }
 
     @Autowired private JdbcTemplate jdbcTemplate;

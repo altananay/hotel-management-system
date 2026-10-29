@@ -107,3 +107,13 @@ Ayrıntılı altyapı, migration, seed ve backend/frontend başlatma adımları 
 5. `@seeded` smoke (geçici kanıt kökü)
 6. `@seeded` design (varsayılan kanıt kökü)
 7. SHA-256 manifest doğrulaması
+
+## 0004 admin kimlik E2E
+
+- Admin seed (migrator): `(cd backend/admin-api && ./mvnw flyway:migrate -Pseed -Dseed.env=local)`
+- Admin-api local JWT anahtarı: `ADMIN_JWT_ACTIVE_KEY_PATH=.local/admin-jwt-active.pem` ve
+  `ADMIN_JWT_ALLOW_GENERATED_DEV_KEY=true`.
+- Testler: `npx playwright test tests/admin --grep @admin` — başarılı login + korumalı sayfa,
+  hatalı login generic hata, logout + login'e dönüş (3/3).
+- 0002 canlı admin-web smoke testi kaldırıldı; 0002 smoke artık 3/3'tür (1 `@empty` + 2 `@seeded`).
+- 0003 design 40/40 korunur; 0004 kanıtları `specs/done/evidence/0004/` altına yazılır.

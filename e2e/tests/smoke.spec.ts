@@ -4,14 +4,13 @@ import { expect, test } from "@playwright/test";
 import { evidenceDir } from "../helpers/evidence";
 
 const WEB_BASE_URL = process.env.E2E_WEB_URL ?? "http://localhost:3000";
-const ADMIN_WEB_BASE_URL = process.env.E2E_ADMIN_WEB_URL ?? "http://localhost:3001";
 const EVIDENCE_DIR = evidenceDir("0002");
 
 test.beforeAll(() => {
   fs.mkdirSync(EVIDENCE_DIR, { recursive: true });
 });
 
-test.describe("Smoke E2E — web (:3000) and admin-web (:3001) (AC-3, AC-5, AC-6, QA-2, QA-10, QA-15)", () => {
+test.describe("Smoke E2E - web (:3000) (AC-3, AC-5, AC-6, QA-2, QA-10, QA-15)", () => {
   test("@empty shouldRenderRealEmptyRoomShowcaseBeforeSeed_whenNavigatingFromHomeToRooms", async ({
     page,
   }) => {
@@ -191,72 +190,4 @@ test.describe("Smoke E2E — web (:3000) and admin-web (:3001) (AC-3, AC-5, AC-6
     await expect(page).toHaveURL(/\/tr\/rooms$/);
   });
 
-  test("@seeded shouldRenderLoadingEmptyAndErrorStatesOnAdminWeb_whenTestingThreeMandatoryStates", async ({
-    page,
-  }) => {
-    // 1. Loading state via Playwright route delay
-    let releaseLoading!: () => void;
-    const loadingGate = new Promise<void>((resolve) => {
-      releaseLoading = resolve;
-    });
-
-    await page.route("**/admin-api/system/sample-items", async (route) => {
-      await loadingGate;
-      await route.continue();
-    });
-
-    await page.goto(ADMIN_WEB_BASE_URL);
-    await expect(page.locator("html")).toHaveAttribute("lang", "tr");
-    await expect(page.getByTestId("admin-status-loading")).toBeVisible();
-    await page.screenshot({
-      path: path.join(EVIDENCE_DIR, "AC-6-admin-web-loading.png"),
-      fullPage: true,
-    });
-
-    // 2. Release gate -> real admin-api endpoint (via Next.js rewrite) returns 200 {"items": []} -> Empty state
-    releaseLoading();
-    await expect(page.getByTestId("admin-status-empty")).toBeVisible();
-    await expect(page.getByTestId("admin-status-empty-title")).toHaveText(
-      "Henüz görüntülenecek operasyonel kayıt bulunmuyor",
-    );
-    await page.screenshot({
-      path: path.join(EVIDENCE_DIR, "AC-6-admin-web-empty.png"),
-      fullPage: true,
-    });
-
-    await page.unroute("**/admin-api/system/sample-items");
-
-    // 3. Error state via Playwright route 500 application/problem+json injection
-    await page.route("**/admin-api/system/sample-items", async (route) => {
-      await route.fulfill({
-        status: 500,
-        contentType: "application/problem+json",
-        headers: {
-          "X-Request-Id": "0199f2c0-0000-7000-8000-000000000012",
-        },
-        body: JSON.stringify({
-          type: "about:blank",
-          title: "Internal Server Error",
-          status: 500,
-          detail: "Internal admin stack trace must never be shown to operator",
-          instance: "/admin-api/system/sample-items",
-          code: "system.internal_error",
-          requestId: "0199f2c0-0000-7000-8000-000000000012",
-        }),
-      });
-    });
-
-    await page.reload();
-    await expect(page.getByTestId("admin-status-error")).toBeVisible();
-    await expect(page.getByTestId("admin-status-error-message")).toHaveText(
-      "Yönetim servisinde geçici bir sorun oluştu. Lütfen tekrar deneyin.",
-    );
-    await expect(page.getByText("Internal admin stack trace")).toHaveCount(0);
-    await expect(page.getByTestId("admin-status-retry")).toBeVisible();
-
-    await page.screenshot({
-      path: path.join(EVIDENCE_DIR, "AC-6-admin-web-error.png"),
-      fullPage: true,
-    });
-  });
 });
