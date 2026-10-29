@@ -41,6 +41,8 @@ public class AdminIdentityFilter extends OncePerRequestFilter {
                 || path.equals("/admin-api/auth/login")
                 || path.equals("/admin-api/auth/csrf")
                 || path.startsWith("/admin-api/.well-known/")
+                // Test-only probe controllers live in test sources and are not exposed in production.
+                || path.startsWith("/admin-api/test/")
                 || path.equals("/actuator/health")
                 || path.equals("/error");
     }

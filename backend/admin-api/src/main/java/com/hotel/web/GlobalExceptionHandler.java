@@ -3,7 +3,8 @@ package com.hotel.web;
 import com.hotel.adminidentity.api.AdminAuditException;
 import com.hotel.adminidentity.api.AdminAuthenticationException;
 import com.hotel.adminidentity.api.AdminSessionException;
-import com.hotel.adminidentity.internal.domain.InvalidPasswordException;
+import com.hotel.gateway.api.GatewayTimeoutException;
+import com.hotel.gateway.api.GatewayUnavailableException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -96,10 +97,25 @@ public class GlobalExceptionHandler {
         return problem(HttpStatus.INTERNAL_SERVER_ERROR, request, "system.internal_error");
     }
 
-    @ExceptionHandler(InvalidPasswordException.class)
-    public ResponseEntity<ProblemDetail> handleInvalidPassword(
-            InvalidPasswordException ex, HttpServletRequest request) {
-        return problem(HttpStatus.BAD_REQUEST, request, "validation.invalid_password");
+    @ExceptionHandler(GatewayTimeoutException.class)
+    public ResponseEntity<ProblemDetail> handleGatewayTimeout(
+            GatewayTimeoutException ex, HttpServletRequest request) {
+        return problem(
+                HttpStatus.GATEWAY_TIMEOUT,
+                request,
+                "system.gateway_timeout",
+                "The admin upstream timed out.");
+    }
+
+    @ExceptionHandler(GatewayUnavailableException.class)
+    public ResponseEntity<ProblemDetail> handleGatewayUnavailable(
+            GatewayUnavailableException ex, HttpServletRequest request) {
+        log.warn("Admin gateway upstream is unavailable: {}", ex.getMessage());
+        return problem(
+                HttpStatus.BAD_GATEWAY,
+                request,
+                "system.gateway_unavailable",
+                "The admin upstream is unavailable.");
     }
 
     @ExceptionHandler(ErrorResponseException.class)
@@ -128,9 +144,13 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<ProblemDetail> problem(
             HttpStatus status, HttpServletRequest request, String code) {
+        return problem(status, request, code, ProblemDetailFactory.defaultDetailFor(status));
+    }
+
+    private ResponseEntity<ProblemDetail> problem(
+            HttpStatus status, HttpServletRequest request, String code, String detail) {
         ProblemDetail problem =
-                ProblemDetailFactory.forStatus(
-                        status, request, code, ProblemDetailFactory.defaultDetailFor(status));
+                ProblemDetailFactory.forStatus(status, request, code, detail);
         return ResponseEntity.status(status)
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .body(problem);
