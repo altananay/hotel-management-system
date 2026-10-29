@@ -1,5 +1,9 @@
 package com.hotel.web;
 
+import com.hotel.adminidentity.api.AdminAuditException;
+import com.hotel.adminidentity.api.AdminAuthenticationException;
+import com.hotel.adminidentity.api.AdminSessionException;
+import com.hotel.adminidentity.internal.domain.InvalidPasswordException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -73,6 +77,31 @@ public class GlobalExceptionHandler {
         return problem(HttpStatus.FORBIDDEN, request);
     }
 
+    @ExceptionHandler(AdminAuthenticationException.class)
+    public ResponseEntity<ProblemDetail> handleAdminAuthentication(
+            AdminAuthenticationException ex, HttpServletRequest request) {
+        return problem(HttpStatus.UNAUTHORIZED, request, "security.invalid_credentials");
+    }
+
+    @ExceptionHandler(AdminSessionException.class)
+    public ResponseEntity<ProblemDetail> handleAdminSession(
+            AdminSessionException ex, HttpServletRequest request) {
+        return problem(HttpStatus.UNAUTHORIZED, request, "security.unauthorized");
+    }
+
+    @ExceptionHandler(AdminAuditException.class)
+    public ResponseEntity<ProblemDetail> handleAdminAudit(
+            AdminAuditException ex, HttpServletRequest request) {
+        log.error("Admin audit write failed for request {}", request.getRequestURI(), ex);
+        return problem(HttpStatus.INTERNAL_SERVER_ERROR, request, "system.internal_error");
+    }
+
+    @ExceptionHandler(InvalidPasswordException.class)
+    public ResponseEntity<ProblemDetail> handleInvalidPassword(
+            InvalidPasswordException ex, HttpServletRequest request) {
+        return problem(HttpStatus.BAD_REQUEST, request, "validation.invalid_password");
+    }
+
     @ExceptionHandler(ErrorResponseException.class)
     public ResponseEntity<ProblemDetail> handleErrorResponseException(
             ErrorResponseException ex, HttpServletRequest request) {
@@ -92,6 +121,16 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<ProblemDetail> problem(HttpStatus status, HttpServletRequest request) {
         ProblemDetail problem = ProblemDetailFactory.forStatus(status, request);
+        return ResponseEntity.status(status)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
+    }
+
+    private ResponseEntity<ProblemDetail> problem(
+            HttpStatus status, HttpServletRequest request, String code) {
+        ProblemDetail problem =
+                ProblemDetailFactory.forStatus(
+                        status, request, code, ProblemDetailFactory.defaultDetailFor(status));
         return ResponseEntity.status(status)
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .body(problem);

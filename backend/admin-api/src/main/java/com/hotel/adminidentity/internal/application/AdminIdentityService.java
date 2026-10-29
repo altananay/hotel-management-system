@@ -6,6 +6,7 @@ import com.hotel.adminaudit.api.AuditResult;
 import com.hotel.adminidentity.api.AdminAuditException;
 import com.hotel.adminidentity.api.AdminAuthenticationException;
 import com.hotel.adminidentity.api.AdminIdentityApi;
+import com.hotel.adminidentity.api.AdminIdentityApi.CsrfToken;
 import com.hotel.adminidentity.api.AdminSessionException;
 import com.hotel.adminidentity.internal.domain.AdminUser;
 import com.hotel.adminidentity.internal.domain.Argon2PasswordHasher;
@@ -19,7 +20,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Locale;
 import java.util.UUID;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -34,6 +34,7 @@ public class AdminIdentityService implements AdminIdentityApi {
     private final Argon2PasswordHasher passwordHasher;
     private final AdminSessionService sessionService;
     private final AdminJwtService jwtService;
+    private final AdminCsrfService csrfService;
     private final AdminAuditApi auditApi;
     private final AdminBootstrapService bootstrapService;
     private final Clock clock;
@@ -44,6 +45,7 @@ public class AdminIdentityService implements AdminIdentityApi {
             Argon2PasswordHasher passwordHasher,
             AdminSessionService sessionService,
             AdminJwtService jwtService,
+            AdminCsrfService csrfService,
             AdminAuditApi auditApi,
             AdminBootstrapService bootstrapService,
             Clock clock) {
@@ -52,6 +54,7 @@ public class AdminIdentityService implements AdminIdentityApi {
         this.passwordHasher = passwordHasher;
         this.sessionService = sessionService;
         this.jwtService = jwtService;
+        this.csrfService = csrfService;
         this.auditApi = auditApi;
         this.bootstrapService = bootstrapService;
         this.clock = clock;
@@ -122,6 +125,26 @@ public class AdminIdentityService implements AdminIdentityApi {
     @Override
     public String issueJwt(AdminSessionView session) {
         return jwtService.issue(session);
+    }
+
+    @Override
+    public CsrfToken issuePreAuthCsrf() {
+        return csrfService.issuePreAuth();
+    }
+
+    @Override
+    public CsrfToken issueSessionCsrf(AdminSessionView session) {
+        return csrfService.issueForSession(session);
+    }
+
+    @Override
+    public void validateCsrf(
+            String token,
+            String rawSessionToken,
+            String origin,
+            String method,
+            boolean loginRequest) {
+        csrfService.validate(token, rawSessionToken, origin, method, loginRequest);
     }
 
     @Override

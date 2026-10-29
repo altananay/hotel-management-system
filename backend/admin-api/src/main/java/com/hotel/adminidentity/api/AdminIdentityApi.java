@@ -11,6 +11,17 @@ public interface AdminIdentityApi {
 
     String issueJwt(AdminSessionView session);
 
+    CsrfToken issuePreAuthCsrf();
+
+    CsrfToken issueSessionCsrf(AdminSessionView session);
+
+    void validateCsrf(
+            String token,
+            String rawSessionToken,
+            String origin,
+            String method,
+            boolean loginRequest);
+
     void logout(String rawSessionToken, AdminClientContext context);
 
     AdminBootstrapOutcome bootstrap(AdminBootstrapCommand command);
@@ -31,6 +42,8 @@ public interface AdminIdentityApi {
             String role) {}
 
     record AdminLoginResult(AdminSessionView session, String rawSessionToken) {}
+
+    record CsrfToken(String value, long maxAgeSeconds) {}
 
     record AdminBootstrapCommand(String username, String email, String password) {}
 
