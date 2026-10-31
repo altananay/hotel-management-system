@@ -1,5 +1,6 @@
 package com.hotel.adminidentity.internal.application;
 
+import com.fasterxml.uuid.Generators;
 import com.hotel.adminaudit.api.AdminAuditApi;
 import com.hotel.adminaudit.api.AuditReasonCode;
 import com.hotel.adminaudit.api.AuditResult;
@@ -14,7 +15,6 @@ import com.hotel.adminidentity.internal.persistence.AdminLoginAttemptEntity;
 import com.hotel.adminidentity.internal.persistence.AdminLoginAttemptRepository;
 import com.hotel.adminidentity.internal.persistence.AdminUserEntity;
 import com.hotel.adminidentity.internal.persistence.AdminUserRepository;
-import com.fasterxml.uuid.Generators;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
