@@ -1,0 +1,17 @@
+# AC-3 hotel-api JWT 401/403 matrix
+# generated_at=2026-10-31T23:13:56.194336+00:00
+# source: local Maven Surefire XML reports (backend) and GitHub Actions run 41250647651
+
+Test set: com.hotel.web.AdminJwtSecurityTest
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time: 0.619s
+  PASS shouldAllowManagerEndpointAndForbidSuperAdmin_whenRoleIsManager (0.041s)
+  PASS shouldReturn401ForMissingWrongAudienceWrongIssuerAndExpiredTokens (0.013s)
+  PASS shouldAllowSuperAdminAndManagerEndpoints_whenJwtIsValid (0.009s)
+  PASS shouldForbidManagerAndSuperAdmin_whenRoleIsFrontDesk (0.009s)
+
+TOTAL: tests=83, failures=0, errors=0, skipped=0
+
+# CI hotel-api job (GitHub Actions run 41250647651)
+2026-10-31T23:00:51.3785766Z [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.765 s -- in com.hotel.web.AdminJwtSecurityTest
+2026-10-31T23:00:51.4431185Z [INFO] Tests run: 83, Failures: 0, Errors: 0, Skipped: 0
+

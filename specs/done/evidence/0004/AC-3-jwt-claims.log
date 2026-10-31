@@ -1,0 +1,8 @@
+# AC-3 JWT claims, RS256 signing and key id
+# generated_at=2026-10-31T23:13:56.194193+00:00
+# source: local Maven Surefire XML reports (backend) and GitHub Actions run 41250647651
+
+Test set: com.hotel.adminidentity.AdminJwtServiceTest
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time: 0.15s
+  PASS shouldIssueFiveMinuteRs256JwtWithRequiredClaims_whenSessionIsValid (0.15s)
+

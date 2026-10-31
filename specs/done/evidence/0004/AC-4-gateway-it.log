@@ -1,0 +1,9 @@
+# AC-4 gateway pass-through and timeout mapping
+# generated_at=2026-10-31T23:13:56.194756+00:00
+# source: local Maven Surefire XML reports (backend) and GitHub Actions run 41250647651
+
+Test set: com.hotel.gateway.AdminGatewayClientTest
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time: 0.602s
+  PASS shouldMapSlowUpstreamToGatewayTimeout (0.584s)
+  PASS shouldForwardOnlyAllowedHeadersAndUseGatewayRequestId (0.016s)
+

@@ -1,0 +1,5 @@
+# AC-6 CSRF and session gate evidence
+AC-6-admin-redirect-401.png: anonymous / request redirected to /login
+AC-6-admin-csrf-fetch-fail.png: CSRF fetch failure shows error + retry
+AC-6-admin-csrf-retry.png: first login POST forced 403, retry succeeded
+AC-6-scaffold-removed.log: anonymous=401 authenticated=404

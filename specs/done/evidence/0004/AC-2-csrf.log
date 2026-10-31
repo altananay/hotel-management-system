@@ -1,0 +1,24 @@
+# AC-2 CSRF pre-auth, session-bound and logout tokens
+# generated_at=2026-10-31T23:13:56.188052+00:00
+# source: local Maven Surefire XML reports (backend) and GitHub Actions run 41250647651
+
+Test set: com.hotel.adminidentity.AdminCsrfServiceTest
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time: 0.053s
+  PASS shouldRejectMissingOriginOrPreAuthTokenOnLogout_whenStateChanging (0.045s)
+  PASS shouldSkipCsrf_whenRequestIsReadOnly (0.002s)
+  PASS shouldAcceptPreAuthToken_whenOriginAndLoginAreValid (0.002s)
+  PASS shouldAcceptSessionBoundToken_whenSessionMatches (0.003s)
+
+Test set: com.hotel.adminidentity.AdminAuthControllerTest
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time: 0.062s
+  PASS shouldFallBackToPreAuthAndClearSession_whenSessionCookieIsInvalid (0.053s)
+  PASS shouldIssuePreAuthCsrf_whenNoSessionCookieIsPresent (0.002s)
+  PASS shouldSetSessionAndCsrfCookiesWithRequiredAttributes_whenLoginSucceeds (0.002s)
+  PASS shouldIssueSessionBoundCsrf_whenSessionCookieIsValid (0.002s)
+
+Test set: com.hotel.web.AdminCsrfFilterTest
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time: 0.056s
+  PASS shouldReturn403AndSkipChain_whenCsrfValidationFails (0.054s)
+  PASS shouldPassThrough_whenCsrfValidationSucceeds (0.002s)
+  PASS shouldSkipSafeMethodsAndTokenEndpoint (0.0s)
+

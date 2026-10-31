@@ -1,0 +1,78 @@
+# AC-7 archive SHA-256 and 0002 byte-identical check
+# generated_at=2026-10-31T23:13:56.239025+00:00
+# source: local Maven Surefire XML reports (backend) and GitHub Actions run 41250647651
+
+# 0002/0003 evidence archive integrity
+generated_at=2026-10-31T23:13:56.197749+00:00
+
+git diff --name-only origin/integration -- specs/done/evidence/0002 specs/done/evidence/0003
+(empty: no changes)
+
+[0002] files=12
+aee3dbd3e246e6a58361a7789214fbbf6f4000e062fa90802a5fe9e0d07202df  specs/done/evidence/0002/AC-6-admin-web-empty.png
+811d396790e8ae33ce1826343b1126e6f604457a561233893da8ad234b8e82cd  specs/done/evidence/0002/AC-6-admin-web-error.png
+a0e3166c9794a67c8e16818d5159e894afc3dcb58f3e80de46cacd4e88a1015b  specs/done/evidence/0002/AC-6-admin-web-loading.png
+89a2cfd9f309ef8a12a8983c6be66d237fe6b31b031e9548b226bc69509288e4  specs/done/evidence/0002/AC-6-web-rooms-empty.png
+e6f7a0b103dbc61d0a2591a59fbaa88b45eee02ed5de2e45bcd1705aea7e182f  specs/done/evidence/0002/AC-6-web-rooms-en.png
+5e55dfb6b6c6202030321c749c26d30bf2349d060c6b4c7c98f4506ae70fa008  specs/done/evidence/0002/AC-6-web-rooms-error.png
+a257eb8e50fc3105647dc698789243a3b8a4bbb921e6f1a414f67756099b1770  specs/done/evidence/0002/AC-6-web-rooms-loading.png
+360ee96e4b986a878b7ac76140674392747df4054d46ccc7a72cab96295ba642  specs/done/evidence/0002/AC-6-web-rooms-tr.png
+da52987ac2e9fcf8dc4d12f7c7055a0bc7f93166041bac608ddf6794fe74a720  specs/done/evidence/0002/code-review-2026-10-20.md
+aa5a250673679bc6722b7da67f21e98d2bfa65ed463df110fc2b0ccd596c8386  specs/done/evidence/0002/code-review-verification-2026-10-20.md
+47ee108239ca05673db5de28740e9a2aa0b992ef9cec37a9e5a330a8fadda8a3  specs/done/evidence/0002/qa-ac-matrix.md
+f6ab84d92bc9f192cc5ab46c5a467f2011fba2427644a9f5902773bf83ab4840  specs/done/evidence/0002/qa-fix-verification.md
+
+[0003] files=47
+b735930d450f8ac41d8ea404689f7e500e2fdb95c4f8eadcc9f7f2e8010c95d2  specs/done/evidence/0003/AC-1-asset-and-font-budget.log
+afef3be021f455d1f47d389ef9d7a9236724adf6a445aceb00b5bcbf83011a18  specs/done/evidence/0003/AC-1-font-fallback.log
+e29fbaa9a23129ead6370d046f2a51b437eee1709e3265057d6befd155c76261  specs/done/evidence/0003/AC-1-font-glyph-fallback.log
+7ecc19adb3cbacf11ed8f87a400d98d115ac2e60b7caac9b41c8651e00d2662e  specs/done/evidence/0003/AC-1-runtime-requests.log
+5f3cb07790a2fdf81b38b090e33cbf4fdb8426e79186a55e7ca9b454e77d2bc4  specs/done/evidence/0003/AC-1-scope.txt
+6b96de5a661273130f54780d2ae1466cc59b9f55108231dff8b0169216c39218  specs/done/evidence/0003/AC-2-credits-en-desktop.png
+adce26d413f39274bbdaf23d1209f803e58cd5babc16153c5ef28e0289756ce3  specs/done/evidence/0003/AC-2-credits-tr-desktop.png
+feabecaa6465acf7bccb339bdfcaca097396e7baaaf9576d1947d74f439483b8  specs/done/evidence/0003/AC-2-hero-crop-candidates.jpg
+a5388df248e1c6c929fade3040183c641deed6e6970cdc01efe833f889b05c2d  specs/done/evidence/0003/AC-2-hero-ffprobe.log
+cff7269ea75f8cc807dd103f4ba908a83111508489a538654eb57d18202081b2  specs/done/evidence/0003/AC-2-home-en-desktop.png
+4081585489cf565306dfcfb834bcaaef4f6beaf98fd0fdafe1816dfb7766f6fb  specs/done/evidence/0003/AC-2-home-nojs.png
+59c96d4b4bd5b097a0fb3b9d88d8dac0a394cca49d0ef98f9c82375dcbedd38e  specs/done/evidence/0003/AC-2-home-scroll-01-hero.png
+283136baca395bc9e6c9f53bba55aeb9b54d2865600c05f7fccb3b6d467da0b7  specs/done/evidence/0003/AC-2-home-scroll-02-story.png
+5492703dd6a846ecb8ec30f7281b57bdbcb8e07b4756d0abdd70ec8172845227  specs/done/evidence/0003/AC-2-home-scroll-03-experience.png
+46ccc4481057ca6ec169aae77807166493c7f7679b623a925239d545e64182a3  specs/done/evidence/0003/AC-2-home-scroll-04-rooms-cta.png
+50312e6750e1548c756cd9ae59355a6c0eb5a05d38387c484775922c77d56eea  specs/done/evidence/0003/AC-2-home-scroll-story.webm
+ce8c2fbda7152bd08ed6c52890a5df3657f863aecfe860afc2b1982742fe6d00  specs/done/evidence/0003/AC-2-home-tr-desktop.png
+02d9e5fe170034d387bb155450701de937ebe96451a7f7e845d33f465728a6a6  specs/done/evidence/0003/AC-2-home-tr-mobile.png
+1434f71104899cedacad139a1dd10adf8a16dbaf98cc6e8c5222107701bd66a9  specs/done/evidence/0003/AC-2-home-video-fallback.png
+58191b0c7dcd32e4d1eeb71d8f58158ee96f5ca89a2f45063c1c857a0c96ee48  specs/done/evidence/0003/AC-2-home-video-source-fallback.png
+058efccff49ef4c9d297fabb438df291f2ae143f7df7a8169a321bb1504a58ec  specs/done/evidence/0003/AC-2-metadata.md
+d26264d64c8f4728dd7e725ff6adb74efad5dae9987c16bf99af4cbbcf185a1c  specs/done/evidence/0003/AC-3-rooms-empty.png
+b5143bfb03a97e1ff225aab00eebd3a0e8655dce199b73fe05811b41d3232f12  specs/done/evidence/0003/AC-3-rooms-en-desktop.png
+e93778190521e78e81b59ac184a4a6badd3af7e83b3e9ee564489bc1eaaf96a8  specs/done/evidence/0003/AC-3-rooms-error-malformed.png
+e93778190521e78e81b59ac184a4a6badd3af7e83b3e9ee564489bc1eaaf96a8  specs/done/evidence/0003/AC-3-rooms-error-network.png
+e93778190521e78e81b59ac184a4a6badd3af7e83b3e9ee564489bc1eaaf96a8  specs/done/evidence/0003/AC-3-rooms-error-timeout.png
+e93778190521e78e81b59ac184a4a6badd3af7e83b3e9ee564489bc1eaaf96a8  specs/done/evidence/0003/AC-3-rooms-error.png
+1ac9e640f5fd898faf70d31bfa74c3bd152f1750a8ed90346d7f37d8a127b1af  specs/done/evidence/0003/AC-3-rooms-loading.png
+f286d7b3f118984963939f220e421e7161a0d986a1d76846abd5b03e0222891b  specs/done/evidence/0003/AC-3-rooms-tr-desktop.png
+55f447fefa1e881b80e11ac76a10fbffb5938b5796666ebe9b481a4466da44aa  specs/done/evidence/0003/AC-3-rooms-tr-mobile.png
+b1c4ea8cc8b1097cdda4a33111000783b4c3011e2e85c3b3cd131cf5f13c373a  specs/done/evidence/0003/AC-4-axe-report.md
+ad96eec88de9ea112548d753de2a17a59ff1dd511b191c8f9c3c754ff14211c4  specs/done/evidence/0003/AC-4-keyboard-focus-header.png
+292010760f1418efa56dcbd359b929a13a9830efaf3a45f6ca8d03c3de20b097  specs/done/evidence/0003/AC-4-mobile-menu-keyboard.png
+ce8c2fbda7152bd08ed6c52890a5df3657f863aecfe860afc2b1982742fe6d00  specs/done/evidence/0003/AC-4-reduced-motion-home.png
+db0b28b1d9dafac0b55488ce3873222fc970f2a7178b15539c79633732d7ff0a  specs/done/evidence/0003/AC-5-asset-and-bundle-budget.log
+b735930d450f8ac41d8ea404689f7e500e2fdb95c4f8eadcc9f7f2e8010c95d2  specs/done/evidence/0003/AC-5-build-guard.log
+55f99869494b3723ce3a3c76957da29d257aed888f3bf5f68061fa87a0cca708  specs/done/evidence/0003/AC-5-lighthouse-mobile.html
+c6e206c051d9b050aec433b5069e81e435abcd7e1481848a7dda327dd9b1ffb2  specs/done/evidence/0003/AC-5-lighthouse-mobile.md
+7ecc19adb3cbacf11ed8f87a400d98d115ac2e60b7caac9b41c8651e00d2662e  specs/done/evidence/0003/AC-5-runtime-requests.log
+383f078284eff7739e4c6efecd418ca4faa39c9348b09b95083e3a33e4dac855  specs/done/evidence/0003/AC-5-scroll-cls.log
+b6081fb44a1e796d7a29c0142bfab90fa3cfee13e99e679d4521e7b9c6b56918  specs/done/evidence/0003/AC-6-0002-evidence-sha256.txt
+413f8b6ed8fd06fa600ad4b64be68736497acb65a1b82dc35f95f9b767f4aa13  specs/done/evidence/0003/AC-6-e2e-ci-summary.md
+37510e9b4e8589efe6fa9723b56bb72b1b6d3822bbe6b65a495db42667dd9b7e  specs/done/evidence/0003/code-review-2026-10-25.md
+8dac6b56002c18c7e5b1aed6af0d91b034693709c5da8d9c51ec850a150788e7  specs/done/evidence/0003/code-review-fixes-2026-10-25.md
+79b5e35f20d5d0765711ae43885b24514d94c202076f08705dde9ee78ad96fd6  specs/done/evidence/0003/code-review-verification-2026-10-25.md
+2fe6d32e54dc733564290d89679c8b1cc3fa3782f12e76c4d54e104f79933c9c  specs/done/evidence/0003/qa-fix-verification-2026-10-26.md
+9db288bbbe1a9cfee2e7ba20312bef8ede44a9410f1425abe70a0682f5acee3b  specs/done/evidence/0003/qa-verification-2026-10-25.md
+
+# CI verification of the 0002 manifest
+2026-10-31T23:08:42.7863326Z Files: 12
+2026-10-31T23:08:42.7864006Z Result: UNCHANGED
+2026-10-31T23:08:42.7864982Z All 0002 evidence files are byte-identical.
+
