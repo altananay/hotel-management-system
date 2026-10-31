@@ -48,6 +48,15 @@
             <artifactId>spring-boot-starter-flyway</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-jose</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>1.80</version>
+        </dependency>
+        <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
@@ -144,4 +153,36 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>seed</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.flywaydb</groupId>
+                        <artifactId>flyway-maven-plugin</artifactId>
+                        <configuration>
+                            <url>${HOTEL_ADMIN_DB_URL}</url>
+                            <user>${HOTEL_ADMIN_MIGRATOR_USER}</user>
+                            <password>${HOTEL_ADMIN_MIGRATOR_PASSWORD}</password>
+                            <initSql>
+                                SELECT CASE
+                                    WHEN '${seed.env}' IN ('local', 'ci')
+                                     AND ('${HOTEL_ADMIN_DB_URL}' LIKE 'jdbc:postgresql://localhost:%/hotel_admin%'
+                                          OR '${HOTEL_ADMIN_DB_URL}' LIKE 'jdbc:postgresql://127.0.0.1:%/hotel_admin%')
+                                    THEN 1
+                                    ELSE 1 / 0
+                                END;
+                            </initSql>
+                            <locations>
+                                <location>filesystem:src/main/resources/db/migration</location>
+                                <location>filesystem:src/main/resources/db/seed/adminidentity</location>
+                            </locations>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

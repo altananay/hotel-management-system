@@ -1,6 +1,8 @@
 package com.hotel.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -8,9 +10,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.hotel.adminidentity.api.AdminIdentityApi;
+import com.hotel.adminidentity.api.AdminSessionException;
 import com.hotel.config.ClockConfig;
 import com.hotel.config.SecurityConfig;
-import com.hotel.scaffold.AdminSampleItemsController;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.junit.jupiter.api.Test;
@@ -26,6 +29,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,15 +42,13 @@ import org.springframework.web.server.ResponseStatusException;
  * Tests for {@code /admin-api/**} prefix, deny-by-default surface, X-Request-Id, RFC 7807 error
  * envelope, and scaffold endpoint on {@code admin-api} (AC-6, AC-11, CR-1, CR-4).
  */
-@WebMvcTest(
-        controllers = {
-            AdminSampleItemsController.class,
-            AdminApiSurfaceAndErrorHandlingTest.AdminTestProbeController.class
-        })
+@WebMvcTest(controllers = AdminApiSurfaceAndErrorHandlingTest.AdminTestProbeController.class)
 @Import({
     SecurityConfig.class,
     ClockConfig.class,
     RequestIdFilter.class,
+    AdminProblemWriter.class,
+    ClientIpResolver.class,
     GlobalExceptionHandler.class,
     AdminApiSurfaceAndErrorHandlingTest.AdminTestProbeController.class,
     AdminApiSurfaceAndErrorHandlingTest.ProbeSecurityTestConfiguration.class
@@ -54,6 +56,14 @@ import org.springframework.web.server.ResponseStatusException;
 class AdminApiSurfaceAndErrorHandlingTest {
 
     @Autowired private MockMvc mockMvc;
+
+    @MockitoBean private AdminIdentityApi identityApi;
+
+    @org.junit.jupiter.api.BeforeEach
+    void rejectMissingSession() {
+        when(identityApi.validateSession(any(), any()))
+                .thenThrow(new AdminSessionException());
+    }
 
     /**
      * Test-only chain: allows reaching the probe controller under {@code /admin-api/test/**} so
@@ -99,17 +109,6 @@ class AdminApiSurfaceAndErrorHandlingTest {
     }
 
     @Test
-    void shouldReturnEmptyItemsList_whenCallingAdminSampleItemsScaffoldEndpoint()
-            throws Exception {
-        mockMvc.perform(get("/admin-api/system/sample-items"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(header().exists("X-Request-Id"))
-                .andExpect(jsonPath("$.items").isArray())
-                .andExpect(jsonPath("$.items").isEmpty());
-    }
-
-    @Test
     void shouldReturn401ProblemDetail_whenCallingUnknownAdminPath() throws Exception {
         mockMvc.perform(get("/admin-api/unknown"))
                 .andExpect(status().isUnauthorized())
@@ -126,16 +125,16 @@ class AdminApiSurfaceAndErrorHandlingTest {
             throws Exception {
         String customRequestId = "admin-trace-2026-1018";
         mockMvc.perform(
-                        get("/admin-api/system/sample-items")
+                        get("/admin-api/test/access-denied")
                                 .header("X-Request-Id", customRequestId))
-                .andExpect(status().isOk())
+                .andExpect(status().isForbidden())
                 .andExpect(header().string("X-Request-Id", customRequestId));
 
         MvcResult generatedResult =
                 mockMvc.perform(
-                                get("/admin-api/system/sample-items")
+                                get("/admin-api/test/access-denied")
                                         .header("X-Request-Id", "short"))
-                        .andExpect(status().isOk())
+                        .andExpect(status().isForbidden())
                         .andReturn();
 
         String generated = generatedResult.getResponse().getHeader("X-Request-Id");
@@ -159,7 +158,7 @@ class AdminApiSurfaceAndErrorHandlingTest {
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.code").value("validation.invalid_request"));
 
-        mockMvc.perform(post("/admin-api/system/sample-items"))
+        mockMvc.perform(post("/admin-api/test/access-denied"))
                 .andExpect(status().isMethodNotAllowed())
                 .andExpect(
                         content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))

@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-// Bilinçli olarak `.passthrough()`: zorunlu alanlar katı şekilde doğrulanır, ileriye dönük
-// ek alanlar (RFC 7807 uzantıları) yanıtı bozmaz (CR-9).
 export const ProblemDetailSchema = z
   .object({
     type: z.string(),
@@ -28,41 +26,73 @@ export class AdminApiClientError extends Error {
   }
 }
 
-export async function adminApiGet<T>(
+export interface AdminApiRequestOptions {
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  body?: unknown;
+  csrfToken?: string;
+}
+
+export async function adminApiRequest<T>(
   path: string,
   schema: z.ZodType<T>,
+  options: AdminApiRequestOptions = {},
 ): Promise<T> {
+  const response = await send(path, options);
+  if (response.status === 204) {
+    return undefined as T;
+  }
+  return schema.parse(await response.json());
+}
+
+export async function adminApiGet<T>(path: string, schema: z.ZodType<T>): Promise<T> {
+  return adminApiRequest(path, schema, { method: "GET" });
+}
+
+export async function adminApiPost(
+  path: string,
+  body: unknown,
+  csrfToken: string,
+): Promise<void> {
+  await send(path, { method: "POST", body, csrfToken });
+}
+
+async function send(path: string, options: AdminApiRequestOptions): Promise<Response> {
+  const headers: Record<string, string> = {
+    Accept: "application/json, application/problem+json",
+  };
+  if (options.body !== undefined) {
+    headers["Content-Type"] = "application/json";
+  }
+  if (options.csrfToken) {
+    headers["X-XSRF-TOKEN"] = options.csrfToken;
+  }
+
   let response: Response;
   try {
     response = await fetch(path, {
-      method: "GET",
-      headers: {
-        Accept: "application/json, application/problem+json",
-      },
+      method: options.method ?? "GET",
+      headers,
       credentials: "same-origin",
+      cache: "no-store",
+      body: options.body === undefined ? undefined : JSON.stringify(options.body),
     });
   } catch {
     throw new AdminApiClientError(0, "system.network_error");
   }
 
-  const headerRequestId = response.headers.get("X-Request-Id") ?? undefined;
-
   if (!response.ok) {
     let code: string | undefined;
-    let requestId = headerRequestId;
+    let requestId = response.headers.get("X-Request-Id") ?? undefined;
     try {
-      const rawError: unknown = await response.json();
-      const parsedProblem = ProblemDetailSchema.safeParse(rawError);
-      if (parsedProblem.success) {
-        code = parsedProblem.data.code;
-        requestId = parsedProblem.data.requestId;
+      const parsed = ProblemDetailSchema.safeParse(await response.json());
+      if (parsed.success) {
+        code = parsed.data.code;
+        requestId = parsed.data.requestId;
       }
     } catch {
-      // Bozuk/eksik zarf: makine kodu okunamaz; kullanıcı dostu genel mesaja düşülür (CR-9).
+      // Generic message is safer than leaking a malformed envelope.
     }
     throw new AdminApiClientError(response.status, code, requestId);
   }
-
-  const rawData: unknown = await response.json();
-  return schema.parse(rawData);
+  return response;
 }

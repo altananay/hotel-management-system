@@ -6,3 +6,9 @@ spring:
     import:
       - "optional:file:.env[.properties]"
       - "optional:file:../../.env[.properties]"
+
+admin:
+  jwt:
+    allow-generated-dev-key: true
+  cookie:
+    secure: false

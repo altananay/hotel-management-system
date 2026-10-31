@@ -51,3 +51,6 @@ COMMENT ON DATABASE hotel_core IS 'local-ci-seed';
 -- public schema: closed to everyone except migrator (Flyway history lives here).
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
 GRANT USAGE, CREATE ON SCHEMA public TO migrator;
+
+-- Local/CI-only admin seed guard marker. Production databases must not carry it.
+COMMENT ON DATABASE hotel_admin IS 'local-ci-seed';

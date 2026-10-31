@@ -33,6 +33,10 @@ spring:
 hotel:
   cors:
     allowed-origins: ${HOTEL_API_CORS_ALLOWED_ORIGINS:http://localhost:3000}
+  admin:
+    jwks-uri: ${HOTEL_ADMIN_JWKS_URI:http://localhost:8082/admin-api/.well-known/jwks.json}
+    issuer: ${HOTEL_ADMIN_JWT_ISSUER:admin-api}
+    audience: ${HOTEL_ADMIN_JWT_AUDIENCE:hotel-admin-api}
 
 management:
   endpoints:

@@ -115,3 +115,17 @@ docker compose --env-file .env -f infra/docker-compose.yml --profile init run --
 ```bash
 docker compose --env-file .env -f infra/docker-compose.yml down -v
 ```
+
+## Admin Kimlik (0004) — Seed, Bootstrap ve JWT Anahtarı
+
+- `hotel_admin` seed marker'ı yalnız boş local/CI hacminde oluşur. Mevcut hacimde marker yoksa:
+  `docker exec -it hotel-postgres psql -U postgres -d hotel_admin -c "COMMENT ON DATABASE hotel_admin IS 'local-ci-seed';"`
+  veya `docker compose ... down -v` ile sıfırlayın.
+- Admin seed (migrator): `(cd backend/admin-api && ./mvnw flyway:migrate -Pseed -Dseed.env=local)`
+- Prod bootstrap (ayrı CLI, web server başlatmaz):
+  `ADMIN_BOOTSTRAP_USERNAME=... ADMIN_BOOTSTRAP_EMAIL=... ADMIN_BOOTSTRAP_PASSWORD=... java -jar admin-api.jar --bootstrap-admin`
+  Exit kodları: 0 oluşturuldu/skip, 2 env/aktif SUPER_ADMIN guard, 3 DB, 4 audit.
+- Local/CI JWT anahtarı: `ADMIN_JWT_ACTIVE_KEY_PATH=.local/admin-jwt-active.pem` ve
+  yalnız local/CI için `ADMIN_JWT_ALLOW_GENERATED_DEV_KEY=true`. Dosya git'e girmez.
+- Yerel doğrulamada backend çalışırken `mvn verify` jar kilidine takılırsa
+  `-Dspring-boot.repackage.skip=true` kullanın.

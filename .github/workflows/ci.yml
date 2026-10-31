@@ -106,9 +106,15 @@ jobs:
           cd backend/hotel-api && ./mvnw -B flyway:migrate package -DskipTests
           cd ../admin-api && ./mvnw -B flyway:migrate package -DskipTests
 
+      - name: Run repeatable admin seed migration as migrator
+        working-directory: backend/admin-api
+        run: ./mvnw -B flyway:migrate -Pseed -Dseed.env=ci
+
       - name: Start hotel-api (:8081) and admin-api (:8082) as app user
         run: |
           nohup java -jar backend/hotel-api/target/hotel-api-0.0.1-SNAPSHOT.jar > /tmp/hotel-api.log 2>&1 &
+          ADMIN_JWT_ACTIVE_KEY_PATH="$RUNNER_TEMP/admin-jwt-active.pem" \
+          ADMIN_JWT_ALLOW_GENERATED_DEV_KEY=true \
           nohup java -jar backend/admin-api/target/admin-api-0.0.1-SNAPSHOT.jar > /tmp/admin-api.log 2>&1 &
           for i in $(seq 1 60); do
             if curl -fsS http://localhost:8081/actuator/health && curl -fsS http://localhost:8082/actuator/health; then
@@ -208,12 +214,36 @@ jobs:
         working-directory: e2e
         run: node scripts/sha256-manifest.mjs verify ../specs/done/evidence/0002 "$RUNNER_TEMP/0002-before.json" ../specs/done/evidence/0003/AC-6-0002-evidence-sha256.txt
 
+      - name: Run @admin login and session tests
+        working-directory: e2e
+        run: npx playwright test tests/admin --grep @admin
+
+      - name: Upload admin E2E failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-e2e-failure
+          path: |
+            e2e/test-results
+            /tmp/admin-api.log
+            /tmp/web.log
+            /tmp/admin-web.log
+          if-no-files-found: warn
+
       - name: Upload 0003 evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: 0003-evidence
           path: specs/done/evidence/0003
+          if-no-files-found: warn
+
+      - name: Upload 0004 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 0004-evidence
+          path: specs/done/evidence/0004
           if-no-files-found: warn
 
       - name: Tear down infrastructure

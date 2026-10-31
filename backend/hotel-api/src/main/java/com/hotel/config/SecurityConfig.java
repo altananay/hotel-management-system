@@ -1,5 +1,6 @@
 package com.hotel.config;
 
+import com.hotel.web.AdminJwtAuthenticationEntryPoint;
 import com.hotel.web.ProblemDetailFactory;
 import com.hotel.web.RequestIdFilter;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,6 +9,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +22,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -46,7 +50,12 @@ public class SecurityConfig {
 
     @Bean
     @Order(1)
-    public SecurityFilterChain adminApiSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain adminApiSecurityFilterChain(
+            HttpSecurity http,
+            ObjectProvider<JwtDecoder> jwtDecoderProvider,
+            ObjectProvider<JwtAuthenticationConverter> jwtConverterProvider,
+            ObjectProvider<AdminJwtAuthenticationEntryPoint> adminEntryPointProvider)
+            throws Exception {
         http.securityMatcher("/admin-api/**")
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(
@@ -56,6 +65,15 @@ public class SecurityConfig {
                         ex ->
                                 ex.authenticationEntryPoint(this::writeUnauthorizedProblem)
                                         .accessDeniedHandler(this::writeForbiddenProblem));
+        JwtDecoder decoder = jwtDecoderProvider.getIfAvailable();
+        JwtAuthenticationConverter converter = jwtConverterProvider.getIfAvailable();
+        AdminJwtAuthenticationEntryPoint entryPoint = adminEntryPointProvider.getIfAvailable();
+        if (decoder != null && converter != null && entryPoint != null) {
+            http.oauth2ResourceServer(
+                    oauth2 ->
+                            oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(converter))
+                                    .authenticationEntryPoint(entryPoint));
+        }
         return http.build();
     }
 
