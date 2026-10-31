@@ -1,6 +1,6 @@
 # AC-3 hotel-api JWT 401/403 matrix
-# generated_at=2026-10-31T23:13:56.194336+00:00
-# source: local Maven Surefire XML reports (backend) and GitHub Actions run 41250647651
+# generated_at=2026-10-31T23:26:19.067646+00:00
+# source: local Maven Surefire XML reports (backend) and GitHub Actions run 41251924005
 
 Test set: com.hotel.web.AdminJwtSecurityTest
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time: 0.619s
@@ -11,7 +11,7 @@ Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time: 0.619s
 
 TOTAL: tests=83, failures=0, errors=0, skipped=0
 
-# CI hotel-api job (GitHub Actions run 41250647651)
-2026-10-31T23:00:51.3785766Z [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.765 s -- in com.hotel.web.AdminJwtSecurityTest
-2026-10-31T23:00:51.4431185Z [INFO] Tests run: 83, Failures: 0, Errors: 0, Skipped: 0
+# CI hotel-api job (GitHub Actions run 41251924005)
+2026-10-31T23:18:22.1388618Z [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.002 s -- in com.hotel.web.AdminJwtSecurityTest
+2026-10-31T23:18:22.2640794Z [INFO] Tests run: 83, Failures: 0, Errors: 0, Skipped: 0
 

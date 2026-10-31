@@ -1,6 +1,6 @@
 # 0004 E2E ve CI özeti
 
-- CI run: [41250647651](https://github.com/altananay/hotel-management-system/actions/runs/41250647651) — head `8663a14`, sonuç **success**.
+- CI run: [41251924005](https://github.com/altananay/hotel-management-system/actions/runs/41251924005) — head `82bbe5d`, sonuç **success**.
 - PR: [#18](https://github.com/altananay/hotel-management-system/pull/18) → `integration`.
 - E2E job: **success**.
 
@@ -8,10 +8,10 @@
 
 | Paket | Komut | Sonuç |
 |---|---|---|
-| 0002 `@empty` | `npx playwright test tests/smoke.spec.ts --grep @empty` | **1 passed** (3.4s) |
-| 0002 `@seeded` | `npx playwright test tests/smoke.spec.ts --grep @seeded` | **2 passed** (4.7s) |
-| 0003 design `@seeded` | `npx playwright test tests/design --grep @seeded` | **40 passed** (2.5m) |
-| 0004 `@admin` | `npx playwright test tests/admin --grep @admin` | **3 passed** (5.6s) |
+| 0002 `@empty` | `npx playwright test tests/smoke.spec.ts --grep @empty` | **1 passed** (3.1s) |
+| 0002 `@seeded` | `npx playwright test tests/smoke.spec.ts --grep @seeded` | **2 passed** (3.8s) |
+| 0003 design `@seeded` | `npx playwright test tests/design --grep @seeded` | **40 passed** (2.3m) |
+| 0004 `@admin` | `npx playwright test tests/admin --grep @admin` | **3 passed** (5.3s) |
 | 0004 ekran kanıtı | `node scripts/capture-0004-admin-evidence.mjs` | 3 PNG + 2 log |
 
 ## `@admin` testleri (AC-6)

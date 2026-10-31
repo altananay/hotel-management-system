@@ -1,13 +1,13 @@
 # AC-2 CSRF before validation and session gate
-# generated_at=2026-10-31T23:13:56.188713+00:00
-# source: local Maven Surefire XML reports (backend) and GitHub Actions run 41250647651
+# generated_at=2026-10-31T23:26:19.062511+00:00
+# source: local Maven Surefire XML reports (backend) and GitHub Actions run 41251924005
 
 Test set: com.hotel.web.AdminCsrfFilterTest
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time: 0.056s
-  PASS shouldReturn403AndSkipChain_whenCsrfValidationFails (0.054s)
-  PASS shouldPassThrough_whenCsrfValidationSucceeds (0.002s)
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time: 0.062s
+  PASS shouldReturn403AndSkipChain_whenCsrfValidationFails (0.061s)
+  PASS shouldPassThrough_whenCsrfValidationSucceeds (0.001s)
   PASS shouldSkipSafeMethodsAndTokenEndpoint (0.0s)
 
 # CI evidence that the admin-web retry recovers from a forced CSRF 403
-2026-10-31T23:08:52.3255136Z AC-6-admin-csrf-retry.png: first login POST forced 403, retry succeeded
+2026-10-31T23:24:06.2791865Z AC-6-admin-csrf-retry.png: first login POST forced 403, retry succeeded
 

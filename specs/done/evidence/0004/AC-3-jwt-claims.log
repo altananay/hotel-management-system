@@ -1,8 +1,20 @@
-# AC-3 JWT claims, RS256 signing and key id
-# generated_at=2026-10-31T23:13:56.194193+00:00
-# source: local Maven Surefire XML reports (backend) and GitHub Actions run 41250647651
+# AC-3 JWT claims, RS256 signing and JWKS rotation
+# generated_at=2026-10-31T23:26:19.067455+00:00
+# source: local Maven Surefire XML reports (backend) and GitHub Actions run 41251924005
 
 Test set: com.hotel.adminidentity.AdminJwtServiceTest
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time: 0.15s
-  PASS shouldIssueFiveMinuteRs256JwtWithRequiredClaims_whenSessionIsValid (0.15s)
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time: 0.04s
+  PASS shouldIssueFiveMinuteRs256JwtWithRequiredClaims_whenSessionIsValid (0.038s)
+
+Test set: com.hotel.adminidentity.AdminJwtKeyProviderTest
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time: 0.334s
+  PASS shouldPublishOnlyActiveKey_whenPreviousKeyIsAbsent (0.116s)
+  PASS shouldPublishActiveAndPreviousKeys_whenPreviousPublicKeyExists (0.087s)
+  PASS shouldGenerateLocalKeyPair_whenGenerationIsAllowed (0.063s)
+  PASS shouldKeepSameKeyIdAcrossRestart_whenActiveKeyFileIsReused (0.064s)
+  PASS shouldFailFast_whenActiveKeyIsMissingAndGenerationIsNotAllowed (0.001s)
+
+# JWKS rotation surface: active key + optional previous public key are published,
+# the previous key stays in the set for the 6 minute overlap window, and the
+# active kid is stable across restarts because the key is read from disk.
 

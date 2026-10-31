@@ -1,7 +1,7 @@
 # 0004 — Admin Kimlik ve Oturum kanıtları
 
 Bu dizin 0004 kabul kriterlerini gerçek test/CI çıktılarıyla eşler.
-Tüm loglar son kod head'i (`8663a14`) üzerinde alınmıştır.
+Tüm loglar son kod head'i (`82bbe5d`) üzerinde alınmıştır.
 
 ## İzlenebilirlik
 
@@ -17,7 +17,7 @@ Tüm loglar son kod head'i (`8663a14`) üzerinde alınmıştır.
 
 ## Test toplamları
 
-- `admin-api`: **56/56** birim, **5/5** Testcontainers IT
+- `admin-api`: **61/61** birim, **5/5** Testcontainers IT
 - `hotel-api`: **83/83**
 - `admin-web`: **21/21** Vitest; lint + build yeşil
 - E2E: `@admin` **3/3**, 0002 **3/3**, 0003 design **40/40**
@@ -38,3 +38,6 @@ Tüm loglar son kod head'i (`8663a14`) üzerinde alınmıştır.
   kanıtlarına dokunulmadı (`AC-7-archive-sha256.txt`).
 - AC-6 CSRF/oturum kapısı görselleri, `@admin` testlerinden sonra
   `e2e/scripts/capture-0004-admin-evidence.mjs` ile üretilir.
+- `AdminJwtKeyProviderTest`, aktif + önceki public anahtarın JWKS'te
+  yayınlandığını, `kid`'in restart'ta korunduğunu ve eksik anahtarda
+  fail-fast davranışını doğrular.
