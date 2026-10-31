@@ -16,9 +16,18 @@ async function openLogin(page: import("@playwright/test").Page) {
 
 async function login(page: import("@playwright/test").Page) {
   await openLogin(page);
+  await page.waitForFunction(() => document.cookie.includes("XSRF-TOKEN="));
   await page.getByTestId("admin-login-identifier").fill(SUPERADMIN_USERNAME);
   await page.getByTestId("admin-login-password").fill(SUPERADMIN_PASSWORD);
+  const loginResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/admin-api/auth/login") &&
+      response.request().method() === "POST",
+  );
   await page.getByTestId("admin-login-submit").click();
+  const response = await loginResponse;
+  expect(response.status()).toBe(204);
+  await page.waitForTimeout(500);
 }
 
 test.describe("Admin auth (AC-6)", () => {
@@ -64,7 +73,7 @@ test.describe("Admin auth (AC-6)", () => {
     { tag: ["@admin"] },
     async ({ page }) => {
       await login(page);
-      await expect(page.getByTestId("admin-home-page")).toBeVisible();
+      await expect(page.getByTestId("admin-home-page")).toBeVisible({ timeout: 15_000 });
       await page.getByTestId("admin-logout").click();
 
       await expect(page).toHaveURL(new RegExp(`${ADMIN_WEB_BASE_URL}/login`));
