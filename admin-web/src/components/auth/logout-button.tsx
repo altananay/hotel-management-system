@@ -4,7 +4,11 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AdminApiClientError, adminApiPost } from "@/lib/api-client";
-import { fetchCsrfToken } from "@/lib/csrf";
+import { fetchCsrfToken, readCsrfToken } from "@/lib/csrf";
+
+async function sessionCsrfToken(): Promise<string> {
+  return readCsrfToken() ?? (await fetchCsrfToken());
+}
 
 export function LogoutButton() {
   const router = useRouter();
@@ -16,7 +20,7 @@ export function LogoutButton() {
     setFailed(false);
     try {
       try {
-        await adminApiPost("/admin-api/auth/logout", {}, await fetchCsrfToken());
+        await adminApiPost("/admin-api/auth/logout", {}, await sessionCsrfToken());
       } catch (error) {
         if (error instanceof AdminApiClientError && error.code === "security.csrf_invalid") {
           await adminApiPost("/admin-api/auth/logout", {}, await fetchCsrfToken());

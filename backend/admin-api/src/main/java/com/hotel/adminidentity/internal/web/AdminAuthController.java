@@ -7,6 +7,7 @@ import com.hotel.adminidentity.api.AdminIdentityApi.AdminLoginCommand;
 import com.hotel.adminidentity.api.AdminIdentityApi.AdminLoginResult;
 import com.hotel.adminidentity.api.AdminIdentityApi.AdminSessionView;
 import com.hotel.adminidentity.api.AdminIdentityApi.CsrfToken;
+import com.hotel.adminidentity.api.AdminSessionException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
@@ -31,11 +32,28 @@ public class AdminAuthController {
     }
 
     @GetMapping("/admin-api/auth/csrf")
-    public ResponseEntity<Void> csrf() {
-        CsrfToken token = identityApi.issuePreAuthCsrf();
+    public ResponseEntity<Void> csrf(
+            @CookieValue(name = AdminCookies.SESSION_COOKIE, required = false)
+                    String currentSessionToken,
+            HttpServletRequest servletRequest) {
         HttpHeaders headers = new HttpHeaders();
+        CsrfToken token = resolveCsrf(currentSessionToken, servletRequest, headers);
         headers.add(HttpHeaders.SET_COOKIE, cookieFactory.csrf(token).toString());
         return ResponseEntity.ok().headers(headers).build();
+    }
+
+    private CsrfToken resolveCsrf(
+            String currentSessionToken, HttpServletRequest request, HttpHeaders headers) {
+        if (currentSessionToken == null || currentSessionToken.isBlank()) {
+            return identityApi.issuePreAuthCsrf();
+        }
+        try {
+            AdminSessionView session = identityApi.validateSession(currentSessionToken, context(request));
+            return identityApi.issueSessionCsrf(session);
+        } catch (AdminSessionException ex) {
+            headers.add(HttpHeaders.SET_COOKIE, cookieFactory.clearSession().toString());
+            return identityApi.issuePreAuthCsrf();
+        }
     }
 
     @PostMapping("/admin-api/auth/login")
