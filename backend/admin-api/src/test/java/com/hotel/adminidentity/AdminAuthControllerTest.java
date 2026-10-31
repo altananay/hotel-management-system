@@ -8,11 +8,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.hotel.adminidentity.api.AdminIdentityApi;
+import com.hotel.adminidentity.api.AdminIdentityApi.AdminLoginResult;
 import com.hotel.adminidentity.api.AdminIdentityApi.AdminSessionView;
 import com.hotel.adminidentity.api.AdminIdentityApi.CsrfToken;
 import com.hotel.adminidentity.api.AdminSessionException;
 import com.hotel.adminidentity.internal.web.AdminAuthController;
 import com.hotel.adminidentity.internal.web.AdminCookieFactory;
+import com.hotel.adminidentity.internal.web.LoginRequest;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -75,6 +77,46 @@ class AdminAuthControllerTest {
                                         .startsWith("XSRF-TOKEN=session-token;")
                                         .contains("Max-Age=28800"));
         verify(identityApi, never()).issuePreAuthCsrf();
+    }
+
+    @Test
+    void shouldSetSessionAndCsrfCookiesWithRequiredAttributes_whenLoginSucceeds() {
+        AdminSessionView session =
+                new AdminSessionView(
+                        UUID.randomUUID(),
+                        UUID.randomUUID(),
+                        "superadmin",
+                        "superadmin@example.com",
+                        "SUPER_ADMIN");
+        when(identityApi.login(any()))
+                .thenReturn(new AdminLoginResult(session, "raw-session-token"));
+        when(identityApi.issueSessionCsrf(session))
+                .thenReturn(new CsrfToken("session-csrf-token", 28_800));
+
+        ResponseEntity<Void> response =
+                controller.login(
+                        new LoginRequest("superadmin", "LocalOnly-Cappadocia-2026!"),
+                        null,
+                        new MockHttpServletRequest());
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        assertThat(response.getBody()).isNull();
+        assertThat(cookies(response))
+                .anySatisfy(
+                        cookie ->
+                                assertThat(cookie)
+                                        .startsWith("ADMIN_SESSION=raw-session-token;")
+                                        .contains("HttpOnly")
+                                        .contains("SameSite=Lax")
+                                        .contains("Path=/")
+                                        .contains("Max-Age=28800"));
+        assertThat(cookies(response))
+                .anySatisfy(
+                        cookie ->
+                                assertThat(cookie)
+                                        .startsWith("XSRF-TOKEN=session-csrf-token;")
+                                        .doesNotContain("HttpOnly")
+                                        .contains("SameSite=Lax"));
     }
 
     @Test
