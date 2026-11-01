@@ -113,6 +113,7 @@ jobs:
       - name: Start hotel-api (:8081) and admin-api (:8082) as app user
         run: |
           nohup java -jar backend/hotel-api/target/hotel-api-0.0.1-SNAPSHOT.jar > /tmp/hotel-api.log 2>&1 &
+          SPRING_PROFILES_ACTIVE=ci \
           ADMIN_JWT_ACTIVE_KEY_PATH="$RUNNER_TEMP/admin-jwt-active.pem" \
           ADMIN_JWT_ALLOW_GENERATED_DEV_KEY=true \
           nohup java -jar backend/admin-api/target/admin-api-0.0.1-SNAPSHOT.jar > /tmp/admin-api.log 2>&1 &
