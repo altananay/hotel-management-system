@@ -1,16 +1,16 @@
 # AC-3 JWT claims, RS256 signing and JWKS key rotation
-# generated_at=2026-11-01T12:56:56.562329+00:00
-# source: local Maven Surefire XML reports and GitHub Actions run 41308208928
+# generated_at=2026-11-01T14:10:01.129168+00:00
+# source: local Maven Surefire XML reports and GitHub Actions run 41314089811
 
 Test set: com.hotel.adminidentity.AdminJwtServiceTest
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time: 0.039s
-  PASS shouldIssueFiveMinuteRs256JwtWithRequiredClaims_whenSessionIsValid (0.039s)
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time: 0.075s
+  PASS shouldIssueFiveMinuteRs256JwtWithRequiredClaims_whenSessionIsValid (0.074s)
 
 Test set: com.hotel.adminidentity.AdminJwtKeyProviderTest
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time: 0.465s
-  PASS shouldPublishOnlyActiveKey_whenPreviousKeyIsAbsent (0.211s)
-  PASS shouldPublishActiveAndPreviousKeys_whenPreviousPublicKeyExists (0.128s)
-  PASS shouldGenerateLocalKeyPair_whenGenerationIsAllowed (0.055s)
-  PASS shouldKeepSameKeyIdAcrossRestart_whenActiveKeyFileIsReused (0.068s)
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time: 0.318s
+  PASS shouldPublishOnlyActiveKey_whenPreviousKeyIsAbsent (0.13s)
+  PASS shouldPublishActiveAndPreviousKeys_whenPreviousPublicKeyExists (0.106s)
+  PASS shouldGenerateLocalKeyPair_whenGenerationIsAllowed (0.056s)
+  PASS shouldKeepSameKeyIdAcrossRestart_whenActiveKeyFileIsReused (0.022s)
   PASS shouldFailFast_whenActiveKeyIsMissingAndGenerationIsNotAllowed (0.002s)
 

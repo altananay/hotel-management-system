@@ -1,26 +1,26 @@
 # AC-2 CSRF pre-auth, session-bound and malformed tokens
-# generated_at=2026-11-01T12:56:56.555000+00:00
-# source: local Maven Surefire XML reports and GitHub Actions run 41308208928
+# generated_at=2026-11-01T14:10:01.121455+00:00
+# source: local Maven Surefire XML reports and GitHub Actions run 41314089811
 
 Test set: com.hotel.adminidentity.AdminCsrfServiceTest
-Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time: 0.061s
-  PASS shouldRejectMissingOriginOrPreAuthTokenOnLogout_whenStateChanging (0.049s)
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time: 0.066s
+  PASS shouldRejectMissingOriginOrPreAuthTokenOnLogout_whenStateChanging (0.052s)
   PASS shouldRejectMalformedBase64Token_withCsrfException (0.001s)
-  PASS shouldRejectTokenWithMalformedPayload_withCsrfException (0.002s)
-  PASS shouldSkipCsrf_whenRequestIsReadOnly (0.001s)
-  PASS shouldAcceptPreAuthToken_whenOriginAndLoginAreValid (0.0s)
-  PASS shouldAcceptSessionBoundToken_whenSessionMatches (0.005s)
+  PASS shouldRejectTokenWithMalformedPayload_withCsrfException (0.001s)
+  PASS shouldSkipCsrf_whenRequestIsReadOnly (0.003s)
+  PASS shouldAcceptPreAuthToken_whenOriginAndLoginAreValid (0.001s)
+  PASS shouldAcceptSessionBoundToken_whenSessionMatches (0.006s)
 
 Test set: com.hotel.adminidentity.AdminAuthControllerTest
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time: 0.059s
-  PASS shouldFallBackToPreAuthAndClearSession_whenSessionCookieIsInvalid (0.05s)
-  PASS shouldIssuePreAuthCsrf_whenNoSessionCookieIsPresent (0.002s)
-  PASS shouldSetSessionAndCsrfCookiesWithRequiredAttributes_whenLoginSucceeds (0.002s)
-  PASS shouldIssueSessionBoundCsrf_whenSessionCookieIsValid (0.002s)
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time: 0.064s
+  PASS shouldFallBackToPreAuthAndClearSession_whenSessionCookieIsInvalid (0.055s)
+  PASS shouldIssuePreAuthCsrf_whenNoSessionCookieIsPresent (0.003s)
+  PASS shouldSetSessionAndCsrfCookiesWithRequiredAttributes_whenLoginSucceeds (0.003s)
+  PASS shouldIssueSessionBoundCsrf_whenSessionCookieIsValid (0.001s)
 
 Test set: com.hotel.web.AdminCsrfFilterTest
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time: 0.028s
-  PASS shouldReturn403AndSkipChain_whenCsrfValidationFails (0.026s)
-  PASS shouldPassThrough_whenCsrfValidationSucceeds (0.001s)
-  PASS shouldSkipSafeMethodsAndTokenEndpoint (0.0s)
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time: 0.037s
+  PASS shouldReturn403AndSkipChain_whenCsrfValidationFails (0.035s)
+  PASS shouldPassThrough_whenCsrfValidationSucceeds (0.0s)
+  PASS shouldSkipSafeMethodsAndTokenEndpoint (0.001s)
 

@@ -1,14 +1,14 @@
 # AC-2 lockout, email alias counter and user enumeration
-# generated_at=2026-11-01T12:56:56.554024+00:00
-# source: local Maven Surefire XML reports and GitHub Actions run 41308208928
+# generated_at=2026-11-01T14:10:01.120511+00:00
+# source: local Maven Surefire XML reports and GitHub Actions run 41314089811
 
 Test set: com.hotel.adminidentity.AdminIdentityServiceTest
-Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time: 0.139s
-  PASS shouldUseDummyHashAndAuditFailure_whenUserIsUnknown (0.117s)
-  PASS shouldRejectWithGenericErrorAndSkipPasswordCheck_whenIdentifierIsLocked (0.002s)
-  PASS shouldAuditInactiveUser_whenCredentialsMatchButUserIsInactive (0.002s)
-  PASS shouldUseSameUserCounter_whenLoggingInWithEmailAlias (0.001s)
-  PASS shouldRevokeNewSessionAndFail_whenSuccessAuditFails (0.003s)
+Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time: 0.153s
+  PASS shouldUseDummyHashAndAuditFailure_whenUserIsUnknown (0.128s)
+  PASS shouldRejectWithGenericErrorAndSkipPasswordCheck_whenIdentifierIsLocked (0.004s)
+  PASS shouldAuditInactiveUser_whenCredentialsMatchButUserIsInactive (0.003s)
+  PASS shouldUseSameUserCounter_whenLoggingInWithEmailAlias (0.003s)
+  PASS shouldRevokeNewSessionAndFail_whenSuccessAuditFails (0.002s)
   PASS shouldLockForFifteenMinutes_whenFifthFailureOccursWithinWindow (0.003s)
   PASS shouldDelegateLogoutToSessionService (0.001s)
   PASS shouldCreateSessionClearFailuresAndAudit_whenCredentialsAreValid (0.002s)

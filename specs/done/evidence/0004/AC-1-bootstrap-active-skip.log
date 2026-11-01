@@ -1,8 +1,8 @@
 # AC-1 bootstrap skips before reading env when an active SUPER_ADMIN exists
-# generated_at=2026-11-01T12:56:56.549710+00:00
-# source: local Maven Surefire XML reports and GitHub Actions run 41308208928
+# generated_at=2026-11-01T14:10:01.115937+00:00
+# source: local Maven Surefire XML reports and GitHub Actions run 41314089811
 
 Test set: com.hotel.adminidentity.AdminBootstrapServiceTest
-Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time: 0.11s
+Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time: 0.114s
 Selected scenarios: shouldSkipWithoutReadingEnv_whenActiveSuperAdminExists
-  PASS shouldSkipWithoutReadingEnv_whenActiveSuperAdminExists (0.002s)
+  PASS shouldSkipWithoutReadingEnv_whenActiveSuperAdminExists (0.001s)

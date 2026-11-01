@@ -1,8 +1,8 @@
 # AC-5 login rotation writes SESSION_REVOKED
-# generated_at=2026-11-01T12:56:56.567068+00:00
-# source: local Maven Surefire XML reports and GitHub Actions run 41308208928
+# generated_at=2026-11-01T14:10:01.134032+00:00
+# source: local Maven Surefire XML reports and GitHub Actions run 41314089811
 
 Test set: com.hotel.adminidentity.AdminSessionServiceTest
-Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time: 0.014s
+Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time: 0.015s
 Selected scenarios: shouldDeleteRotatedSessionAndAuditRevocation_whenRevoking
-  PASS shouldDeleteRotatedSessionAndAuditRevocation_whenRevoking (0.003s)
+  PASS shouldDeleteRotatedSessionAndAuditRevocation_whenRevoking (0.002s)

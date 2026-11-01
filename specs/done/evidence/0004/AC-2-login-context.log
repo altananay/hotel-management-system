@@ -1,25 +1,25 @@
 # AC-2 login lockout and audit client context
-# generated_at=2026-11-01T12:56:56.556862+00:00
-# source: local Maven Surefire XML reports and GitHub Actions run 41308208928
+# generated_at=2026-11-01T14:10:01.123336+00:00
+# source: local Maven Surefire XML reports and GitHub Actions run 41314089811
 
 Test set: com.hotel.web.ClientIpResolverTest
-Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time: 0.004s
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time: 0.003s
   PASS shouldUseFirstUntrustedForwardedAddress_whenProxyIsTrusted (0.001s)
-  PASS shouldFallBackToDirectAddress_whenForwardedAddressHasAnInvalidPort (0.001s)
-  PASS shouldUseDirectAddress_whenAllForwardedHopsAreTrusted (0.0s)
-  PASS shouldFallBackToDirectAddress_whenForwardedAddressIsInvalid (0.001s)
+  PASS shouldFallBackToDirectAddress_whenForwardedAddressHasAnInvalidPort (0.0s)
+  PASS shouldUseDirectAddress_whenAllForwardedHopsAreTrusted (0.002s)
+  PASS shouldFallBackToDirectAddress_whenForwardedAddressIsInvalid (0.0s)
   PASS shouldUseDirectAddress_whenForwardedHeaderIsMissing (0.0s)
   PASS shouldIgnoreForwardedHeader_whenNoProxyIsTrusted (0.0s)
 
 Test set: com.hotel.web.AdminClientContextFilterTest
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time: 0.028s
-  PASS shouldSetLoginClientContextBeforeTheChain (0.028s)
-  PASS shouldNotDecorateNonAdminRequests (0.0s)
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time: 0.034s
+  PASS shouldSetLoginClientContextBeforeTheChain (0.031s)
+  PASS shouldNotDecorateNonAdminRequests (0.001s)
 
 Test set: com.hotel.adminidentity.AdminAuthControllerTest
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time: 0.059s
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time: 0.064s
 Selected scenarios: shouldSetSessionAndCsrfCookiesWithRequiredAttributes_whenLoginSucceeds
-  PASS shouldSetSessionAndCsrfCookiesWithRequiredAttributes_whenLoginSucceeds (0.002s)
+  PASS shouldSetSessionAndCsrfCookiesWithRequiredAttributes_whenLoginSucceeds (0.003s)
 
 # AdminClientContextFilter resolves IP/requestId before the identity filter for every
 # /admin-api/** request, including anonymous login; the controller consumes the same

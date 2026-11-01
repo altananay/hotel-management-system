@@ -1,34 +1,34 @@
 # AC-1 admin seed and bootstrap
-# generated_at=2026-11-01T12:56:56.548674+00:00
-# source: local Maven Surefire XML reports and GitHub Actions run 41308208928
+# generated_at=2026-11-01T14:10:01.114948+00:00
+# source: local Maven Surefire XML reports and GitHub Actions run 41314089811
 
 Test set: com.hotel.adminidentity.AdminBootstrapServiceTest
-Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time: 0.11s
-  PASS shouldFailFast_whenUsernameOrEmailFormatIsInvalid (0.078s)
+Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time: 0.114s
+  PASS shouldFailFast_whenUsernameOrEmailFormatIsInvalid (0.08s)
   PASS shouldDeleteAdminAndFail_whenCreationAuditFails (0.008s)
-  PASS shouldKeepSkippedOutcome_whenSkipAuditFails (0.003s)
+  PASS shouldKeepSkippedOutcome_whenSkipAuditFails (0.005s)
   PASS shouldSkip_whenConcurrentInsertHitsUniqueAndActiveSuperAdminExists (0.004s)
-  PASS shouldFailFast_whenEnvIsMissingOrWeak (0.001s)
-  PASS shouldSkipWithoutReadingEnv_whenActiveSuperAdminExists (0.002s)
+  PASS shouldFailFast_whenEnvIsMissingOrWeak (0.002s)
+  PASS shouldSkipWithoutReadingEnv_whenActiveSuperAdminExists (0.001s)
   PASS shouldFailFast_whenOnlyPassiveSuperAdminExists (0.002s)
   PASS shouldCreateSuperAdminWithNormalizedIdentity_whenNoAdminRowsAndEnvIsValid (0.002s)
-  PASS shouldFailFast_whenConcurrentInsertHitsUniqueWithoutActiveSuperAdmin (0.002s)
-  PASS shouldFailFast_whenOnlyManagerOrFrontDeskRowsExist (0.001s)
+  PASS shouldFailFast_whenConcurrentInsertHitsUniqueWithoutActiveSuperAdmin (0.001s)
+  PASS shouldFailFast_whenOnlyManagerOrFrontDeskRowsExist (0.002s)
 
 Test set: com.hotel.bootstrap.AdminBootstrapCliTest
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time: 0.003s
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time: 0.004s
   PASS shouldReturnDeclaredExitCode_whenBootstrapOutcomeIsKnown (0.003s)
-  PASS shouldReturnThree_whenBootstrapThrowsDatabaseError (0.0s)
+  PASS shouldReturnThree_whenBootstrapThrowsDatabaseError (0.001s)
 
 Test set: com.hotel.AdminApiApplicationTest
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time: 0.043s
-  PASS shouldUseBootstrapMode_whenBootstrapFlagIsPresent (0.029s)
-  PASS shouldStartWithoutWebServer_whenBootstrapFlagIsPresent (0.003s)
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time: 0.045s
+  PASS shouldUseBootstrapMode_whenBootstrapFlagIsPresent (0.031s)
+  PASS shouldStartWithoutWebServer_whenBootstrapFlagIsPresent (0.005s)
 
-# CI seed and guard output (GitHub Actions run 41308208928, e2e job)
-2026-11-01T12:49:05.4744844Z [INFO] Migrating schema "public" with repeatable migration "seed admin dev"
-2026-11-01T12:51:45.5306265Z [36;1mecho "Seed guard rejected missing and prod environments with the expected guard error."[0m
-2026-11-01T12:51:52.4710087Z Seed guard rejected missing and prod environments with the expected guard error.
-2026-11-01T12:51:52.4771861Z [36;1mecho "Seed SQL guard rejected overridden Flyway URL with the expected marker error."[0m
-2026-11-01T12:51:59.6815244Z Seed SQL guard rejected overridden Flyway URL with the expected marker error.
+# CI seed and guard output (GitHub Actions run 41314089811, e2e job)
+2026-11-01T14:02:31.7206377Z [INFO] Migrating schema "public" with repeatable migration "seed admin dev"
+2026-11-01T14:05:02.5276577Z [36;1mecho "Seed guard rejected missing and prod environments with the expected guard error."[0m
+2026-11-01T14:05:08.3204770Z Seed guard rejected missing and prod environments with the expected guard error.
+2026-11-01T14:05:08.3265866Z [36;1mecho "Seed SQL guard rejected overridden Flyway URL with the expected marker error."[0m
+2026-11-01T14:05:14.9003616Z Seed SQL guard rejected overridden Flyway URL with the expected marker error.
 

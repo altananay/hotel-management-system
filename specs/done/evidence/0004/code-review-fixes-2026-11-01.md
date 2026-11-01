@@ -1,7 +1,7 @@
 # 0004 code review fixleri — 2026-11-01
 
 - **İncelenen head:** `6eeb710`
-- **Fix head:** `04c4673` (`plan 0004/21`…`0004/28`)
+- **Fix head:** `592507c` (`plan 0004/21`…`0004/28`)
 - **Kaynak:** `code-review-brief-2026-11-01.md`
 
 ## Özet
@@ -42,7 +42,7 @@ local-part'lı hesaplarda parola politikası pratikte uygulanamaz.
 
 ## Test / kanıt
 
-- `admin-api`: **95/95** birim; Testcontainers IT CI'da.
+- `admin-api`: **98/98** birim; Testcontainers IT CI'da.
 - `hotel-api`: **89/89**.
 - `admin-web`: **23/23**.
 - Yeni kanıtlar: `AC-1-bootstrap-*.log`, `AC-2-login-context.log`,

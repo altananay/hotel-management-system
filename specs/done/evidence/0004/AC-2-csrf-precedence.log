@@ -1,22 +1,22 @@
 # AC-2 CSRF before validation and session gate
-# generated_at=2026-11-01T12:56:56.555897+00:00
-# source: local Maven Surefire XML reports and GitHub Actions run 41308208928
+# generated_at=2026-11-01T14:10:01.122369+00:00
+# source: local Maven Surefire XML reports and GitHub Actions run 41314089811
 
 Test set: com.hotel.web.AdminCsrfFilterTest
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time: 0.028s
-  PASS shouldReturn403AndSkipChain_whenCsrfValidationFails (0.026s)
-  PASS shouldPassThrough_whenCsrfValidationSucceeds (0.001s)
-  PASS shouldSkipSafeMethodsAndTokenEndpoint (0.0s)
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time: 0.037s
+  PASS shouldReturn403AndSkipChain_whenCsrfValidationFails (0.035s)
+  PASS shouldPassThrough_whenCsrfValidationSucceeds (0.0s)
+  PASS shouldSkipSafeMethodsAndTokenEndpoint (0.001s)
 
 Test set: com.hotel.adminidentity.AdminCsrfServiceTest
-Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time: 0.061s
-  PASS shouldRejectMissingOriginOrPreAuthTokenOnLogout_whenStateChanging (0.049s)
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time: 0.066s
+  PASS shouldRejectMissingOriginOrPreAuthTokenOnLogout_whenStateChanging (0.052s)
   PASS shouldRejectMalformedBase64Token_withCsrfException (0.001s)
-  PASS shouldRejectTokenWithMalformedPayload_withCsrfException (0.002s)
-  PASS shouldSkipCsrf_whenRequestIsReadOnly (0.001s)
-  PASS shouldAcceptPreAuthToken_whenOriginAndLoginAreValid (0.0s)
-  PASS shouldAcceptSessionBoundToken_whenSessionMatches (0.005s)
+  PASS shouldRejectTokenWithMalformedPayload_withCsrfException (0.001s)
+  PASS shouldSkipCsrf_whenRequestIsReadOnly (0.003s)
+  PASS shouldAcceptPreAuthToken_whenOriginAndLoginAreValid (0.001s)
+  PASS shouldAcceptSessionBoundToken_whenSessionMatches (0.006s)
 
 # CI evidence that the admin-web retry recovers from a forced CSRF 403
-2026-11-01T12:54:50.0470250Z AC-6-admin-csrf-retry.png: first login POST forced 403, retry succeeded
+2026-11-01T14:08:04.9134181Z AC-6-admin-csrf-retry.png: first login POST forced 403, retry succeeded
 

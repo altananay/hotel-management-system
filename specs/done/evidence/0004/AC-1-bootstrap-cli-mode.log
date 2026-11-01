@@ -1,11 +1,11 @@
 # AC-1 bootstrap CLI disables the web server
-# generated_at=2026-11-01T12:56:56.551789+00:00
-# source: local Maven Surefire XML reports and GitHub Actions run 41308208928
+# generated_at=2026-11-01T14:10:01.118220+00:00
+# source: local Maven Surefire XML reports and GitHub Actions run 41314089811
 
 Test set: com.hotel.AdminApiApplicationTest
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time: 0.043s
-  PASS shouldUseBootstrapMode_whenBootstrapFlagIsPresent (0.029s)
-  PASS shouldStartWithoutWebServer_whenBootstrapFlagIsPresent (0.003s)
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time: 0.045s
+  PASS shouldUseBootstrapMode_whenBootstrapFlagIsPresent (0.031s)
+  PASS shouldStartWithoutWebServer_whenBootstrapFlagIsPresent (0.005s)
 
 # AdminApiApplication uses WebApplicationType.NONE when --bootstrap-admin is present;
 # the test asserts both the mode flag and the resulting WebApplicationType.

@@ -1,6 +1,6 @@
 # 0004 E2E ve CI özeti
 
-- CI run: [41308208928](https://github.com/altananay/hotel-management-system/actions/runs/41308208928) — head `04c4673`, sonuç **success**.
+- CI run: [41314089811](https://github.com/altananay/hotel-management-system/actions/runs/41314089811) — head `592507c`, sonuç **success**.
 - PR: [#18](https://github.com/altananay/hotel-management-system/pull/18) → `integration`.
 - E2E job: **success**.
 
@@ -8,8 +8,8 @@
 
 | Paket | Komut | Sonuç |
 |---|---|---|
-| 0002 `@empty` | `npx playwright test tests/smoke.spec.ts --grep @empty` | **1 passed** (3.5s) |
-| 0002 `@seeded` | `npx playwright test tests/smoke.spec.ts --grep @seeded` | **2 passed** (5.0s) |
+| 0002 `@empty` | `npx playwright test tests/smoke.spec.ts --grep @empty` | **1 passed** (3.3s) |
+| 0002 `@seeded` | `npx playwright test tests/smoke.spec.ts --grep @seeded` | **2 passed** (4.4s) |
 | 0003 design `@seeded` | `npx playwright test tests/design --grep @seeded` | **40 passed** (2.5m) |
 | 0004 `@admin` | `npx playwright test tests/admin --grep @admin` | **3 passed** (5.7s) |
 | 0004 ekran kanıtı | `node scripts/capture-0004-admin-evidence.mjs` | 3 PNG + 2 log |
