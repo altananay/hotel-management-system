@@ -1,0 +1,22 @@
+# AC-6 admin-web Vitest (21/21)
+# command: npm test (admin-web)
+
+
+> hotel-admin-web@0.1.0 test
+> vitest run
+
+
+ RUN  v3.0.7 D:/projects/hotel-management-system/admin-web
+
+ Ô£ô src/lib/__tests__/return-to.test.ts (2 tests) 1ms
+ Ô£ô src/lib/__tests__/error-messages.test.ts (3 tests) 1ms
+ Ô£ô src/lib/__tests__/csrf.test.ts (3 tests) 8ms
+ Ô£ô src/lib/__tests__/admin-auth.test.ts (4 tests) 5ms
+ Ô£ô src/components/auth/__tests__/logout-button.test.tsx (5 tests) 101ms
+ Ô£ô src/components/auth/__tests__/login-form.test.tsx (4 tests) 102ms
+
+ Test Files  6 passed (6)
+      Tests  21 passed (21)
+   Start at  02:14:04
+   Duration  1.11s (transform 183ms, setup 609ms, collect 401ms, tests 218ms, environment 2.88s, prepare 718ms)
+

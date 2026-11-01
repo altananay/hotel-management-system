@@ -1,0 +1,41 @@
+# AC-5 audit fail-closed paths
+# generated_at=2026-11-01T14:10:01.133601+00:00
+# source: local Maven Surefire XML reports and GitHub Actions run 41314089811
+
+Test set: com.hotel.adminidentity.AdminIdentityServiceTest
+Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time: 0.153s
+  PASS shouldUseDummyHashAndAuditFailure_whenUserIsUnknown (0.128s)
+  PASS shouldRejectWithGenericErrorAndSkipPasswordCheck_whenIdentifierIsLocked (0.004s)
+  PASS shouldAuditInactiveUser_whenCredentialsMatchButUserIsInactive (0.003s)
+  PASS shouldUseSameUserCounter_whenLoggingInWithEmailAlias (0.003s)
+  PASS shouldRevokeNewSessionAndFail_whenSuccessAuditFails (0.002s)
+  PASS shouldLockForFifteenMinutes_whenFifthFailureOccursWithinWindow (0.003s)
+  PASS shouldDelegateLogoutToSessionService (0.001s)
+  PASS shouldCreateSessionClearFailuresAndAudit_whenCredentialsAreValid (0.002s)
+  PASS shouldFailWithAuditErrorAndCreateNoSession_whenFailureAuditFails (0.002s)
+
+Test set: com.hotel.adminidentity.AdminSessionServiceTest
+Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time: 0.015s
+  PASS shouldRejectWithoutRepositoryLookup_whenTokenIsBlank (0.001s)
+  PASS shouldReject_whenUserIsInactive (0.002s)
+  PASS shouldDeleteAndReject_whenAbsoluteExpiryIsReached (0.002s)
+  PASS shouldDeleteOnlyCurrentSessionAndAuditLogout_whenLoggingOut (0.001s)
+  PASS shouldDeleteAndReject_whenIdleTimeoutIsExceeded (0.001s)
+  PASS shouldIgnoreUnknownSession_whenLoggingOut (0.0s)
+  PASS shouldDeleteRotatedSessionAndAuditRevocation_whenRevoking (0.002s)
+  PASS shouldTouchLastSeenAndReturnView_whenSessionIsValid (0.001s)
+  PASS shouldContinueLogout_whenAuditWriteFails (0.002s)
+
+Test set: com.hotel.adminidentity.AdminBootstrapServiceTest
+Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time: 0.114s
+  PASS shouldFailFast_whenUsernameOrEmailFormatIsInvalid (0.08s)
+  PASS shouldDeleteAdminAndFail_whenCreationAuditFails (0.008s)
+  PASS shouldKeepSkippedOutcome_whenSkipAuditFails (0.005s)
+  PASS shouldSkip_whenConcurrentInsertHitsUniqueAndActiveSuperAdminExists (0.004s)
+  PASS shouldFailFast_whenEnvIsMissingOrWeak (0.002s)
+  PASS shouldSkipWithoutReadingEnv_whenActiveSuperAdminExists (0.001s)
+  PASS shouldFailFast_whenOnlyPassiveSuperAdminExists (0.002s)
+  PASS shouldCreateSuperAdminWithNormalizedIdentity_whenNoAdminRowsAndEnvIsValid (0.002s)
+  PASS shouldFailFast_whenConcurrentInsertHitsUniqueWithoutActiveSuperAdmin (0.001s)
+  PASS shouldFailFast_whenOnlyManagerOrFrontDeskRowsExist (0.002s)
+

@@ -40,12 +40,12 @@ class AdminApiModularityTest {
 
     /**
      * Closed allowlist of cross-module dependencies for admin modules (docs/architecture.md §4).
-     * The list is intentionally EMPTY: no cross-module dependency has been approved yet. Any new
+     * The only approved edge is adminidentity -> adminaudit for synchronous audit writes. Any new
      * edge requires updating {@code docs/architecture.md} §4 first.
      */
     private static final Map<String, Set<String>> ALLOWED_ADMIN_MODULE_DEPENDENCIES =
             Map.of(
-                    "adminidentity", Set.of(),
+                    "adminidentity", Set.of("adminaudit"),
                     "adminaudit", Set.of(),
                     "preferences", Set.of(),
                     "gateway", Set.of());
@@ -113,7 +113,7 @@ class AdminApiModularityTest {
         }
 
         // Explicit negative direction example required by the review: adminaudit must not depend on
-        // adminidentity while the allowlist stays empty (docs/architecture.md §4).
+        // adminidentity; only adminidentity -> adminaudit is allowed (docs/architecture.md §4).
         noClasses()
                 .that()
                 .resideInAPackage("com.hotel.adminaudit..")
