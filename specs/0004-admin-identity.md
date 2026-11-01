@@ -10,10 +10,10 @@
 
 - **Spec No:** `0004`
 - **Başlık:** Admin Kimlik ve Oturum (`admin-identity`)
-- **Durum:** Onaylandı *(rev.7 — eşzamanlılık kapsamı doküman netleştirmeleri işlendi)*
+- **Durum:** Onaylandı *(rev.8 — CR-10 e-posta local-part istisnası spec'e işlendi)*
 - **Branch:** `feature/0004-admin-identity`
-- **İlgili doküman/kararlar:** `docs/architecture.md` (§2, §4, §5 R3/R6, §6, §8, §10 D2/D19, §11), `docs/domain.md` (§1 `AdminSession`/`AdminRole`/`AuditEntry`, §3 rol tablosu), `docs/conventions.md` (§2.3, §2.4, §4), `docs/frontend.md`, `docs/testing.md`, `docs/git.md`, `specs/done/0001-project-architecture.md` (`CLARIFY-3A`, `F5`, `F7`), `specs/done/0002-room-catalog.md` (seed konvansiyonu), `specs/done/0003-ui-design-system.md` (E2E kanıt helper'ı); Onaylı kararlar: `CLARIFY-1A`…`CLARIFY-9A`, `CLARIFY-11A`, `Q10=A` (CSRF double-submit + Origin, 2026-10-28); rev.4: identifier+IP kilidi, CSRF/Origin önceliği, gateway request-id, login rotasyonu audit'i ve 0003 40/40 CI koruması işlendi; rev.5: B-14 bootstrap aktif SUPER_ADMIN/audit rollback düzeltmesi işlendi; rev.6: bootstrap CLI/eşzamanlılık, `BOOTSTRAP_SKIPPED` skip audit'i, CSRF fetch hatası ve `@admin` test adları işlendi; rev.7: eşzamanlılık kapsamı aynı `ADMIN_BOOTSTRAP_USERNAME` ile netleştirildi, global tek-SUPER_ADMIN invariantı kapsam dışına alındı
-- **Tarih:** 2026-10-28 *(Son revizyon: 2026-10-29, rev.7)*
+- **İlgili doküman/kararlar:** `docs/architecture.md` (§2, §4, §5 R3/R6, §6, §8, §10 D2/D19, §11), `docs/domain.md` (§1 `AdminSession`/`AdminRole`/`AuditEntry`, §3 rol tablosu), `docs/conventions.md` (§2.3, §2.4, §4), `docs/frontend.md`, `docs/testing.md`, `docs/git.md`, `specs/done/0001-project-architecture.md` (`CLARIFY-3A`, `F5`, `F7`), `specs/done/0002-room-catalog.md` (seed konvansiyonu), `specs/done/0003-ui-design-system.md` (E2E kanıt helper'ı); Onaylı kararlar: `CLARIFY-1A`…`CLARIFY-9A`, `CLARIFY-11A`, `Q10=A` (CSRF double-submit + Origin, 2026-10-28); rev.4: identifier+IP kilidi, CSRF/Origin önceliği, gateway request-id, login rotasyonu audit'i ve 0003 40/40 CI koruması işlendi; rev.5: B-14 bootstrap aktif SUPER_ADMIN/audit rollback düzeltmesi işlendi; rev.6: bootstrap CLI/eşzamanlılık, `BOOTSTRAP_SKIPPED` skip audit'i, CSRF fetch hatası ve `@admin` test adları işlendi; rev.7: eşzamanlılık kapsamı aynı `ADMIN_BOOTSTRAP_USERNAME` ile netleştirildi, global tek-SUPER_ADMIN invariantı kapsam dışına alındı; rev.8: CR-10 — e-posta local-part kontrolünün 1–2 karakterlik local-part istisnası açıkça yazıldı; davranış değişmedi.
+- **Tarih:** 2026-10-28 *(Son revizyon: 2026-11-01, rev.8)*
 - **Sahip:** Analist (`analyst`)
 - **Onaylayan (Takım Yöneticisi):** Takım Yöneticisi (Onaylandı - 2026-10-29)
 
@@ -60,7 +60,7 @@ Otel personeli (`SUPER_ADMIN`, `MANAGER`, `FRONT_DESK`) ve otel yönetimi, bugü
 - **Kullanıcı adı:** 3–40 karakter; `^[a-z0-9][a-z0-9._-]{2,39}$`; girişte küçük harfe normalize edilir; benzersizlik `lower(username)` üzerinde DB unique index ile sağlanır.
 - **E-posta:** en fazla 254 karakter, RFC 5322 biçimi; küçük harfe normalize edilir; benzersizlik `lower(email)` üzerinde DB unique index ile sağlanır.
 - **Pasif hesap:** `active=false` olan kullanıcı giriş yapamaz; doğru parola verilse bile `401 security.invalid_credentials` generic yanıtı döner. Pasifleştirilen kullanıcının mevcut oturumları bir sonraki doğrulamada geçersizdir (kullanıcı yönetimi 0004 kapsamı dışındadır; kural hazırdır).
-- **Parola:** NFC normalize edilmiş **12–128 Unicode code point** ve en fazla **512 UTF-8 byte**; kompozisyon kuralı yok; parola, kullanıcı adını veya e-postayı (case-insensitive, tam veya local-part) içeremez.
+- **Parola:** NFC normalize edilmiş **12–128 Unicode code point** ve en fazla **512 UTF-8 byte**; kompozisyon kuralı yok; parola, kullanıcı adını veya e-postayı (case-insensitive, tam veya local-part) içeremez. E-posta local-part'ı için substring kontrolü yalnız local-part uzunluğu **3 veya daha fazla** ise uygulanır; 1–2 karakterli local-part'lar pratikte tüm parolalarla çakışacağı için bu kontrolden muaftır. Tam e-posta adresi ve kullanıcı adı her uzunlukta kontrol edilir.
 - **Hash:** Argon2id; bellek **19.456 KiB**, iterasyon **2**, paralellik **1**, salt **16 B**, çıktı **32 B**, version **0x13**. Parametreler kodda tek yerde tanımlıdır; testler hash'in düz metin olmadığını ve doğrulama maliyetinin bilinmeyen kullanıcıda da korunduğunu doğrular.
 - **Generic hata:** Kullanıcı yok, parola yanlış, pasif hesap ve kilitli hesap aynı `401 security.invalid_credentials` gövdesini döner; yanıt süresi belirgin fark üretmez.
 
@@ -182,7 +182,8 @@ Otel personeli (`SUPER_ADMIN`, `MANAGER`, `FRONT_DESK`) ve otel yönetimi, bugü
 - **AC-1 (Admin Kimlik Modeli, Parola Politikası, Seed ve Bootstrap — `REQ-1`, `CLARIFY-2A`, `CLARIFY-4A`):**
   - `hotel_admin.admin_platform` şemasında V2 admin kullanıcı/oturum/deneme tabloları, V3 audit tablosu oluşur; JPA entity'leri `@Table(schema = "admin_platform")` taşır; `hotel_core` referansı yoktur.
   - Admin kullanıcı; UUIDv7 kimlik, benzersiz kullanıcı adı (case-insensitive), benzersiz e-posta, Argon2id parola özeti, rol (`SUPER_ADMIN`/`MANAGER`/`FRONT_DESK`), aktiflik ve zaman damgaları taşır. Parola özeti düz metin değildir; Argon2id parametreleri testle doğrulanır.
-  - Parola politikası: 12–128 karakter, kompozisyon kuralı yok, kullanıcı adı/e-posta içeremez. Kısa/uzun/aynı kullanıcı adını içeren parolalar reddedilir; hata generic ve kullanıcı numaralandırması yapmaz.
+  - Parola politikası: 12–128 karakter, kompozisyon kuralı yok, kullanıcı adı/e-posta içeremez. Kısa/uzun/aynı kullanıcı adını içeren parolalar reddedilir; hata generic ve kullanıcı numaralandırması yapmaz. E-posta local-part kontrolü 3+ karakterli local-part'larda uygulanır; **1–2 karakterli local-part istisnası** testle doğrulanır (tam e-posta ve kullanıcı adı kontrolü her uzunlukta korunur).
+  - Parola testleri (`PasswordPolicyTest`, önerilen adlar): (a) `shouldAcceptPasswordContainingOneCharacterLocalPart_whenFullEmailAndUsernameAreAbsent` — `a@example.com`, parolada `a` var, tam e-posta/kullanıcı adı yok → kabul; (b) `shouldRejectPasswordContainingThreeCharacterLocalPart` — `abc@example.com`, parolada `abc` var → `InvalidPasswordException`; (c) `shouldRejectPasswordContainingFullShortEmail` — `a@example.com`, parolada tam e-posta var → `InvalidPasswordException`. Mevcut `shouldRejectPasswordContainingEmailLocalPart_whenLongEnough` korunur.
   - Local/CI seed üç rolü temsil eden üç aktif hesap oluşturur; kimlik bilgileri `.env.example`'da local-only işaretli env değerlerinden gelir; aynı seed iki kez çalıştırıldığında mükerrer kayıt/parola değişikliği olmaz. Seed yalnız `local`/`ci` guard'ı ve `hotel_admin` `local-ci-seed` marker'ı ile çalışır; prod'da çalışmaz.
   - Prod bootstrap ayrı CLI/init job'dur; CLI modunda web server başlatılmaz ve süreç exit koduyla kapanır; **yalnız aktif SUPER_ADMIN** varsa env kontrolünden önce skip + uyarı ile exit 0 yapar; skip yolunda `BOOTSTRAP_SKIPPED` audit'i yazılır, audit yazılamazsa uyarı loglanır ve exit 0 korunur; aktif SUPER_ADMIN yokken herhangi bir admin satırı (pasif SUPER_ADMIN, yalnız MANAGER veya FRONT_DESK) varsa fail-fast exit 2; hiç admin yoksa env'den güçlü parola ile bir `SUPER_ADMIN` oluşturur; env eksik/zayıfsa exit 2. Oluşturma audit'e yazılır; audit başarısızsa kayıt **rollback/delete** edilir, **pending/pasif SUPER_ADMIN bırakılmaz**, aktif admin oluşmaz (exit 4). Repoda prod parolası yoktur.
   - Bootstrap eşzamanlılık: Aynı `ADMIN_BOOTSTRAP_USERNAME` ile iki CLI aynı anda çalışırsa unique çakışması oluşur; çakışma sonrası aktif SUPER_ADMIN varsa `BOOTSTRAP_SKIPPED` audit'i ile exit 0, yoksa exit 2; testte tek aktif SUPER_ADMIN kalır.
@@ -245,7 +246,7 @@ Otel personeli (`SUPER_ADMIN`, `MANAGER`, `FRONT_DESK`) ve otel yönetimi, bugü
 
 ## 7. SCORECARD
 
-- **Spec revizyon sayısı:** 7
+- **Spec revizyon sayısı:** 8
 - **Düzeltme turu sayısı:**
 - **Bulgu gerçek/gürültü oranı:**
 - **Regresyon sayısı:**
