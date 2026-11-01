@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * requests. The context is stored as a request attribute and reused by the identity filter and the
  * auth controller.
  */
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 5)
 public class AdminClientContextFilter extends OncePerRequestFilter {

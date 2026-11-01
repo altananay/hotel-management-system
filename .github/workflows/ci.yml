@@ -110,6 +110,16 @@ jobs:
         working-directory: backend/admin-api
         run: ./mvnw -B flyway:migrate -Pseed -Dseed.env=ci
 
+      - name: Verify bootstrap CLI runs without a JWT key
+        run: |
+          SPRING_PROFILES_ACTIVE=ci \
+          ADMIN_JWT_ACTIVE_KEY_PATH="$RUNNER_TEMP/missing-admin-key.pem" \
+          ADMIN_JWT_ALLOW_GENERATED_DEV_KEY=false \
+          ADMIN_BOOTSTRAP_USERNAME=probe \
+          ADMIN_BOOTSTRAP_EMAIL=probe@example.com \
+          ADMIN_BOOTSTRAP_PASSWORD='Probe-Password-2026!' \
+          java -jar backend/admin-api/target/admin-api-0.0.1-SNAPSHOT.jar --bootstrap-admin
+
       - name: Start hotel-api (:8081) and admin-api (:8082) as app user
         run: |
           nohup java -jar backend/hotel-api/target/hotel-api-0.0.1-SNAPSHOT.jar > /tmp/hotel-api.log 2>&1 &

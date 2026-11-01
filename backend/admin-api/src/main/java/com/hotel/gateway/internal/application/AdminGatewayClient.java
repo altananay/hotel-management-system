@@ -1,6 +1,5 @@
 package com.hotel.gateway.internal.application;
 
-import com.fasterxml.uuid.Generators;
 import com.hotel.gateway.api.GatewayTimeoutException;
 import com.hotel.gateway.api.GatewayUnavailableException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,8 +31,7 @@ public class AdminGatewayClient {
     }
 
     public GatewayResponse exchange(
-            HttpServletRequest request, byte[] body, String jwt) {
-        String requestId = Generators.timeBasedEpochGenerator().generate().toString();
+            HttpServletRequest request, byte[] body, String jwt, String requestId) {
         URI uri = URI.create(upstreamBaseUrl + request.getRequestURI()
                 + (request.getQueryString() == null ? "" : "?" + request.getQueryString()));
         HttpRequest.Builder builder =

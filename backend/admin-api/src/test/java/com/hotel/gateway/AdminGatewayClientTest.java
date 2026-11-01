@@ -63,7 +63,11 @@ class AdminGatewayClientTest {
         request.addHeader("X-Internal-User", "spoofed");
 
         GatewayResponse response =
-                client.exchange(request, "{}".getBytes(StandardCharsets.UTF_8), "gateway-jwt");
+                client.exchange(
+                        request,
+                        "{}".getBytes(StandardCharsets.UTF_8),
+                        "gateway-jwt",
+                        "edge-request-id");
 
         assertThat(response.status()).isEqualTo(200);
         assertThat(new String(response.body(), StandardCharsets.UTF_8)).isEqualTo("upstream");
@@ -74,9 +78,9 @@ class AdminGatewayClientTest {
         assertThat(captured.get().get("X-Forwarded-For")).isNull();
         assertThat(captured.get().get("X-Internal-User")).isNull();
         assertThat(captured.get().get("X-Request-Id"))
-                .isNotEmpty()
+                .containsExactly("edge-request-id")
                 .doesNotContain("client-request-id");
-        assertThat(response.requestId()).isNotBlank();
+        assertThat(response.requestId()).isEqualTo("edge-request-id");
     }
 
     @Test
@@ -89,7 +93,8 @@ class AdminGatewayClientTest {
                                 unavailableClient.exchange(
                                         new MockHttpServletRequest("GET", "/admin-api/rooms"),
                                         null,
-                                        "jwt"))
+                                        "jwt",
+                                        "edge-request-id"))
                 .isInstanceOf(com.hotel.gateway.api.GatewayUnavailableException.class);
     }
 
@@ -112,7 +117,10 @@ class AdminGatewayClientTest {
                         Duration.ofMillis(50));
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/admin-api/slow");
 
-        assertThatThrownBy(() -> shortTimeoutClient.exchange(request, null, "jwt"))
+        assertThatThrownBy(
+                        () ->
+                                shortTimeoutClient.exchange(
+                                        request, null, "jwt", "edge-request-id"))
                 .isInstanceOf(GatewayTimeoutException.class);
     }
 }
