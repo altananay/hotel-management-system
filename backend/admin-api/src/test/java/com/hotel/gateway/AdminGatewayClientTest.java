@@ -57,6 +57,10 @@ class AdminGatewayClientTest {
         request.addHeader("Cookie", "ADMIN_SESSION=secret");
         request.addHeader("Authorization", "Bearer client-token");
         request.addHeader("X-Request-Id", "client-request-id");
+        request.addHeader("Origin", "http://localhost:3001");
+        request.addHeader("Referer", "http://localhost:3001/admin");
+        request.addHeader("X-Forwarded-For", "203.0.113.9");
+        request.addHeader("X-Internal-User", "spoofed");
 
         GatewayResponse response =
                 client.exchange(request, "{}".getBytes(StandardCharsets.UTF_8), "gateway-jwt");
@@ -65,10 +69,28 @@ class AdminGatewayClientTest {
         assertThat(new String(response.body(), StandardCharsets.UTF_8)).isEqualTo("upstream");
         assertThat(captured.get().get("Authorization")).containsExactly("Bearer gateway-jwt");
         assertThat(captured.get().get("Cookie")).isNull();
+        assertThat(captured.get().get("Origin")).isNull();
+        assertThat(captured.get().get("Referer")).isNull();
+        assertThat(captured.get().get("X-Forwarded-For")).isNull();
+        assertThat(captured.get().get("X-Internal-User")).isNull();
         assertThat(captured.get().get("X-Request-Id"))
                 .isNotEmpty()
                 .doesNotContain("client-request-id");
         assertThat(response.requestId()).isNotBlank();
+    }
+
+    @Test
+    void shouldMapConnectionRefusedToGatewayUnavailable() {
+        AdminGatewayClient unavailableClient =
+                new AdminGatewayClient("http://127.0.0.1:1", Duration.ofMillis(200));
+
+        assertThatThrownBy(
+                        () ->
+                                unavailableClient.exchange(
+                                        new MockHttpServletRequest("GET", "/admin-api/rooms"),
+                                        null,
+                                        "jwt"))
+                .isInstanceOf(com.hotel.gateway.api.GatewayUnavailableException.class);
     }
 
     @Test

@@ -11,7 +11,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 public class AdminApiApplication {
 
     public static void main(String[] args) {
-        if (Arrays.asList(args).contains("--bootstrap-admin")) {
+        if (isBootstrapMode(args)) {
             try (ConfigurableApplicationContext context =
                     new SpringApplicationBuilder(AdminApiApplication.class)
                             .web(WebApplicationType.NONE)
@@ -20,5 +20,9 @@ public class AdminApiApplication {
             }
         }
         SpringApplication.run(AdminApiApplication.class, args);
+    }
+
+    static boolean isBootstrapMode(String[] args) {
+        return Arrays.asList(args).contains("--bootstrap-admin");
     }
 }

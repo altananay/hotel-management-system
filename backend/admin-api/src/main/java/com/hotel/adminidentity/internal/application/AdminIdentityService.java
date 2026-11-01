@@ -8,7 +8,6 @@ import com.hotel.adminidentity.api.AdminAuditException;
 import com.hotel.adminidentity.api.AdminAuthenticationException;
 import com.hotel.adminidentity.api.AdminIdentityApi;
 import com.hotel.adminidentity.api.AdminIdentityApi.CsrfToken;
-import com.hotel.adminidentity.api.AdminSessionException;
 import com.hotel.adminidentity.internal.domain.AdminUser;
 import com.hotel.adminidentity.internal.domain.Argon2PasswordHasher;
 import com.hotel.adminidentity.internal.persistence.AdminLoginAttemptEntity;
@@ -110,11 +109,7 @@ public class AdminIdentityService implements AdminIdentityApi {
     @Override
     public AdminSessionView validateSession(
             String rawSessionToken, AdminClientContext context) {
-        try {
-            return sessionService.validate(rawSessionToken, context);
-        } catch (AdminSessionException ex) {
-            throw ex;
-        }
+        return sessionService.validate(rawSessionToken, context);
     }
 
     @Override
