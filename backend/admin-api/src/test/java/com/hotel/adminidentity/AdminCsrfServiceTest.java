@@ -80,6 +80,32 @@ class AdminCsrfServiceTest {
     }
 
     @Test
+    void shouldRejectMalformedBase64Token_withCsrfException() {
+        assertThatThrownBy(
+                        () ->
+                                service.validate(
+                                        "!!!not-base64!!!.signature",
+                                        null,
+                                        "http://localhost:3001",
+                                        "POST",
+                                        true))
+                .isInstanceOf(AdminCsrfException.class);
+    }
+
+    @Test
+    void shouldRejectTokenWithMalformedPayload_withCsrfException() {
+        assertThatThrownBy(
+                        () ->
+                                service.validate(
+                                        "abc.def",
+                                        null,
+                                        "http://localhost:3001",
+                                        "POST",
+                                        true))
+                .isInstanceOf(AdminCsrfException.class);
+    }
+
+    @Test
     void shouldAcceptSessionBoundToken_whenSessionMatches() {
         String rawSession = tokenHasher.newToken();
         String hash = tokenHasher.hash(rawSession);

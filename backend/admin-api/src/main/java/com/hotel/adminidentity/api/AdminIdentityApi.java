@@ -5,6 +5,9 @@ import java.util.UUID;
 
 public interface AdminIdentityApi {
 
+    /** Request attribute carrying the single client context resolved for every admin request. */
+    String CLIENT_CONTEXT_ATTRIBUTE = "adminClientContext";
+
     AdminLoginResult login(AdminLoginCommand command);
 
     AdminSessionView validateSession(String rawSessionToken, AdminClientContext context);

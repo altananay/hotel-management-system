@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 public class ClientIpResolver {
 
     private static final Logger log = LoggerFactory.getLogger(ClientIpResolver.class);
+    private static final Pattern IP_LITERAL = Pattern.compile("^[0-9a-fA-F:.]+$");
 
     private final List<IpAddressMatcher> trustedProxies;
 
@@ -45,11 +47,32 @@ public class ClientIpResolver {
         }
         for (int index = candidates.size() - 1; index >= 0; index--) {
             String candidate = candidates.get(index);
+            if (!isIpLiteral(candidate)) {
+                log.warn(
+                        "Invalid X-Forwarded-For address '{}'; using direct address",
+                        candidate);
+                return remoteAddress;
+            }
             if (!isTrusted(candidate)) {
                 return candidate;
             }
         }
         return remoteAddress;
+    }
+
+    private boolean isIpLiteral(String value) {
+        if (value == null
+                || value.isBlank()
+                || (!value.contains(".") && !value.contains(":"))
+                || !IP_LITERAL.matcher(value).matches()) {
+            return false;
+        }
+        try {
+            new IpAddressMatcher(value);
+            return true;
+        } catch (IllegalArgumentException ex) {
+            return false;
+        }
     }
 
     private boolean isTrusted(String address) {
@@ -62,7 +85,6 @@ public class ClientIpResolver {
                     return true;
                 }
             } catch (IllegalArgumentException ex) {
-                log.warn("Invalid forwarded address '{}'; using direct address", address);
                 return false;
             }
         }

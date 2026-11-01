@@ -23,15 +23,15 @@ public class AdminIdentityFilter extends OncePerRequestFilter {
 
     private final AdminIdentityApi identityApi;
     private final AdminProblemWriter problemWriter;
-    private final ClientIpResolver clientIpResolver;
+    private final AdminClientContextFactory clientContextFactory;
 
     public AdminIdentityFilter(
             AdminIdentityApi identityApi,
             AdminProblemWriter problemWriter,
-            ClientIpResolver clientIpResolver) {
+            AdminClientContextFactory clientContextFactory) {
         this.identityApi = identityApi;
         this.problemWriter = problemWriter;
-        this.clientIpResolver = clientIpResolver;
+        this.clientContextFactory = clientContextFactory;
     }
 
     @Override
@@ -51,18 +51,11 @@ public class AdminIdentityFilter extends OncePerRequestFilter {
     protected void doFilterInternal(
             HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        String ip = clientIpResolver.resolve(request);
-        String userAgent = request.getHeader("User-Agent");
-        String requestId = RequestIdFilter.resolveRequestId(request);
-        request.setAttribute("adminClientIp", ip);
-        request.setAttribute("adminUserAgent", userAgent);
-        request.setAttribute("adminRequestId", requestId);
-
+        AdminClientContext clientContext = clientContext(request);
         String rawToken = cookie(request, AdminCookies.SESSION_COOKIE);
         try {
             AdminSessionView session =
-                    identityApi.validateSession(
-                            rawToken, new AdminClientContext(ip, userAgent, requestId));
+                    identityApi.validateSession(rawToken, clientContext);
             request.setAttribute("adminSession", session);
             if (!request.getRequestURI().startsWith("/admin-api/auth/")) {
                 request.setAttribute("adminJwt", identityApi.issueJwt(session));
@@ -76,6 +69,14 @@ public class AdminIdentityFilter extends OncePerRequestFilter {
                     "security.unauthorized",
                     "Authentication is required to access this resource.");
         }
+    }
+
+    private AdminClientContext clientContext(HttpServletRequest request) {
+        Object attribute = request.getAttribute(AdminIdentityApi.CLIENT_CONTEXT_ATTRIBUTE);
+        if (attribute instanceof AdminClientContext context) {
+            return context;
+        }
+        return clientContextFactory.resolve(request);
     }
 
     private String cookie(HttpServletRequest request, String name) {

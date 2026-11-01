@@ -8,7 +8,6 @@ import com.hotel.adminidentity.api.AdminIdentityApi.AdminLoginResult;
 import com.hotel.adminidentity.api.AdminIdentityApi.AdminSessionView;
 import com.hotel.adminidentity.api.AdminIdentityApi.CsrfToken;
 import com.hotel.adminidentity.api.AdminSessionException;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -25,8 +24,7 @@ public class AdminAuthController {
     private final AdminIdentityApi identityApi;
     private final AdminCookieFactory cookieFactory;
 
-    public AdminAuthController(
-            AdminIdentityApi identityApi, AdminCookieFactory cookieFactory) {
+    public AdminAuthController(AdminIdentityApi identityApi, AdminCookieFactory cookieFactory) {
         this.identityApi = identityApi;
         this.cookieFactory = cookieFactory;
     }
@@ -35,20 +33,24 @@ public class AdminAuthController {
     public ResponseEntity<Void> csrf(
             @CookieValue(name = AdminCookies.SESSION_COOKIE, required = false)
                     String currentSessionToken,
-            HttpServletRequest servletRequest) {
+            @RequestAttribute(name = AdminIdentityApi.CLIENT_CONTEXT_ATTRIBUTE)
+                    AdminClientContext clientContext) {
         HttpHeaders headers = new HttpHeaders();
-        CsrfToken token = resolveCsrf(currentSessionToken, servletRequest, headers);
+        CsrfToken token = resolveCsrf(currentSessionToken, clientContext, headers);
         headers.add(HttpHeaders.SET_COOKIE, cookieFactory.csrf(token).toString());
         return ResponseEntity.ok().headers(headers).build();
     }
 
     private CsrfToken resolveCsrf(
-            String currentSessionToken, HttpServletRequest request, HttpHeaders headers) {
+            String currentSessionToken,
+            AdminClientContext clientContext,
+            HttpHeaders headers) {
         if (currentSessionToken == null || currentSessionToken.isBlank()) {
             return identityApi.issuePreAuthCsrf();
         }
         try {
-            AdminSessionView session = identityApi.validateSession(currentSessionToken, context(request));
+            AdminSessionView session =
+                    identityApi.validateSession(currentSessionToken, clientContext);
             return identityApi.issueSessionCsrf(session);
         } catch (AdminSessionException ex) {
             headers.add(HttpHeaders.SET_COOKIE, cookieFactory.clearSession().toString());
@@ -61,14 +63,15 @@ public class AdminAuthController {
             @Valid @RequestBody LoginRequest request,
             @CookieValue(name = AdminCookies.SESSION_COOKIE, required = false)
                     String currentSessionToken,
-            HttpServletRequest servletRequest) {
+            @RequestAttribute(name = AdminIdentityApi.CLIENT_CONTEXT_ATTRIBUTE)
+                    AdminClientContext clientContext) {
         AdminLoginResult result =
                 identityApi.login(
                         new AdminLoginCommand(
                                 request.identifier(),
                                 request.password(),
                                 currentSessionToken,
-                                context(servletRequest)));
+                                clientContext));
         CsrfToken csrfToken = identityApi.issueSessionCsrf(result.session());
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.SET_COOKIE, cookieFactory.session(result.rawSessionToken()).toString());
@@ -80,8 +83,9 @@ public class AdminAuthController {
     public ResponseEntity<Void> logout(
             @CookieValue(name = AdminCookies.SESSION_COOKIE, required = false)
                     String currentSessionToken,
-            HttpServletRequest servletRequest) {
-        identityApi.logout(currentSessionToken, context(servletRequest));
+            @RequestAttribute(name = AdminIdentityApi.CLIENT_CONTEXT_ATTRIBUTE)
+                    AdminClientContext clientContext) {
+        identityApi.logout(currentSessionToken, clientContext);
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.SET_COOKIE, cookieFactory.clearSession().toString());
         headers.add(HttpHeaders.SET_COOKIE, cookieFactory.clearCsrf().toString());
@@ -91,17 +95,5 @@ public class AdminAuthController {
     @GetMapping("/admin-api/auth/me")
     public MeResponse me(@RequestAttribute(name = "adminSession") AdminSessionView session) {
         return MeResponse.from(session);
-    }
-
-    static AdminClientContext context(HttpServletRequest request) {
-        return new AdminClientContext(
-                attribute(request, "adminClientIp", request.getRemoteAddr()),
-                attribute(request, "adminUserAgent", request.getHeader("User-Agent")),
-                attribute(request, "adminRequestId", "unknown"));
-    }
-
-    private static String attribute(HttpServletRequest request, String name, String fallback) {
-        Object value = request.getAttribute(name);
-        return value instanceof String text && !text.isBlank() ? text : fallback;
     }
 }

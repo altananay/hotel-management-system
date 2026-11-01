@@ -99,7 +99,12 @@ public class AdminCsrfService {
         if (parts.length != 2) {
             throw new AdminCsrfException();
         }
-        String payloadValue = decode(parts[0]);
+        String payloadValue;
+        try {
+            payloadValue = decode(parts[0]);
+        } catch (IllegalArgumentException ex) {
+            throw new AdminCsrfException();
+        }
         byte[] expected = hmac(payloadValue).getBytes(StandardCharsets.US_ASCII);
         byte[] actual = parts[1].getBytes(StandardCharsets.US_ASCII);
         if (!MessageDigest.isEqual(expected, actual)) {

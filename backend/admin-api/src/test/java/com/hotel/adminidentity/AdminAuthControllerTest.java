@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.hotel.adminidentity.api.AdminIdentityApi;
+import com.hotel.adminidentity.api.AdminIdentityApi.AdminClientContext;
 import com.hotel.adminidentity.api.AdminIdentityApi.AdminLoginResult;
 import com.hotel.adminidentity.api.AdminIdentityApi.AdminSessionView;
 import com.hotel.adminidentity.api.AdminIdentityApi.CsrfToken;
@@ -25,12 +26,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mock.web.MockHttpServletRequest;
 
 @ExtendWith(MockitoExtension.class)
 class AdminAuthControllerTest {
 
     @Mock private AdminIdentityApi identityApi;
+
+    private final AdminClientContext clientContext =
+            new AdminClientContext("127.0.0.1", "JUnit", "req-1");
 
     private AdminAuthController controller;
 
@@ -43,7 +46,7 @@ class AdminAuthControllerTest {
     void shouldIssuePreAuthCsrf_whenNoSessionCookieIsPresent() {
         when(identityApi.issuePreAuthCsrf()).thenReturn(new CsrfToken("pre-auth-token", 900));
 
-        ResponseEntity<Void> response = controller.csrf(null, new MockHttpServletRequest());
+        ResponseEntity<Void> response = controller.csrf(null, clientContext);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(cookies(response))
@@ -66,7 +69,7 @@ class AdminAuthControllerTest {
         when(identityApi.issueSessionCsrf(session))
                 .thenReturn(new CsrfToken("session-token", 28_800));
 
-        ResponseEntity<Void> response = controller.csrf("raw-session", new MockHttpServletRequest());
+        ResponseEntity<Void> response = controller.csrf("raw-session", clientContext);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(cookies(response))
@@ -97,7 +100,7 @@ class AdminAuthControllerTest {
                 controller.login(
                         new LoginRequest("superadmin", "LocalOnly-Cappadocia-2026!"),
                         null,
-                        new MockHttpServletRequest());
+                        clientContext);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         assertThat(response.getBody()).isNull();
@@ -125,8 +128,7 @@ class AdminAuthControllerTest {
                 .thenThrow(new AdminSessionException());
         when(identityApi.issuePreAuthCsrf()).thenReturn(new CsrfToken("pre-auth-token", 900));
 
-        ResponseEntity<Void> response =
-                controller.csrf("stale-session", new MockHttpServletRequest());
+        ResponseEntity<Void> response = controller.csrf("stale-session", clientContext);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(cookies(response))

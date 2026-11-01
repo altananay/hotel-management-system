@@ -49,6 +49,7 @@ import org.springframework.web.server.ResponseStatusException;
     RequestIdFilter.class,
     AdminProblemWriter.class,
     ClientIpResolver.class,
+    AdminClientContextFactory.class,
     GlobalExceptionHandler.class,
     AdminApiSurfaceAndErrorHandlingTest.AdminTestProbeController.class,
     AdminApiSurfaceAndErrorHandlingTest.ProbeSecurityTestConfiguration.class
