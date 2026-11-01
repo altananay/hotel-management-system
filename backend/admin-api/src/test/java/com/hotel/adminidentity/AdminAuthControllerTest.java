@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.hotel.adminidentity.api.AdminIdentityApi;
 import com.hotel.adminidentity.api.AdminIdentityApi.AdminClientContext;
+import com.hotel.adminidentity.api.AdminIdentityApi.AdminLoginCommand;
 import com.hotel.adminidentity.api.AdminIdentityApi.AdminLoginResult;
 import com.hotel.adminidentity.api.AdminIdentityApi.AdminSessionView;
 import com.hotel.adminidentity.api.AdminIdentityApi.CsrfToken;
@@ -21,6 +22,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpHeaders;
@@ -104,6 +106,10 @@ class AdminAuthControllerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         assertThat(response.getBody()).isNull();
+        ArgumentCaptor<AdminLoginCommand> loginCommand =
+                ArgumentCaptor.forClass(AdminLoginCommand.class);
+        verify(identityApi).login(loginCommand.capture());
+        assertThat(loginCommand.getValue().context()).isEqualTo(clientContext);
         assertThat(cookies(response))
                 .anySatisfy(
                         cookie ->
