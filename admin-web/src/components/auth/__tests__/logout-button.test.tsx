@@ -84,6 +84,26 @@ describe("LogoutButton (AC-6)", () => {
     );
   });
 
+  it("shouldRedirectToLogin_whenCsrfRetryReturnsUnauthorized", async () => {
+    document.cookie = "XSRF-TOKEN=stale-token; path=/";
+    adminApiPostMock
+      .mockRejectedValueOnce(new AdminApiClientError(403, "security.csrf_invalid"))
+      .mockRejectedValueOnce(new AdminApiClientError(401, "security.unauthorized"));
+    fetchCsrfTokenMock.mockResolvedValueOnce("fresh-token");
+
+    render(<LogoutButton />);
+    fireEvent.click(screen.getByTestId("admin-logout"));
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/login"));
+    expect(push).toHaveBeenCalledTimes(1);
+    expect(adminApiPostMock).toHaveBeenLastCalledWith(
+      "/admin-api/auth/logout",
+      {},
+      "fresh-token",
+    );
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("shouldRedirectToLogin_whenSessionIsUnauthorized", async () => {
     document.cookie = "XSRF-TOKEN=session-token; path=/";
     adminApiPostMock.mockRejectedValueOnce(

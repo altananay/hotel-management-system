@@ -15,20 +15,40 @@ export function LogoutButton() {
   const [submitting, setSubmitting] = useState(false);
   const [failed, setFailed] = useState(false);
 
+  const sendLogout = async (csrfToken: string): Promise<"sent" | "redirected"> => {
+    try {
+      await adminApiPost("/admin-api/auth/logout", {}, csrfToken);
+      return "sent";
+    } catch (error) {
+      if (error instanceof AdminApiClientError && error.status === 401) {
+        router.push("/login");
+        return "redirected";
+      }
+      throw error;
+    }
+  };
+
   const logout = async () => {
     setSubmitting(true);
     setFailed(false);
     try {
       try {
-        await adminApiPost("/admin-api/auth/logout", {}, await sessionCsrfToken());
-      } catch (error) {
-        if (error instanceof AdminApiClientError && error.code === "security.csrf_invalid") {
-          await adminApiPost("/admin-api/auth/logout", {}, await fetchCsrfToken());
-        } else if (error instanceof AdminApiClientError && error.status === 401) {
-          router.push("/login");
+        const first = await sendLogout(await sessionCsrfToken());
+        if (first === "redirected") {
           return;
-        } else {
+        }
+      } catch (error) {
+        if (
+          !(
+            error instanceof AdminApiClientError &&
+            error.code === "security.csrf_invalid"
+          )
+        ) {
           throw error;
+        }
+        const retry = await sendLogout(await fetchCsrfToken());
+        if (retry === "redirected") {
+          return;
         }
       }
       router.push("/login");
