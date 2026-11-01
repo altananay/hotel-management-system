@@ -45,6 +45,35 @@ class PasswordPolicyTest {
     }
 
     @Test
+    void shouldAcceptPasswordContainingOneCharacterLocalPart_whenFullEmailAndUsernameAreAbsent() {
+        String password = "Guvenli-Parola-2026!";
+        assertThat(PasswordPolicy.validate(password, "shortmail", "a@example.com"))
+                .isEqualTo(password);
+    }
+
+    @Test
+    void shouldRejectPasswordContainingThreeCharacterLocalPart() {
+        assertThatThrownBy(
+                        () ->
+                                PasswordPolicy.validate(
+                                        "abc-Guvenli-2026!",
+                                        "operator",
+                                        "abc@example.com"))
+                .isInstanceOf(InvalidPasswordException.class);
+    }
+
+    @Test
+    void shouldRejectPasswordContainingFullShortEmail() {
+        assertThatThrownBy(
+                        () ->
+                                PasswordPolicy.validate(
+                                        "a@example.com-Guvenli!",
+                                        "shortmail",
+                                        "a@example.com"))
+                .isInstanceOf(InvalidPasswordException.class);
+    }
+
+    @Test
     void shouldNormalizeNfcBeforeValidation_whenPasswordUsesCombiningCharacters() {
         String decomposed = "Cafe\u0301-Guvenli-2026!";
         String validated = PasswordPolicy.validate(decomposed, "operator", "operator@example.com");
