@@ -3,9 +3,6 @@ package com.hotel.web;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.ConnectException;
-import java.net.UnknownHostException;
-import java.net.http.HttpTimeoutException;
 import java.nio.charset.StandardCharsets;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -33,10 +30,7 @@ public class AdminJwtAuthenticationEntryPoint implements AuthenticationEntryPoin
             throws IOException {
         Throwable cause = authException;
         while (cause != null) {
-            if (cause instanceof ResourceAccessException
-                    || cause instanceof ConnectException
-                    || cause instanceof HttpTimeoutException
-                    || cause instanceof UnknownHostException) {
+            if (cause instanceof ResourceAccessException || cause instanceof IOException) {
                 write(response, request, HttpStatus.SERVICE_UNAVAILABLE, "system.http_503");
                 return;
             }
