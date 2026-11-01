@@ -4,6 +4,7 @@ import com.fasterxml.uuid.Generators;
 import com.hotel.adminaudit.api.AdminAuditApi;
 import com.hotel.adminaudit.api.AuditReasonCode;
 import com.hotel.adminaudit.api.AuditResult;
+import com.hotel.adminidentity.api.AdminBootstrapApi;
 import com.hotel.adminidentity.api.AdminIdentityApi.AdminBootstrapCommand;
 import com.hotel.adminidentity.api.AdminIdentityApi.AdminBootstrapOutcome;
 import com.hotel.adminidentity.internal.domain.AdminRole;
@@ -23,7 +24,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class AdminBootstrapService {
+public class AdminBootstrapService implements AdminBootstrapApi {
 
     private static final Logger log = LoggerFactory.getLogger(AdminBootstrapService.class);
 
@@ -43,6 +44,7 @@ public class AdminBootstrapService {
         this.clock = clock;
     }
 
+    @Override
     public AdminBootstrapOutcome bootstrap(AdminBootstrapCommand command) {
         if (userRepository.existsByRoleAndActiveTrue(AdminRole.SUPER_ADMIN)) {
             auditSkip();

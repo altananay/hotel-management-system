@@ -19,8 +19,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Locale;
 import java.util.UUID;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.stereotype.Service;
 
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @Service
 public class AdminIdentityService implements AdminIdentityApi {
 
@@ -64,7 +66,9 @@ public class AdminIdentityService implements AdminIdentityApi {
         String normalizedIdentifier = normalize(command.identifier());
         String ip = command.context().ipAddress();
         AdminUser user = findUser(normalizedIdentifier);
-        String lockoutKey = user == null ? normalizedIdentifier : user.id().toString();
+        // Known users use their canonical username so username and e-mail aliases share one
+        // counter; unknown identifiers keep the normalized input. The IP is always part of the key.
+        String lockoutKey = user == null ? normalizedIdentifier : normalize(user.username());
 
         if (isLocked(lockoutKey, ip)) {
             audit(

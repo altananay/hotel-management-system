@@ -2,9 +2,11 @@ package com.hotel.adminidentity.internal.web;
 
 import com.hotel.adminidentity.internal.application.AdminJwtKeyProvider;
 import java.util.Map;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @RestController
 public class AdminJwksController {
 

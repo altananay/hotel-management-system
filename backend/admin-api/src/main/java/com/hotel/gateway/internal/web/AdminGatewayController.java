@@ -4,6 +4,7 @@ import com.hotel.gateway.internal.application.AdminGatewayClient;
 import com.hotel.gateway.internal.application.GatewayResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @RestController
 public class AdminGatewayController {
 
@@ -25,8 +27,9 @@ public class AdminGatewayController {
     public ResponseEntity<byte[]> forward(
             HttpServletRequest request,
             @RequestBody(required = false) byte[] body,
-            @RequestAttribute(name = "adminJwt") String jwt) {
-        GatewayResponse response = gatewayClient.exchange(request, body, jwt);
+            @RequestAttribute(name = "adminJwt") String jwt,
+            @RequestAttribute(name = "adminRequestId") String requestId) {
+        GatewayResponse response = gatewayClient.exchange(request, body, jwt, requestId);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(response.contentType()));
         headers.set("X-Request-Id", response.requestId());
