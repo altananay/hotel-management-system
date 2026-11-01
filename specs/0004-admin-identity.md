@@ -10,10 +10,10 @@
 
 - **Spec No:** `0004`
 - **Başlık:** Admin Kimlik ve Oturum (`admin-identity`)
-- **Durum:** Onaylandı *(rev.8 — CR-10 e-posta local-part istisnası spec'e işlendi)*
+- **Durum:** Tamamlandı *(rev.9 — QA F-01…F-05 fixleri ve kapanış kontrolleri işlendi; `specs/done/` taşıma analist kapanışında)*
 - **Branch:** `feature/0004-admin-identity`
-- **İlgili doküman/kararlar:** `docs/architecture.md` (§2, §4, §5 R3/R6, §6, §8, §10 D2/D19, §11), `docs/domain.md` (§1 `AdminSession`/`AdminRole`/`AuditEntry`, §3 rol tablosu), `docs/conventions.md` (§2.3, §2.4, §4), `docs/frontend.md`, `docs/testing.md`, `docs/git.md`, `specs/done/0001-project-architecture.md` (`CLARIFY-3A`, `F5`, `F7`), `specs/done/0002-room-catalog.md` (seed konvansiyonu), `specs/done/0003-ui-design-system.md` (E2E kanıt helper'ı); Onaylı kararlar: `CLARIFY-1A`…`CLARIFY-9A`, `CLARIFY-11A`, `Q10=A` (CSRF double-submit + Origin, 2026-10-28); rev.4: identifier+IP kilidi, CSRF/Origin önceliği, gateway request-id, login rotasyonu audit'i ve 0003 40/40 CI koruması işlendi; rev.5: B-14 bootstrap aktif SUPER_ADMIN/audit rollback düzeltmesi işlendi; rev.6: bootstrap CLI/eşzamanlılık, `BOOTSTRAP_SKIPPED` skip audit'i, CSRF fetch hatası ve `@admin` test adları işlendi; rev.7: eşzamanlılık kapsamı aynı `ADMIN_BOOTSTRAP_USERNAME` ile netleştirildi, global tek-SUPER_ADMIN invariantı kapsam dışına alındı; rev.8: CR-10 — e-posta local-part kontrolünün 1–2 karakterlik local-part istisnası açıkça yazıldı; davranış değişmedi.
-- **Tarih:** 2026-10-28 *(Son revizyon: 2026-11-01, rev.8)*
+- **İlgili doküman/kararlar:** `docs/architecture.md` (§2, §4, §5 R3/R6, §6, §8, §10 D2/D19, §11), `docs/domain.md` (§1 `AdminSession`/`AdminRole`/`AuditEntry`, §3 rol tablosu), `docs/conventions.md` (§2.3, §2.4, §4), `docs/frontend.md`, `docs/testing.md`, `docs/git.md`, `specs/done/0001-project-architecture.md` (`CLARIFY-3A`, `F5`, `F7`), `specs/done/0002-room-catalog.md` (seed konvansiyonu), `specs/done/0003-ui-design-system.md` (E2E kanıt helper'ı); Onaylı kararlar: `CLARIFY-1A`…`CLARIFY-9A`, `CLARIFY-11A`, `Q10=A` (CSRF double-submit + Origin, 2026-10-28); rev.4: identifier+IP kilidi, CSRF/Origin önceliği, gateway request-id, login rotasyonu audit'i ve 0003 40/40 CI koruması işlendi; rev.5: B-14 bootstrap aktif SUPER_ADMIN/audit rollback düzeltmesi işlendi; rev.6: bootstrap CLI/eşzamanlılık, `BOOTSTRAP_SKIPPED` skip audit'i, CSRF fetch hatası ve `@admin` test adları işlendi; rev.7: eşzamanlılık kapsamı aynı `ADMIN_BOOTSTRAP_USERNAME` ile netleştirildi, global tek-SUPER_ADMIN invariantı kapsam dışına alındı; rev.8: CR-10 — e-posta local-part kontrolünün 1–2 karakterlik local-part istisnası açıkça yazıldı; davranış değişmedi; rev.9: QA F-01…F-05 fixleri işlendi — bootstrap CLI web/JWT bean'lerinden ayrıldı, parola NFC login'de uygulandı, logout 401 retry yönlendirmesi, kanonik kullanıcı adı kilit anahtarı ve edge `X-Request-Id` tekilliği netleştirildi; DoD/SCORECARD dolduruldu.
+- **Tarih:** 2026-10-28 *(Son revizyon: 2026-11-01, rev.9)*
 - **Sahip:** Analist (`analyst`)
 - **Onaylayan (Takım Yöneticisi):** Takım Yöneticisi (Onaylandı - 2026-10-29)
 
@@ -65,7 +65,7 @@ Otel personeli (`SUPER_ADMIN`, `MANAGER`, `FRONT_DESK`) ve otel yönetimi, bugü
 - **Generic hata:** Kullanıcı yok, parola yanlış, pasif hesap ve kilitli hesap aynı `401 security.invalid_credentials` gövdesini döner; yanıt süresi belirgin fark üretmez.
 
 **2.2.2 Kilit (B-03)**
-- **Pencere:** Kayan **15 dk**; anahtar **normalize identifier (kullanıcı adı veya e-posta) + istemci IP**'sidir. E-posta ile giriş de aynı sayaç anahtarını kullanır.
+- **Pencere:** Kayan **15 dk**; anahtar **kanonik kullanıcı adı + istemci IP**'sidir. Bilinen kullanıcıda kanonik kullanıcı adı, bilinmeyen denemede normalize identifier kullanılır; e-posta ile giriş de aynı sayaç anahtarını kullanır.
 - **Tetik:** 5. **başarısız** doğrulamada kilit **15 dk** başlar; ilk 4 hata yalnız 401 döner. 5. denemede parola doğruysa giriş başarılı olur ve sayaç temizlenir.
 - **Kilitliyken:** Doğru parola da generic 401 döner; kilitli denemeler sayılmaz ve kilidi uzatmaz.
 - **Temizlik:** Başarılı giriş, o identifier+IP için pencereyi temizler. Denemeler DB'de tutulur; restart sonrası korunur. 15 dk'dan eski denemeler sorgu dışıdır; fiziksel temizlik operasyonel runbook'a bağlıdır.
@@ -98,8 +98,8 @@ Otel personeli (`SUPER_ADMIN`, `MANAGER`, `FRONT_DESK`) ve otel yönetimi, bugü
 **2.2.7 Gateway durum/header sözleşmesi (B-11)**
 - **Timeout:** Bağlantı + okuma toplamı **3 sn**; `ADMIN_GATEWAY_TIMEOUT_MS=3000` ile yapılandırılır.
 - **Eşleme:** Timeout → **504 `system.gateway_timeout`**; connection refused/DNS → **502 `system.gateway_unavailable`**; upstream 4xx/5xx durum ve gövdesi sanitize edilerek korunur (`Set-Cookie`, `Server` strip); upstream 401/403 aynen iletilir. Path/query/body aynen iletilir.
-- **İstek allowlist:** `Accept`, `Content-Type`, `Content-Length` (gateway yeniden hesaplar) ve gateway'in ürettiği `X-Request-Id` iletilir; `Cookie`, `Authorization`, `Origin`, `Referer`, `Host`, `X-Forwarded-*` ve diğer `X-*` başlıkları upstream'e taşınmaz. İstemcinin `X-Request-Id` değeri yok sayılır.
-- **Yanıt allowlist:** `Content-Type` ve gateway'in `X-Request-Id` değeri istemciye taşınır; upstream `Set-Cookie` ve `Server` strip edilir; diğer upstream başlıkları filtrelenir.
+- **İstek allowlist:** `Accept`, `Content-Type`, `Content-Length` (gateway yeniden hesaplar) ve admin-api kenarında üretilen/doğrulanan `X-Request-Id` iletilir; `Cookie`, `Authorization`, `Origin`, `Referer`, `Host`, `X-Forwarded-*` ve diğer `X-*` başlıkları upstream'e taşınmaz. İstemcinin `X-Request-Id` değeri yok sayılır; gateway ikinci bir ID üretmez.
+- **Yanıt allowlist:** `Content-Type` ve admin-api kenarındaki aynı `X-Request-Id` değeri istemciye taşınır; upstream `Set-Cookie` ve `Server` strip edilir; diğer upstream başlıkları filtrelenir.
 
 **2.2.8 Audit tablosu, kodlar ve proxy (B-12, B-13)**
 - **Tablo:** `admin_audit`; `id` UUIDv7, `occurred_at` timestamptz, `event_type`, `actor_user_id` (nullable), `username_attempted` (nullable), `result` (`SUCCESS`/`FAILURE`), `reason_code` (nullable), `ip_address`, `user_agent` (≤512), `request_id`, `metadata` (jsonb, opsiyonel). `actor_user_id` **FK değildir**; modüller arası FK yasaktır.
@@ -108,7 +108,7 @@ Otel personeli (`SUPER_ADMIN`, `MANAGER`, `FRONT_DESK`) ve otel yönetimi, bugü
 - **Proxy:** `ADMIN_TRUSTED_PROXY_CIDRS` virgülle ayrılmış IPv4/IPv6 CIDR listesi. Doğrudan bağlantı bu listedeyse `X-Forwarded-For` sağdan sola ayrıştırılır, güvenilen proxy'ler atlanır ve ilk güvenilmeyen IP alınır; değilse doğrudan bağlantı IP'si kullanılır. Bozuk XFF'te doğrudan IP kullanılır ve uyarı loglanır. IP spoofing'e izin verilmez.
 
 **2.2.9 Bootstrap (B-14)**
-- Ayrı CLI/init job: `java -jar admin-api.jar --bootstrap-admin` (runbook'ta belgelenir); startup'ta çalışmaz; CLI modunda web server başlatılmaz ve süreç exit koduyla kapanır. Env: `ADMIN_BOOTSTRAP_USERNAME`, `ADMIN_BOOTSTRAP_EMAIL`, `ADMIN_BOOTSTRAP_PASSWORD`.
+- Ayrı CLI/init job: `java -jar admin-api.jar --bootstrap-admin` (runbook'ta belgelenir); startup'ta çalışmaz; CLI modunda web server başlatılmaz, JWT/CSRF/web bean'leri yüklenmez ve süreç exit koduyla kapanır. Env: `ADMIN_BOOTSTRAP_USERNAME`, `ADMIN_BOOTSTRAP_EMAIL`, `ADMIN_BOOTSTRAP_PASSWORD`.
 - **Koşul:** `admin_users` tablosunda **en az bir aktif SUPER_ADMIN** varsa env kontrolünden önce skip + uyarı, **exit 0**; skip kararı DB'den alınır, DB erişilemezse exit 3; skip yolunda audit `BOOTSTRAP_SKIPPED` (`SUCCESS`) yazılır, audit yazılamazsa uyarı loglanır ve exit 0 korunur. Aktif SUPER_ADMIN yokken herhangi bir admin satırı (pasif SUPER_ADMIN, yalnız MANAGER veya FRONT_DESK) varsa **fail-fast exit 2** (manuel karar). Hiç admin yoksa env'den güçlü parola ile aktif `SUPER_ADMIN` oluşturur; audit `BOOTSTRAP_CREATED` yazar.
 - **Exit kodları:** 0 oluşturuldu/skip; 2 eksik/zayıf env veya aktif SUPER_ADMIN'siz mevcut admin; 3 DB hatası (skip sorgusu veya admin insert); 4 oluşturma audit hatası (admin insert sonrası audit yazımı başarısız; skip audit hatası loglanır, exit 0 kalır). Oluşturma audit başarısızsa admin kaydı **rollback/delete** edilir; **pending/pasif SUPER_ADMIN bırakılmaz, aktif admin oluşmaz**. Parola/secret loglanmaz.
 - **Eşzamanlılık:** Aynı `ADMIN_BOOTSTRAP_USERNAME` ile iki CLI aynı anda çalışırsa unique çakışması oluşur; çakışma sonrası aktif SUPER_ADMIN varsa `BOOTSTRAP_SKIPPED` audit'i ile **exit 0**, yoksa **exit 2**. Testte tek aktif SUPER_ADMIN kalır; exit 0/2 kabul edilir.
@@ -185,18 +185,18 @@ Otel personeli (`SUPER_ADMIN`, `MANAGER`, `FRONT_DESK`) ve otel yönetimi, bugü
   - Parola politikası: 12–128 karakter, kompozisyon kuralı yok, kullanıcı adı/e-posta içeremez. Kısa/uzun/aynı kullanıcı adını içeren parolalar reddedilir; hata generic ve kullanıcı numaralandırması yapmaz. E-posta local-part kontrolü 3+ karakterli local-part'larda uygulanır; **1–2 karakterli local-part istisnası** testle doğrulanır (tam e-posta ve kullanıcı adı kontrolü her uzunlukta korunur).
   - Parola testleri (`PasswordPolicyTest`, önerilen adlar): (a) `shouldAcceptPasswordContainingOneCharacterLocalPart_whenFullEmailAndUsernameAreAbsent` — `a@example.com`, parolada `a` var, tam e-posta/kullanıcı adı yok → kabul; (b) `shouldRejectPasswordContainingThreeCharacterLocalPart` — `abc@example.com`, parolada `abc` var → `InvalidPasswordException`; (c) `shouldRejectPasswordContainingFullShortEmail` — `a@example.com`, parolada tam e-posta var → `InvalidPasswordException`. Mevcut `shouldRejectPasswordContainingEmailLocalPart_whenLongEnough` korunur.
   - Local/CI seed üç rolü temsil eden üç aktif hesap oluşturur; kimlik bilgileri `.env.example`'da local-only işaretli env değerlerinden gelir; aynı seed iki kez çalıştırıldığında mükerrer kayıt/parola değişikliği olmaz. Seed yalnız `local`/`ci` guard'ı ve `hotel_admin` `local-ci-seed` marker'ı ile çalışır; prod'da çalışmaz.
-  - Prod bootstrap ayrı CLI/init job'dur; CLI modunda web server başlatılmaz ve süreç exit koduyla kapanır; **yalnız aktif SUPER_ADMIN** varsa env kontrolünden önce skip + uyarı ile exit 0 yapar; skip yolunda `BOOTSTRAP_SKIPPED` audit'i yazılır, audit yazılamazsa uyarı loglanır ve exit 0 korunur; aktif SUPER_ADMIN yokken herhangi bir admin satırı (pasif SUPER_ADMIN, yalnız MANAGER veya FRONT_DESK) varsa fail-fast exit 2; hiç admin yoksa env'den güçlü parola ile bir `SUPER_ADMIN` oluşturur; env eksik/zayıfsa exit 2. Oluşturma audit'e yazılır; audit başarısızsa kayıt **rollback/delete** edilir, **pending/pasif SUPER_ADMIN bırakılmaz**, aktif admin oluşmaz (exit 4). Repoda prod parolası yoktur.
+  - Prod bootstrap ayrı CLI/init job'dur; CLI modunda web server başlatılmaz, JWT/CSRF/web bean'leri yüklenmez ve süreç exit koduyla kapanır; **yalnız aktif SUPER_ADMIN** varsa env kontrolünden önce skip + uyarı ile exit 0 yapar; skip yolunda `BOOTSTRAP_SKIPPED` audit'i yazılır, audit yazılamazsa uyarı loglanır ve exit 0 korunur; aktif SUPER_ADMIN yokken herhangi bir admin satırı (pasif SUPER_ADMIN, yalnız MANAGER veya FRONT_DESK) varsa fail-fast exit 2; hiç admin yoksa env'den güçlü parola ile bir `SUPER_ADMIN` oluşturur; env eksik/zayıfsa exit 2. Oluşturma audit'e yazılır; audit başarısızsa kayıt **rollback/delete** edilir, **pending/pasif SUPER_ADMIN bırakılmaz**, aktif admin oluşmaz (exit 4). Repoda prod parolası yoktur.
   - Bootstrap eşzamanlılık: Aynı `ADMIN_BOOTSTRAP_USERNAME` ile iki CLI aynı anda çalışırsa unique çakışması oluşur; çakışma sonrası aktif SUPER_ADMIN varsa `BOOTSTRAP_SKIPPED` audit'i ile exit 0, yoksa exit 2; testte tek aktif SUPER_ADMIN kalır.
   - Bootstrap testleri: (a) aktif SUPER_ADMIN varken skip exit 0 + `BOOTSTRAP_SKIPPED`; (b) pasif SUPER_ADMIN varken fail-fast exit 2; (c) yalnız MANAGER/FRONT_DESK varken fail-fast exit 2; (d) oluşturma audit hatasında admin kaydı yoktur ve retry tek aktif SUPER_ADMIN oluşturur; (e) hiç admin yokken geçerli env ile tek aktif SUPER_ADMIN oluşur; (f) env eksik/zayıfken exit 2; (g) DB hatasında exit 3; (h) aynı username ile eşzamanlı iki CLI'da tek aktif SUPER_ADMIN ve exit 0/2; (i) CLI modunda web server portu dinlenmez ve süreç exit koduyla kapanır; (j) skip audit'i yazılamazsa uyarı loglanır, exit 0 ve durum değişmez.
-  - **Kanıt:** `AC-1-admin-api-verify.log`, `AC-1-admin-seed-idempotency.log`, `AC-1-bootstrap-cli.log`, `AC-1-bootstrap-superadmin.log`, `AC-1-bootstrap-active-skip.log`, `AC-1-bootstrap-passive-superadmin.log`, `AC-1-bootstrap-audit-fail.log`, `AC-1-bootstrap-exit-codes.log`, `AC-1-bootstrap-concurrent.log`, `AC-1-bootstrap-cli-mode.log`, `AC-1-bootstrap-skip-audit.log`.
+  - **Kanıt:** `AC-1-admin-api-verify.log`, `AC-1-admin-seed-and-bootstrap.log`, `AC-1-bootstrap-superadmin.log`, `AC-1-bootstrap-active-skip.log`, `AC-1-bootstrap-passive-superadmin.log`, `AC-1-bootstrap-audit-fail.log`, `AC-1-bootstrap-exit-codes.log`, `AC-1-bootstrap-concurrent.log`, `AC-1-bootstrap-cli-mode.log`, `AC-1-bootstrap-skip-audit.log`.
   - **Sözleşme:** §2.2.1, §2.2.9 ve §2.2.10'daki kimlik/parola, bootstrap ve seed kuralları test edilir.
 - **AC-2 (Oturum, Kilit ve CSRF — `REQ-2`, `CLARIFY-3A`, `Q10=A`):**
   - Başarılı girişte `ADMIN_SESSION` `HttpOnly`, `SameSite=Lax`, `Path=/`, prod'da `Secure` oturum çerezi ve okunabilir `XSRF-TOKEN` çerezi set edilir; yanıt gövdesinde JWT/oturum kimliği yoktur. Geçersiz girişte `401 security.invalid_credentials` generic hata ve RFC 7807 döner.
   - Oturum kimliği yeterli entropiyle üretilir; DB'de yalnız özeti saklanır. Girişte oturum rotasyonu yapılır; eski oturum geçersizdir. `GET /admin-api/auth/me` geçerli `{id, username, email, role}` döner; geçersiz/expired oturum 401 problem+json döner.
   - Oturum 30 dk idle + 8 saat mutlak sonra geçersizdir; `last_seen_at` her doğrulanmış istekte güncellenir; süre enjekte edilen `Clock` ile test edilir, gerçek bekleme yapılmaz. Çıkış mevcut oturumu iptal eder; diğer oturumlar sürer.
-  - 15 dk içinde 5 başarısız girişten sonra **normalize identifier (kullanıcı adı veya e-posta) + IP** 15 dk kilitlenir; aynı kullanıcıya e-posta ile giriş de aynı sayacı kullanır; denemeler DB'de tutulur, restart sonrası korunur; kilitliyken doğru parola da generic hata döner; başarılı giriş sayacı temizler. Bilinmeyen kullanıcıda dummy hash çalışır ve yanıt süresi belirgin fark üretmez.
+  - 15 dk içinde 5 başarısız girişten sonra **kanonik kullanıcı adı + IP** 15 dk kilitlenir; bilinen kullanıcıda kanonik kullanıcı adı, bilinmeyen denemede normalize identifier kullanılır ve aynı kullanıcıya e-posta ile giriş de aynı sayacı kullanır; denemeler DB'de tutulur, restart sonrası korunur; kilitliyken doğru parola da generic hata döner; başarılı giriş sayacı temizler. Bilinmeyen kullanıcıda dummy hash çalışır ve yanıt süresi belirgin fark üretmez.
   - **CSRF:** `GET /admin-api/auth/csrf` anonim çağrıyla `XSRF-TOKEN` çerezi döner; login öncesi token **15 dk** TTL taşır. Login dahil tüm state-changing istekler `X-XSRF-TOKEN` + izinli `Origin` taşır. **Hata önceliği:** CSRF/Origin → 403; sonra 400 validation → 401 session → 403 role → 500 audit (login'de oturum/rol adımları yoktur). Eksik/yanlış token veya Origin yok/izinsiz → 403 `security.csrf_invalid` problem+json. Login sonrası token döner, logout'ta temizlenir; CSRF doğrulaması gateway'e geçmeden yapılır.
-  - **Kanıt:** `AC-2-login-session.log`, `AC-2-session-expiry.log`, `AC-2-lockout-and-enumeration.log`, `AC-2-csrf.log`, `AC-2-csrf-precedence.log`.
+  - **Kanıt:** `AC-2-login-session.log`, `AC-2-session-expiry.log`, `AC-2-lockout-and-enumeration.log`, `AC-2-csrf.log`, `AC-2-csrf-precedence.log`, `AC-2-login-context.log`.
   - **Sözleşme:** §2.2.2–§2.2.4'teki kilit, oturum, CSRF ve hata önceliği test edilir.
 - **AC-3 (JWT, JWKS, Anahtar Yönetimi ve `hotel-api` 401/403 — `REQ-3`, `CLARIFY-1A`, `CLARIFY-3A`, `CLARIFY-8A`):**
   - JWT RS256 imzalıdır; `iss=admin-api`, `aud=hotel-admin-api`, `sub`, `roles` (array), `iat`, `exp` (5 dk), `jti` ve `kid` taşır. JWT her istekte yeniden üretilir; cache yoktur. Özel anahtar yalnız admin-api'dedir; `hotel-api` yalnız JWKS public anahtarlarını kullanır.
@@ -208,7 +208,7 @@ Otel personeli (`SUPER_ADMIN`, `MANAGER`, `FRONT_DESK`) ve otel yönetimi, bugü
 - **AC-4 (Kök Kimlik Filtresi ve Gateway Pass-through — `REQ-4`, `CLARIFY-5A`, `CLARIFY-8A`):**
   - Oturum doğrulama ve JWT üretimi kök kimlik filtresindedir; filtre `adminidentity.api` üzerinden oturumu doğrular. Modül sınıfları kök `config`/`web` paketlerine bağımlı değildir; `AdminApiModularityTest` bu yönü yasaklamaya devam eder.
   - Gateway, kimlik/JWKS uçları hariç `/admin-api/**` isteğini `hotel-api` admin yüzeyine Bearer JWT ile iletir; timeout ve hata eşlemesi dışında mantık içermez. `gateway → adminidentity` modül kenarı yoktur; allowlist bu yönde boş kalır.
-  - Gateway IT'de mock upstream ile: oturum çerezi olmayan istek 401; geçerli oturumda Bearer JWT iletilir; istemci `Cookie`, `Authorization`, `X-Request-Id` ve iç kimlik başlıkları upstream'e taşınmaz/ezilir; **X-Request-Id gateway tarafından üretilir/doğrulanır ve upstream'e yalnız gateway'in değeri yazılır**; `Origin`/`Referer` gereksizse taşınmaz; timeout **504 `system.gateway_timeout`**, connection refused **502 `system.gateway_unavailable`**, upstream 4xx/5xx sanitize edilerek korunur; `Set-Cookie`/`Server` strip edilir.
+  - Gateway IT'de mock upstream ile: oturum çerezi olmayan istek 401; geçerli oturumda Bearer JWT iletilir; istemci `Cookie`, `Authorization`, `X-Request-Id` ve iç kimlik başlıkları upstream'e taşınmaz/ezilir; **admin-api kenarında üretilen/doğrulanan tek `X-Request-Id` upstream'e ve istemci yanıtına yazılır; gateway ikinci ID üretmez**; `Origin`/`Referer` gereksizse taşınmaz; timeout **504 `system.gateway_timeout`**, connection refused **502 `system.gateway_unavailable`**, upstream 4xx/5xx sanitize edilerek korunur; `Set-Cookie`/`Server` strip edilir.
   - `docs/architecture.md` §4'teki "gateway kimlik iliştirir" cümlesi kök filtre yaklaşımına göre netleştirilmiştir; `AdminApiModularityTest` yeşildir.
   - **Kanıt:** `AC-4-gateway-it.log`, `AC-4-header-hygiene.log`, `AC-4-request-id.log`, `AC-4-allowlist.log`.
   - **Sözleşme:** §2.2.7'deki gateway durum/header sözleşmesi test edilir.
@@ -232,25 +232,25 @@ Otel personeli (`SUPER_ADMIN`, `MANAGER`, `FRONT_DESK`) ve otel yönetimi, bugü
   - Admin-web Vitest + RTL + MSW: login formu, yükleme, hata, CSRF token'ı, CSRF fetch hatası + retry, 401 yönlendirme, korumalı sayfa, logout, 403 `security.csrf_invalid` sonrası token yenileme/otomatik tekrar deneme. E2E `@admin` (3/3): (a) başarılı login + korumalı sayfa, (b) başarısız login generic hata, (c) logout + login'e dönüş; admin seed aşaması `@admin` öncesinde çalışır; 0002 canlı smoke **3/3** (1 `@empty` + 2 `@seeded`) ve 0003 `@seeded` design **40/40** korunur.
   - Kanıtlar `specs/done/evidence/0004/` altındadır; `0001`/`0002`/`0003` arşivleri SHA-256/`git diff` ile değişmemiştir. CI'da admin seed adımı, admin E2E ve JWT IT'leri çalışır; pipeline yeşildir.
   - Dokümanlar güncellenmiştir: `docs/architecture.md` §4/§6, `docs/frontend.md`, `infra/README.md`, `e2e/README.md`, `.env.example`, `.github/workflows/ci.yml`, `specs/done/README.md` (gerekliyse).
-  - **Kanıt:** `AC-7-e2e-admin-summary.md`, `AC-7-ci-run.md`, `AC-7-0003-design-40.txt`, `AC-7-archive-sha256.txt`.
+  - **Kanıt:** `AC-7-e2e-admin-summary.md`, `AC-7-ci-run.md`, `AC-7-0003-design-40.txt`, `AC-7-archive-sha256.txt`, `QA-fix-verification-2026-11-01.md`.
   - **Sözleşme:** §2.2.12'deki CI sırası, 0002 3/3 geçişi ve `@admin` kanıtları doğrulanır.
 
 ## 6. Definition of Done
 
-- [ ] Tüm AC'ler doğrulandı (test ve/veya görsel kanıt)
-- [ ] Pipeline yeşil (lint + build + test + kritik akış smoke)
-- [ ] Kod incelemesi onaylandı (Takım Yöneticisi)
-- [ ] Davranış değiştiyse dokümanlar güncellendi
-- [ ] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi
-- [ ] SCORECARD dolduruldu
+- [x] Tüm AC'ler doğrulandı (test ve/veya görsel kanıt)
+- [x] Pipeline yeşil (lint + build + test + kritik akış smoke)
+- [x] Kod incelemesi onaylandı (Takım Yöneticisi)
+- [x] Davranış değiştiyse dokümanlar güncellendi
+- [ ] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi *(analist kapanışında)*
+- [x] SCORECARD dolduruldu
 
 ## 7. SCORECARD
 
-- **Spec revizyon sayısı:** 8
-- **Düzeltme turu sayısı:**
-- **Bulgu gerçek/gürültü oranı:**
-- **Regresyon sayısı:**
-- **Kaçan hata (escaped bug):**
+- **Spec revizyon sayısı:** 9
+- **Düzeltme turu sayısı:** 2 (code review + QA)
+- **Bulgu gerçek/gürültü oranı:** 18/18 gerçek (CR-1…CR-13 + QA F-01…F-05; CR-9 ertelendi, CR-12 dashboard aksiyonu)
+- **Regresyon sayısı:** 0
+- **Kaçan hata (escaped bug):** 5 (QA F-01…F-05; F-01 yüksek öncelikli bootstrap CLI)
 
 ## 8. Ek A — Q10 Kararı (A) ve CSRF Uygulama Notları
 

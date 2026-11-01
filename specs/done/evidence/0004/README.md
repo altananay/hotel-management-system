@@ -1,7 +1,7 @@
 # 0004 — Admin Kimlik ve Oturum kanıtları
 
 Bu dizin 0004 kabul kriterlerini gerçek test/CI çıktılarıyla eşler.
-Tüm loglar code review fixleri sonrası head `592507c` üzerinde alınmıştır.
+Tüm loglar code review fixleri sonrası head `78104e6` üzerinde alınmıştır.
 
 ## İzlenebilirlik
 
@@ -17,13 +17,14 @@ Tüm loglar code review fixleri sonrası head `592507c` üzerinde alınmıştır
 
 ## Test toplamları
 
-- `admin-api`: **98/98** birim, **5/5** Testcontainers IT
+- `admin-api`: **101/101** birim, **5/5** Testcontainers IT
 - `hotel-api`: **89/89**
-- `admin-web`: **23/23** Vitest; lint + build yeşil
+- `admin-web`: **24/24** Vitest; lint + build yeşil
 - E2E: `@admin` **3/3**, 0002 **3/3**, 0003 design **40/40**
 
 ## Code review fixleri
 
+- `QA-fix-verification-2026-11-01.md` — QA F-01…F-05 fix ve doğrulama özeti.
 - `code-review-fixes-2026-11-01.md` — CR-1…CR-11 eşlemesi; CR-9/CR-10 için gerekçeli
   erteleme/itiraz notları.
 - `code-review-brief-2026-11-01.md` — incelenen brief.
