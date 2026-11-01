@@ -20,6 +20,22 @@ class Argon2PasswordHasherTest {
     }
 
     @Test
+    void shouldMatchNfdLoginInputAgainstNfcHash() {
+        Argon2PasswordHasher hasher = new Argon2PasswordHasher();
+        String hash = hasher.hash("Café-Guvenli-2026!");
+
+        assertThat(hasher.matches("Cafe\u0301-Guvenli-2026!", hash)).isTrue();
+    }
+
+    @Test
+    void shouldMatchNfcLoginInputAgainstNfdHash() {
+        Argon2PasswordHasher hasher = new Argon2PasswordHasher();
+        String hash = hasher.hash("Cafe\u0301-Guvenli-2026!");
+
+        assertThat(hasher.matches("Café-Guvenli-2026!", hash)).isTrue();
+    }
+
+    @Test
     void shouldKeepDummyHashAvailable_whenUnknownUserIsChecked() {
         assertThat(hasher.dummyHash()).startsWith("$argon2id$");
         assertThat(hasher.matches("anything", hasher.dummyHash())).isFalse();

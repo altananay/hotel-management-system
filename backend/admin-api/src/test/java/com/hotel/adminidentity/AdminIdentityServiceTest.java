@@ -83,7 +83,7 @@ class AdminIdentityServiceTest {
     void shouldCreateSessionClearFailuresAndAudit_whenCredentialsAreValid() {
         AdminUserEntity user = userEntity(true);
         when(userRepository.findByUsernameIgnoreCase("superadmin")).thenReturn(Optional.of(user));
-        when(attemptRepository.findActiveLocks(userId.toString(), IP, NOW)).thenReturn(List.of());
+        when(attemptRepository.findActiveLocks("superadmin", IP, NOW)).thenReturn(List.of());
         when(passwordHasher.matches(PASSWORD, "hash")).thenReturn(true);
         AdminSessionView view =
                 new AdminSessionView(
@@ -96,7 +96,7 @@ class AdminIdentityServiceTest {
 
         assertThat(result.rawSessionToken()).isEqualTo("raw-new");
         assertThat(result.session()).isEqualTo(view);
-        verify(attemptRepository).deleteByIdentifierNormAndIpAddress(userId.toString(), IP);
+        verify(attemptRepository).deleteByIdentifierNormAndIpAddress("superadmin", IP);
         verify(sessionService).revoke("raw-old", context);
         AuditEvent event = auditEvent(AuditReasonCode.LOGIN_SUCCESS);
         assertThat(event.actorUserId()).isEqualTo(userId);
@@ -109,7 +109,7 @@ class AdminIdentityServiceTest {
     void shouldRevokeNewSessionAndFail_whenSuccessAuditFails() {
         AdminUserEntity user = userEntity(true);
         when(userRepository.findByUsernameIgnoreCase("superadmin")).thenReturn(Optional.of(user));
-        when(attemptRepository.findActiveLocks(userId.toString(), IP, NOW)).thenReturn(List.of());
+        when(attemptRepository.findActiveLocks("superadmin", IP, NOW)).thenReturn(List.of());
         when(passwordHasher.matches(PASSWORD, "hash")).thenReturn(true);
         AdminSessionView view =
                 new AdminSessionView(
@@ -163,10 +163,10 @@ class AdminIdentityServiceTest {
     void shouldLockForFifteenMinutes_whenFifthFailureOccursWithinWindow() {
         AdminUserEntity user = userEntity(true);
         when(userRepository.findByUsernameIgnoreCase("superadmin")).thenReturn(Optional.of(user));
-        when(attemptRepository.findActiveLocks(userId.toString(), IP, NOW)).thenReturn(List.of());
+        when(attemptRepository.findActiveLocks("superadmin", IP, NOW)).thenReturn(List.of());
         when(passwordHasher.matches("wrong", "hash")).thenReturn(false);
         when(attemptRepository.countRecentFailures(
-                        userId.toString(), IP, NOW.minus(Duration.ofMinutes(15))))
+                        "superadmin", IP, NOW.minus(Duration.ofMinutes(15))))
                 .thenReturn(4L);
 
         assertThatThrownBy(
@@ -187,12 +187,12 @@ class AdminIdentityServiceTest {
     void shouldRejectWithGenericErrorAndSkipPasswordCheck_whenIdentifierIsLocked() {
         AdminUserEntity user = userEntity(true);
         when(userRepository.findByUsernameIgnoreCase("superadmin")).thenReturn(Optional.of(user));
-        when(attemptRepository.findActiveLocks(userId.toString(), IP, NOW))
+        when(attemptRepository.findActiveLocks("superadmin", IP, NOW))
                 .thenReturn(
                         List.of(
                                 new AdminLoginAttemptEntity(
                                         UUID.randomUUID(),
-                                        userId.toString(),
+                                        "superadmin",
                                         userId,
                                         IP,
                                         NOW.minus(Duration.ofMinutes(1)),
@@ -218,10 +218,10 @@ class AdminIdentityServiceTest {
                 .thenReturn(Optional.empty());
         when(userRepository.findByEmailIgnoreCase("superadmin@example.com"))
                 .thenReturn(Optional.of(user));
-        when(attemptRepository.findActiveLocks(userId.toString(), IP, NOW)).thenReturn(List.of());
+        when(attemptRepository.findActiveLocks("superadmin", IP, NOW)).thenReturn(List.of());
         when(passwordHasher.matches("wrong", "hash")).thenReturn(false);
         when(attemptRepository.countRecentFailures(
-                        userId.toString(), IP, NOW.minus(Duration.ofMinutes(15))))
+                        "superadmin", IP, NOW.minus(Duration.ofMinutes(15))))
                 .thenReturn(0L);
 
         assertThatThrownBy(
@@ -234,7 +234,7 @@ class AdminIdentityServiceTest {
         ArgumentCaptor<AdminLoginAttemptEntity> attempt =
                 ArgumentCaptor.forClass(AdminLoginAttemptEntity.class);
         verify(attemptRepository).save(attempt.capture());
-        assertThat(attempt.getValue().getIdentifierNorm()).isEqualTo(userId.toString());
+        assertThat(attempt.getValue().getIdentifierNorm()).isEqualTo("superadmin");
         assertThat(attempt.getValue().getUserId()).isEqualTo(userId);
         assertThat(auditEvent(AuditReasonCode.LOGIN_INVALID_CREDENTIALS).usernameAttempted())
                 .isEqualTo("superadmin@example.com");
@@ -244,10 +244,10 @@ class AdminIdentityServiceTest {
     void shouldAuditInactiveUser_whenCredentialsMatchButUserIsInactive() {
         AdminUserEntity user = userEntity(false);
         when(userRepository.findByUsernameIgnoreCase("superadmin")).thenReturn(Optional.of(user));
-        when(attemptRepository.findActiveLocks(userId.toString(), IP, NOW)).thenReturn(List.of());
+        when(attemptRepository.findActiveLocks("superadmin", IP, NOW)).thenReturn(List.of());
         when(passwordHasher.matches(PASSWORD, "hash")).thenReturn(true);
         when(attemptRepository.countRecentFailures(
-                        userId.toString(), IP, NOW.minus(Duration.ofMinutes(15))))
+                        "superadmin", IP, NOW.minus(Duration.ofMinutes(15))))
                 .thenReturn(0L);
 
         assertThatThrownBy(
