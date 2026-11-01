@@ -14,7 +14,7 @@ public class AdminApiApplication {
         if (isBootstrapMode(args)) {
             try (ConfigurableApplicationContext context =
                     new SpringApplicationBuilder(AdminApiApplication.class)
-                            .web(WebApplicationType.NONE)
+                            .web(webApplicationType(args))
                             .run(args)) {
                 System.exit(context.getBean(AdminBootstrapCli.class).run());
             }
@@ -24,5 +24,9 @@ public class AdminApiApplication {
 
     static boolean isBootstrapMode(String[] args) {
         return Arrays.asList(args).contains("--bootstrap-admin");
+    }
+
+    static WebApplicationType webApplicationType(String[] args) {
+        return isBootstrapMode(args) ? WebApplicationType.NONE : WebApplicationType.SERVLET;
     }
 }
