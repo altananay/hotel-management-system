@@ -1,13 +1,22 @@
 # AC-2 CSRF before validation and session gate
-# generated_at=2026-10-31T23:26:19.062511+00:00
-# source: local Maven Surefire XML reports (backend) and GitHub Actions run 41251924005
+# generated_at=2026-11-01T12:56:56.555897+00:00
+# source: local Maven Surefire XML reports and GitHub Actions run 41308208928
 
 Test set: com.hotel.web.AdminCsrfFilterTest
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time: 0.062s
-  PASS shouldReturn403AndSkipChain_whenCsrfValidationFails (0.061s)
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time: 0.028s
+  PASS shouldReturn403AndSkipChain_whenCsrfValidationFails (0.026s)
   PASS shouldPassThrough_whenCsrfValidationSucceeds (0.001s)
   PASS shouldSkipSafeMethodsAndTokenEndpoint (0.0s)
 
+Test set: com.hotel.adminidentity.AdminCsrfServiceTest
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time: 0.061s
+  PASS shouldRejectMissingOriginOrPreAuthTokenOnLogout_whenStateChanging (0.049s)
+  PASS shouldRejectMalformedBase64Token_withCsrfException (0.001s)
+  PASS shouldRejectTokenWithMalformedPayload_withCsrfException (0.002s)
+  PASS shouldSkipCsrf_whenRequestIsReadOnly (0.001s)
+  PASS shouldAcceptPreAuthToken_whenOriginAndLoginAreValid (0.0s)
+  PASS shouldAcceptSessionBoundToken_whenSessionMatches (0.005s)
+
 # CI evidence that the admin-web retry recovers from a forced CSRF 403
-2026-10-31T23:24:06.2791865Z AC-6-admin-csrf-retry.png: first login POST forced 403, retry succeeded
+2026-11-01T12:54:50.0470250Z AC-6-admin-csrf-retry.png: first login POST forced 403, retry succeeded
 

@@ -1,0 +1,10 @@
+# AC-1 bootstrap audit fail-closed and skip-audit tolerance
+# generated_at=2026-11-01T12:56:56.550615+00:00
+# source: local Maven Surefire XML reports and GitHub Actions run 41308208928
+
+Test set: com.hotel.adminidentity.AdminBootstrapServiceTest
+Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time: 0.11s
+Selected scenarios: shouldDeleteAdminAndFail_whenCreationAuditFails, shouldKeepSkippedOutcome_whenSkipAuditFails
+  PASS shouldDeleteAdminAndFail_whenCreationAuditFails (0.008s)
+  PASS shouldKeepSkippedOutcome_whenSkipAuditFails (0.003s)
+

@@ -1,7 +1,7 @@
 # AC-6 scaffold removal evidence
-captured_at=2026-10-31T23:08:52.697Z
+captured_at=2026-11-01T12:54:50.414Z
 GET /admin-api/system/sample-items (anonymous) -> 401
-{"detail":"Authentication is required to access this resource.","instance":"/admin-api/system/sample-items","status":401,"title":"Unauthorized","type":"about:blank","code":"security.unauthorized","requestId":"01a19439-1908-779a-a37d-9c8be4aca0fb"}
+{"detail":"Authentication is required to access this resource.","instance":"/admin-api/system/sample-items","status":401,"title":"Unauthorized","type":"about:blank","code":"security.unauthorized","requestId":"01a1972d-49ef-73f3-b03d-f30a9da77dcf"}
 POST /admin-api/auth/login -> 204
 GET /admin-api/system/sample-items (authenticated) -> 404
-{"detail":"The requested resource was not found.","instance":"/admin-api/system/sample-items","status":404,"title":"Not Found","type":"about:blank","code":"system.not_found","requestId":"01a19439-198f-733f-828f-cc684651b9f3"}
+{"detail":"The requested resource was not found.","instance":"/admin-api/system/sample-items","status":404,"title":"Not Found","type":"about:blank","code":"system.not_found","requestId":"01a1972d-4a65-766d-9e2f-0ed5c33f17e7"}

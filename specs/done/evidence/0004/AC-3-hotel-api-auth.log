@@ -1,17 +1,22 @@
-# AC-3 hotel-api JWT 401/403 matrix
-# generated_at=2026-10-31T23:26:19.067646+00:00
-# source: local Maven Surefire XML reports (backend) and GitHub Actions run 41251924005
+# AC-3 hotel-api JWT 401/403/503 matrix
+# generated_at=2026-11-01T12:56:56.562873+00:00
+# source: local Maven Surefire XML reports and GitHub Actions run 41308208928
 
 Test set: com.hotel.web.AdminJwtSecurityTest
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time: 0.619s
-  PASS shouldAllowManagerEndpointAndForbidSuperAdmin_whenRoleIsManager (0.041s)
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time: 0.345s
+  PASS shouldAllowManagerEndpointAndForbidSuperAdmin_whenRoleIsManager (0.024s)
   PASS shouldReturn401ForMissingWrongAudienceWrongIssuerAndExpiredTokens (0.013s)
-  PASS shouldAllowSuperAdminAndManagerEndpoints_whenJwtIsValid (0.009s)
-  PASS shouldForbidManagerAndSuperAdmin_whenRoleIsFrontDesk (0.009s)
+  PASS shouldAllowSuperAdminAndManagerEndpoints_whenJwtIsValid (0.007s)
+  PASS shouldForbidManagerAndSuperAdmin_whenRoleIsFrontDesk (0.006s)
 
-TOTAL: tests=83, failures=0, errors=0, skipped=0
+Test set: com.hotel.web.AdminJwtAuthenticationEntryPointTest
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time: 0.004s
+  PASS shouldReturn503_whenJwksRetrievalFails (0.003s)
+  PASS shouldReturn401_whenTokenIsInvalid (0.001s)
 
-# CI hotel-api job (GitHub Actions run 41251924005)
-2026-10-31T23:18:22.1388618Z [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.002 s -- in com.hotel.web.AdminJwtSecurityTest
-2026-10-31T23:18:22.2640794Z [INFO] Tests run: 83, Failures: 0, Errors: 0, Skipped: 0
+TOTAL: tests=89, failures=0, errors=0, skipped=0
+
+# CI hotel-api job (GitHub Actions run 41308208928)
+2026-11-01T12:48:39.4373717Z [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.834 s -- in com.hotel.web.AdminJwtSecurityTest
+2026-11-01T12:48:40.4432802Z [INFO] Tests run: 89, Failures: 0, Errors: 0, Skipped: 0
 

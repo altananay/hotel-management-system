@@ -1,49 +1,83 @@
 # AC-1 admin-api verification (identity, password policy, seed, bootstrap)
-# generated_at=2026-10-31T23:26:19.058560+00:00
-# source: local Maven Surefire XML reports (backend) and GitHub Actions run 41251924005
+# generated_at=2026-11-01T12:56:56.547132+00:00
+# source: local Maven Surefire XML reports and GitHub Actions run 41308208928
 
 Test set: com.hotel.adminidentity.AdminBootstrapServiceTest
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time: 0.083s
-  PASS shouldDeleteAdminAndFail_whenCreationAuditFails (0.071s)
-  PASS shouldCreateSuperAdmin_whenNoAdminRowsAndEnvIsValid (0.003s)
+Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time: 0.11s
+  PASS shouldFailFast_whenUsernameOrEmailFormatIsInvalid (0.078s)
+  PASS shouldDeleteAdminAndFail_whenCreationAuditFails (0.008s)
+  PASS shouldKeepSkippedOutcome_whenSkipAuditFails (0.003s)
+  PASS shouldSkip_whenConcurrentInsertHitsUniqueAndActiveSuperAdminExists (0.004s)
+  PASS shouldFailFast_whenEnvIsMissingOrWeak (0.001s)
   PASS shouldSkipWithoutReadingEnv_whenActiveSuperAdminExists (0.002s)
-  PASS shouldFailFast_whenOnlyNonSuperAdminRowsExist (0.001s)
+  PASS shouldFailFast_whenOnlyPassiveSuperAdminExists (0.002s)
+  PASS shouldCreateSuperAdminWithNormalizedIdentity_whenNoAdminRowsAndEnvIsValid (0.002s)
+  PASS shouldFailFast_whenConcurrentInsertHitsUniqueWithoutActiveSuperAdmin (0.002s)
+  PASS shouldFailFast_whenOnlyManagerOrFrontDeskRowsExist (0.001s)
+
+Test set: com.hotel.bootstrap.AdminBootstrapCliTest
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time: 0.003s
+  PASS shouldReturnDeclaredExitCode_whenBootstrapOutcomeIsKnown (0.003s)
+  PASS shouldReturnThree_whenBootstrapThrowsDatabaseError (0.0s)
+
+Test set: com.hotel.AdminApiApplicationTest
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time: 0.043s
+  PASS shouldUseBootstrapMode_whenBootstrapFlagIsPresent (0.029s)
+  PASS shouldStartWithoutWebServer_whenBootstrapFlagIsPresent (0.003s)
 
 Test set: com.hotel.adminidentity.Argon2PasswordHasherTest
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time: 0.165s
-  PASS shouldKeepDummyHashAvailable_whenUnknownUserIsChecked (0.018s)
-  PASS shouldHashWithArgon2idParameters_whenPasswordIsHashed (0.058s)
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time: 0.164s
+  PASS shouldKeepDummyHashAvailable_whenUnknownUserIsChecked (0.019s)
+  PASS shouldHashWithArgon2idParameters_whenPasswordIsHashed (0.055s)
 
 Test set: com.hotel.adminidentity.PasswordPolicyTest
 Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time: 0.003s
-  PASS shouldNormalizeNfcBeforeValidation_whenPasswordUsesCombiningCharacters (0.001s)
+  PASS shouldNormalizeNfcBeforeValidation_whenPasswordUsesCombiningCharacters (0.0s)
   PASS shouldRejectPasswordContainingUsername_whenCaseInsensitive (0.0s)
-  PASS shouldRejectPasswordContainingEmailLocalPart_whenLongEnough (0.002s)
+  PASS shouldRejectPasswordContainingEmailLocalPart_whenLongEnough (0.001s)
   PASS shouldRejectShortPassword_whenFewerThanTwelveCodePoints (0.0s)
   PASS shouldAcceptValidPassword_whenItIsLongEnoughAndDoesNotContainIdentity (0.0s)
 
 Test set: com.hotel.adminidentity.SessionTokenHasherTest
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time: 0.0s
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time: 0.001s
   PASS shouldProduceUrlSafeTokenAndStableHash_whenGeneratingSessionToken (0.0s)
 
+Test set: com.hotel.adminidentity.UsernamePolicyTest
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time: 0.003s
+  PASS shouldNormalizeToLowercaseAndTrim_whenUsernameIsValid (0.0s)
+  PASS shouldRejectUsername_whenItDoesNotStartWithAlphanumeric (0.002s)
+  PASS shouldRejectUsername_whenItIsNull (0.0s)
+  PASS shouldRejectUsername_whenLengthIsOutsideThreeToForty (0.0s)
+  PASS shouldRejectUsername_whenItContainsSpacesOrNonAsciiCharacters (0.0s)
+
+Test set: com.hotel.adminidentity.EmailPolicyTest
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time: 0.004s
+  PASS shouldRejectEmail_whenFormatIsInvalid (0.001s)
+  PASS shouldRejectEmail_whenItIsNull (0.0s)
+  PASS shouldRejectEmail_whenLocalPartOrAddressIsTooLong (0.0s)
+  PASS shouldNormalizeAndAcceptCommonRfc5322Addresses (0.002s)
+
+Test set: com.hotel.config.AdminProductionSecurityValidatorTest
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time: 0.002s
+  PASS shouldAcceptProdConfiguration_whenCookieIsSecureAndSecretIsCustom (0.0s)
+  PASS shouldRejectLocalDefaultSecret_whenOutsideLocalAndCiProfiles (0.001s)
+  PASS shouldRejectInsecureCookie_whenOutsideLocalAndCiProfiles (0.0s)
+  PASS shouldRejectShortSecret_whenOutsideLocalAndCiProfiles (0.0s)
+
 Test set: com.hotel.architecture.AdminApiModularityTest
-Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time: 1.163s
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time: 1.162s
   PASS shouldNotReferenceBusinessCoreDatabase_whenScanningAllAdminApiMainSources (0.009s)
-  PASS shouldVerifyModularStructure_whenCheckingFourAdminModules (0.475s)
+  PASS shouldVerifyModularStructure_whenCheckingFourAdminModules (0.482s)
   PASS shouldForbidInternalPackageAccessAndCrossCuttingReverseDependencies_whenCheckingBoundaries (0.033s)
-  PASS shouldForbidEntityLeakageAndDoubleFloat_whenCheckingProductionClasses (0.004s)
-  PASS shouldForbidCrossModuleDependencies_whenCheckingClosedAllowlist (0.001s)
+  PASS shouldForbidEntityLeakageAndDoubleFloat_whenCheckingProductionClasses (0.003s)
+  PASS shouldForbidCrossModuleDependencies_whenCheckingClosedAllowlist (0.003s)
   PASS shouldDefineApiAndInternalSubpackages_whenInspectingAllAdminModules (0.001s)
 
-TOTAL: tests=61, failures=0, errors=0, skipped=0
+TOTAL: tests=95, failures=0, errors=0, skipped=0
 
-# CI backend job (GitHub Actions run 41251924005)
-2026-10-31T23:18:48.6321951Z [INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.885 s -- in com.hotel.DatabaseSchemaAndRoleSeparationIT
-2026-10-31T23:18:49.9315710Z [INFO] BUILD SUCCESS
-2026-10-31T23:18:59.7861705Z [INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.568 s -- in com.hotel.adminidentity.AdminJwtKeyProviderTest
-2026-10-31T23:19:01.0567353Z [INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 s -- in com.hotel.adminidentity.PasswordPolicyTest
-2026-10-31T23:19:07.6233383Z [INFO] Tests run: 61, Failures: 0, Errors: 0, Skipped: 0
-2026-10-31T23:19:21.1739046Z [INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 11.77 s -- in com.hotel.AdminDatabaseIsolationIT
-2026-10-31T23:19:21.6073982Z [INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0
-2026-10-31T23:19:22.0955875Z [INFO] BUILD SUCCESS
+# CI backend job (GitHub Actions run 41308208928)
+2026-11-01T12:49:38.1936436Z [INFO] BUILD SUCCESS
+2026-11-01T12:49:54.3346912Z [INFO] Tests run: 95, Failures: 0, Errors: 0, Skipped: 0
+2026-11-01T12:50:07.1179647Z [INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 11.08 s -- in com.hotel.AdminDatabaseIsolationIT
+2026-11-01T12:50:37.8172163Z [INFO] BUILD SUCCESS
 

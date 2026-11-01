@@ -1,9 +1,9 @@
 # AC-7 archive SHA-256 and 0002 byte-identical check
-# generated_at=2026-10-31T23:26:19.085885+00:00
-# source: local Maven Surefire XML reports (backend) and GitHub Actions run 41251924005
+# generated_at=2026-11-01T12:56:56.584253+00:00
+# source: local Maven Surefire XML reports and GitHub Actions run 41308208928
 
 # 0002/0003 evidence archive integrity
-generated_at=2026-10-31T23:26:19.070900+00:00
+generated_at=2026-11-01T12:56:56.568258+00:00
 
 git diff --name-only origin/integration -- specs/done/evidence/0002 specs/done/evidence/0003
 (empty: no changes)
@@ -72,7 +72,7 @@ b6081fb44a1e796d7a29c0142bfab90fa3cfee13e99e679d4521e7b9c6b56918  specs/done/evi
 9db288bbbe1a9cfee2e7ba20312bef8ede44a9410f1425abe70a0682f5acee3b  specs/done/evidence/0003/qa-verification-2026-10-25.md
 
 # CI verification of the 0002 manifest
-2026-10-31T23:23:57.5408816Z Files: 12
-2026-10-31T23:23:57.5409143Z Result: UNCHANGED
-2026-10-31T23:23:57.5409507Z All 0002 evidence files are byte-identical.
+2026-11-01T12:54:40.3153509Z Files: 12
+2026-11-01T12:54:40.3153991Z Result: UNCHANGED
+2026-11-01T12:54:40.3154535Z All 0002 evidence files are byte-identical.
 

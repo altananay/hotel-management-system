@@ -1,26 +1,32 @@
 # 0004 — Admin Kimlik ve Oturum kanıtları
 
 Bu dizin 0004 kabul kriterlerini gerçek test/CI çıktılarıyla eşler.
-Tüm loglar son kod head'i (`82bbe5d`) üzerinde alınmıştır.
+Tüm loglar code review fixleri sonrası head `04c4673` üzerinde alınmıştır.
 
 ## İzlenebilirlik
 
 | AC | Kapsam | Kanıt |
 |---|---|---|
-| AC-1 | Kimlik modeli, parola politikası, seed, bootstrap | `AC-1-admin-api-verify.log`, `AC-1-admin-seed-and-bootstrap.log` |
-| AC-2 | Oturum, kilit, CSRF | `AC-2-login-session.log`, `AC-2-session-expiry.log`, `AC-2-lockout-and-enumeration.log`, `AC-2-csrf.log`, `AC-2-csrf-precedence.log` |
-| AC-3 | JWT, JWKS, hotel-api 401/403 | `AC-3-jwt-claims.log`, `AC-3-hotel-api-auth.log` |
-| AC-4 | Kök kimlik filtresi ve gateway | `AC-4-gateway-it.log`, `AC-4-header-hygiene.log` |
-| AC-5 | Audit olayları ve fail-closed | `AC-5-audit-events.log`, `AC-5-audit-failclosed.log` |
+| AC-1 | Kimlik modeli, parola politikası, seed, bootstrap | `AC-1-admin-api-verify.log`, `AC-1-admin-seed-and-bootstrap.log`, `AC-1-bootstrap-*.log` |
+| AC-2 | Oturum, kilit, CSRF, login context | `AC-2-login-session.log`, `AC-2-session-expiry.log`, `AC-2-lockout-and-enumeration.log`, `AC-2-csrf.log`, `AC-2-csrf-precedence.log`, `AC-2-login-context.log` |
+| AC-3 | JWT, JWKS, hotel-api 401/403/503 | `AC-3-jwt-claims.log`, `AC-3-jwks-rotation.log`, `AC-3-hotel-api-auth.log` |
+| AC-4 | Kök kimlik filtresi ve gateway | `AC-4-gateway-it.log`, `AC-4-header-hygiene.log`, `AC-4-request-id.log`, `AC-4-allowlist.log` |
+| AC-5 | Audit olayları ve fail-closed | `AC-5-audit-events.log`, `AC-5-audit-failclosed.log`, `AC-5-rotation-audit.log`, `AC-5-bootstrap-skip-audit.log`, `AC-5-audit-retention.md` |
 | AC-6 | Admin-web login, oturum kapısı, logout, CSRF | `AC-6-*.png`, `AC-6-scaffold-removed.log`, `AC-6-csrf-and-gate.log`, `AC-6-admin-web-vitest.log` |
 | AC-7 | Testler, CI, arşiv izolasyonu | `AC-7-e2e-admin-summary.md`, `AC-7-ci-run.md`, `AC-7-0003-design-40.txt`, `AC-7-archive-sha256.txt` |
 
 ## Test toplamları
 
-- `admin-api`: **61/61** birim, **5/5** Testcontainers IT
-- `hotel-api`: **83/83**
-- `admin-web`: **21/21** Vitest; lint + build yeşil
+- `admin-api`: **95/95** birim, **5/5** Testcontainers IT
+- `hotel-api`: **89/89**
+- `admin-web`: **23/23** Vitest; lint + build yeşil
 - E2E: `@admin` **3/3**, 0002 **3/3**, 0003 design **40/40**
+
+## Code review fixleri
+
+- `code-review-fixes-2026-11-01.md` — CR-1…CR-11 eşlemesi; CR-9/CR-10 için gerekçeli
+  erteleme/itiraz notları.
+- `code-review-brief-2026-11-01.md` — incelenen brief.
 
 ## AC-6 görselleri
 
@@ -38,6 +44,5 @@ Tüm loglar son kod head'i (`82bbe5d`) üzerinde alınmıştır.
   kanıtlarına dokunulmadı (`AC-7-archive-sha256.txt`).
 - AC-6 CSRF/oturum kapısı görselleri, `@admin` testlerinden sonra
   `e2e/scripts/capture-0004-admin-evidence.mjs` ile üretilir.
-- `AdminJwtKeyProviderTest`, aktif + önceki public anahtarın JWKS'te
-  yayınlandığını, `kid`'in restart'ta korunduğunu ve eksik anahtarda
-  fail-fast davranışını doğrular.
+- `AdminJwtConfigTest`, 5 dk cache, 60 sn unknown-kid cooldown, iat +60 sn
+  ve JWKS erişilemezliği senaryolarını doğrular.

@@ -1,0 +1,11 @@
+# AC-3 remote JWKS cache, unknown-kid refresh and 503 path
+# generated_at=2026-11-01T12:56:56.562762+00:00
+# source: local Maven Surefire XML reports and GitHub Actions run 41308208928
+
+Test set: com.hotel.config.AdminJwtConfigTest
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time: 0.634s
+  PASS shouldFailWhenJwksCannotBeRetrievedAndCacheIsEmpty (0.212s)
+  PASS shouldLimitUnknownKidRefreshToOnePerCooldown (0.199s)
+  PASS shouldReturn401StyleValidationError_whenIssuedAtIsMoreThanSixtySecondsInFuture (0.051s)
+  PASS shouldCacheJwksAndRefreshOnce_whenUnknownKidAppearsAfterCooldown (0.169s)
+

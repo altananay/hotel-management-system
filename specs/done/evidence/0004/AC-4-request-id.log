@@ -1,0 +1,10 @@
+# AC-4 gateway-generated request id
+# generated_at=2026-11-01T12:56:56.564021+00:00
+# source: local Maven Surefire XML reports and GitHub Actions run 41308208928
+
+Test set: com.hotel.gateway.AdminGatewayClientTest
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time: 0.604s
+  PASS shouldMapSlowUpstreamToGatewayTimeout (0.584s)
+  PASS shouldMapConnectionRefusedToGatewayUnavailable (0.005s)
+  PASS shouldForwardOnlyAllowedHeadersAndUseGatewayRequestId (0.013s)
+

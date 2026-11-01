@@ -1,35 +1,35 @@
 # AC-2 login, session rotation and cookie attributes
-# generated_at=2026-10-31T23:26:19.059872+00:00
-# source: local Maven Surefire XML reports (backend) and GitHub Actions run 41251924005
+# generated_at=2026-11-01T12:56:56.553171+00:00
+# source: local Maven Surefire XML reports and GitHub Actions run 41308208928
 
 Test set: com.hotel.adminidentity.AdminIdentityServiceTest
-Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time: 0.143s
-  PASS shouldUseDummyHashAndAuditFailure_whenUserIsUnknown (0.114s)
-  PASS shouldRejectWithGenericErrorAndSkipPasswordCheck_whenIdentifierIsLocked (0.005s)
-  PASS shouldAuditInactiveUser_whenCredentialsMatchButUserIsInactive (0.003s)
-  PASS shouldUseSameUserCounter_whenLoggingInWithEmailAlias (0.003s)
-  PASS shouldRevokeNewSessionAndFail_whenSuccessAuditFails (0.004s)
+Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time: 0.139s
+  PASS shouldUseDummyHashAndAuditFailure_whenUserIsUnknown (0.117s)
+  PASS shouldRejectWithGenericErrorAndSkipPasswordCheck_whenIdentifierIsLocked (0.002s)
+  PASS shouldAuditInactiveUser_whenCredentialsMatchButUserIsInactive (0.002s)
+  PASS shouldUseSameUserCounter_whenLoggingInWithEmailAlias (0.001s)
+  PASS shouldRevokeNewSessionAndFail_whenSuccessAuditFails (0.003s)
   PASS shouldLockForFifteenMinutes_whenFifthFailureOccursWithinWindow (0.003s)
-  PASS shouldDelegateLogoutToSessionService (0.002s)
-  PASS shouldCreateSessionClearFailuresAndAudit_whenCredentialsAreValid (0.003s)
-  PASS shouldFailWithAuditErrorAndCreateNoSession_whenFailureAuditFails (0.003s)
+  PASS shouldDelegateLogoutToSessionService (0.001s)
+  PASS shouldCreateSessionClearFailuresAndAudit_whenCredentialsAreValid (0.002s)
+  PASS shouldFailWithAuditErrorAndCreateNoSession_whenFailureAuditFails (0.002s)
 
 Test set: com.hotel.adminidentity.AdminSessionServiceTest
 Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time: 0.014s
   PASS shouldRejectWithoutRepositoryLookup_whenTokenIsBlank (0.001s)
-  PASS shouldReject_whenUserIsInactive (0.003s)
+  PASS shouldReject_whenUserIsInactive (0.001s)
   PASS shouldDeleteAndReject_whenAbsoluteExpiryIsReached (0.001s)
-  PASS shouldDeleteOnlyCurrentSessionAndAuditLogout_whenLoggingOut (0.002s)
+  PASS shouldDeleteOnlyCurrentSessionAndAuditLogout_whenLoggingOut (0.001s)
   PASS shouldDeleteAndReject_whenIdleTimeoutIsExceeded (0.001s)
-  PASS shouldIgnoreUnknownSession_whenLoggingOut (0.0s)
-  PASS shouldDeleteRotatedSessionAndAuditRevocation_whenRevoking (0.002s)
-  PASS shouldTouchLastSeenAndReturnView_whenSessionIsValid (0.0s)
-  PASS shouldContinueLogout_whenAuditWriteFails (0.004s)
+  PASS shouldIgnoreUnknownSession_whenLoggingOut (0.001s)
+  PASS shouldDeleteRotatedSessionAndAuditRevocation_whenRevoking (0.003s)
+  PASS shouldTouchLastSeenAndReturnView_whenSessionIsValid (0.001s)
+  PASS shouldContinueLogout_whenAuditWriteFails (0.002s)
 
 Test set: com.hotel.adminidentity.AdminAuthControllerTest
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time: 0.061s
-  PASS shouldFallBackToPreAuthAndClearSession_whenSessionCookieIsInvalid (0.054s)
-  PASS shouldIssuePreAuthCsrf_whenNoSessionCookieIsPresent (0.003s)
-  PASS shouldSetSessionAndCsrfCookiesWithRequiredAttributes_whenLoginSucceeds (0.003s)
-  PASS shouldIssueSessionBoundCsrf_whenSessionCookieIsValid (0.001s)
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time: 0.059s
+  PASS shouldFallBackToPreAuthAndClearSession_whenSessionCookieIsInvalid (0.05s)
+  PASS shouldIssuePreAuthCsrf_whenNoSessionCookieIsPresent (0.002s)
+  PASS shouldSetSessionAndCsrfCookiesWithRequiredAttributes_whenLoginSucceeds (0.002s)
+  PASS shouldIssueSessionBoundCsrf_whenSessionCookieIsValid (0.002s)
 

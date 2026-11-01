@@ -1,0 +1,9 @@
+# AC-1 bootstrap CLI exit codes
+# generated_at=2026-11-01T12:56:56.551006+00:00
+# source: local Maven Surefire XML reports and GitHub Actions run 41308208928
+
+Test set: com.hotel.bootstrap.AdminBootstrapCliTest
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time: 0.003s
+  PASS shouldReturnDeclaredExitCode_whenBootstrapOutcomeIsKnown (0.003s)
+  PASS shouldReturnThree_whenBootstrapThrowsDatabaseError (0.0s)
+

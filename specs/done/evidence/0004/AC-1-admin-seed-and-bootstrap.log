@@ -1,35 +1,34 @@
-# AC-1 admin seed idempotency and bootstrap
-# generated_at=2026-10-31T23:26:19.058756+00:00
-# source: local Maven Surefire XML reports (backend) and GitHub Actions run 41251924005
-
-Test set: com.hotel.adminidentity.Argon2PasswordHasherTest
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time: 0.165s
-  PASS shouldKeepDummyHashAvailable_whenUnknownUserIsChecked (0.018s)
-  PASS shouldHashWithArgon2idParameters_whenPasswordIsHashed (0.058s)
-
-Test set: com.hotel.adminidentity.PasswordPolicyTest
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time: 0.003s
-  PASS shouldNormalizeNfcBeforeValidation_whenPasswordUsesCombiningCharacters (0.001s)
-  PASS shouldRejectPasswordContainingUsername_whenCaseInsensitive (0.0s)
-  PASS shouldRejectPasswordContainingEmailLocalPart_whenLongEnough (0.002s)
-  PASS shouldRejectShortPassword_whenFewerThanTwelveCodePoints (0.0s)
-  PASS shouldAcceptValidPassword_whenItIsLongEnoughAndDoesNotContainIdentity (0.0s)
-
-Test set: com.hotel.adminidentity.SessionTokenHasherTest
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time: 0.0s
-  PASS shouldProduceUrlSafeTokenAndStableHash_whenGeneratingSessionToken (0.0s)
+# AC-1 admin seed and bootstrap
+# generated_at=2026-11-01T12:56:56.548674+00:00
+# source: local Maven Surefire XML reports and GitHub Actions run 41308208928
 
 Test set: com.hotel.adminidentity.AdminBootstrapServiceTest
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time: 0.083s
-  PASS shouldDeleteAdminAndFail_whenCreationAuditFails (0.071s)
-  PASS shouldCreateSuperAdmin_whenNoAdminRowsAndEnvIsValid (0.003s)
+Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time: 0.11s
+  PASS shouldFailFast_whenUsernameOrEmailFormatIsInvalid (0.078s)
+  PASS shouldDeleteAdminAndFail_whenCreationAuditFails (0.008s)
+  PASS shouldKeepSkippedOutcome_whenSkipAuditFails (0.003s)
+  PASS shouldSkip_whenConcurrentInsertHitsUniqueAndActiveSuperAdminExists (0.004s)
+  PASS shouldFailFast_whenEnvIsMissingOrWeak (0.001s)
   PASS shouldSkipWithoutReadingEnv_whenActiveSuperAdminExists (0.002s)
-  PASS shouldFailFast_whenOnlyNonSuperAdminRowsExist (0.001s)
+  PASS shouldFailFast_whenOnlyPassiveSuperAdminExists (0.002s)
+  PASS shouldCreateSuperAdminWithNormalizedIdentity_whenNoAdminRowsAndEnvIsValid (0.002s)
+  PASS shouldFailFast_whenConcurrentInsertHitsUniqueWithoutActiveSuperAdmin (0.002s)
+  PASS shouldFailFast_whenOnlyManagerOrFrontDeskRowsExist (0.001s)
 
-# CI seed and guard output (GitHub Actions run 41251924005, e2e job)
-2026-10-31T23:18:51.4029922Z [INFO] Migrating schema "public" with repeatable migration "seed admin dev"
-2026-10-31T23:21:21.3954333Z [36;1mecho "Seed guard rejected missing and prod environments with the expected guard error."[0m
-2026-10-31T23:21:25.7433963Z Seed guard rejected missing and prod environments with the expected guard error.
-2026-10-31T23:21:25.7483034Z [36;1mecho "Seed SQL guard rejected overridden Flyway URL with the expected marker error."[0m
-2026-10-31T23:21:30.5277156Z Seed SQL guard rejected overridden Flyway URL with the expected marker error.
+Test set: com.hotel.bootstrap.AdminBootstrapCliTest
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time: 0.003s
+  PASS shouldReturnDeclaredExitCode_whenBootstrapOutcomeIsKnown (0.003s)
+  PASS shouldReturnThree_whenBootstrapThrowsDatabaseError (0.0s)
+
+Test set: com.hotel.AdminApiApplicationTest
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time: 0.043s
+  PASS shouldUseBootstrapMode_whenBootstrapFlagIsPresent (0.029s)
+  PASS shouldStartWithoutWebServer_whenBootstrapFlagIsPresent (0.003s)
+
+# CI seed and guard output (GitHub Actions run 41308208928, e2e job)
+2026-11-01T12:49:05.4744844Z [INFO] Migrating schema "public" with repeatable migration "seed admin dev"
+2026-11-01T12:51:45.5306265Z [36;1mecho "Seed guard rejected missing and prod environments with the expected guard error."[0m
+2026-11-01T12:51:52.4710087Z Seed guard rejected missing and prod environments with the expected guard error.
+2026-11-01T12:51:52.4771861Z [36;1mecho "Seed SQL guard rejected overridden Flyway URL with the expected marker error."[0m
+2026-11-01T12:51:59.6815244Z Seed SQL guard rejected overridden Flyway URL with the expected marker error.
 
