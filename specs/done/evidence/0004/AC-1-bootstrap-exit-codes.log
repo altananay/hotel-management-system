@@ -6,4 +6,3 @@ Test set: com.hotel.bootstrap.AdminBootstrapCliTest
 Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time: 0.003s
   PASS shouldReturnDeclaredExitCode_whenBootstrapOutcomeIsKnown (0.003s)
   PASS shouldReturnThree_whenBootstrapThrowsDatabaseError (0.0s)
-

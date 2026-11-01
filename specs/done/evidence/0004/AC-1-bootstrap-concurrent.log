@@ -7,4 +7,3 @@ Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time: 0.11s
 Selected scenarios: shouldFailFast_whenConcurrentInsertHitsUniqueWithoutActiveSuperAdmin, shouldSkip_whenConcurrentInsertHitsUniqueAndActiveSuperAdminExists
   PASS shouldSkip_whenConcurrentInsertHitsUniqueAndActiveSuperAdminExists (0.004s)
   PASS shouldFailFast_whenConcurrentInsertHitsUniqueWithoutActiveSuperAdmin (0.002s)
-

@@ -9,4 +9,3 @@ Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time: 0.043s
 
 # AdminApiApplication uses WebApplicationType.NONE when --bootstrap-admin is present;
 # the test asserts both the mode flag and the resulting WebApplicationType.
-

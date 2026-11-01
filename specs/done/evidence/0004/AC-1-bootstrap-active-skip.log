@@ -6,4 +6,3 @@ Test set: com.hotel.adminidentity.AdminBootstrapServiceTest
 Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time: 0.11s
 Selected scenarios: shouldSkipWithoutReadingEnv_whenActiveSuperAdminExists
   PASS shouldSkipWithoutReadingEnv_whenActiveSuperAdminExists (0.002s)
-

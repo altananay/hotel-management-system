@@ -7,4 +7,3 @@ Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time: 0.11s
 Selected scenarios: shouldCreateSuperAdminWithNormalizedIdentity_whenNoAdminRowsAndEnvIsValid, shouldSkipWithoutReadingEnv_whenActiveSuperAdminExists
   PASS shouldSkipWithoutReadingEnv_whenActiveSuperAdminExists (0.002s)
   PASS shouldCreateSuperAdminWithNormalizedIdentity_whenNoAdminRowsAndEnvIsValid (0.002s)
-

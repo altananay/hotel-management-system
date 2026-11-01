@@ -24,4 +24,3 @@ Selected scenarios: shouldSetSessionAndCsrfCookiesWithRequiredAttributes_whenLog
 # AdminClientContextFilter resolves IP/requestId before the identity filter for every
 # /admin-api/** request, including anonymous login; the controller consumes the same
 # request attribute instead of falling back to remoteAddr/unknown.
-
