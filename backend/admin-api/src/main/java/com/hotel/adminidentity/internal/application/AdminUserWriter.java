@@ -3,11 +3,12 @@ package com.hotel.adminidentity.internal.application;
 import com.fasterxml.uuid.Generators;
 import com.hotel.adminidentity.internal.domain.AdminRole;
 import com.hotel.adminidentity.internal.domain.Argon2PasswordHasher;
+import com.hotel.adminidentity.internal.domain.EmailPolicy;
+import com.hotel.adminidentity.internal.domain.UsernamePolicy;
 import com.hotel.adminidentity.internal.persistence.AdminUserEntity;
 import com.hotel.adminidentity.internal.persistence.AdminUserRepository;
 import java.time.Clock;
 import java.time.Instant;
-import java.util.Locale;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -33,8 +34,8 @@ public class AdminUserWriter {
         return userRepository.save(
                 new AdminUserEntity(
                         Generators.timeBasedEpochGenerator().generate(),
-                        username.trim().toLowerCase(Locale.ROOT),
-                        email.trim().toLowerCase(Locale.ROOT),
+                        UsernamePolicy.normalizeAndValidate(username),
+                        EmailPolicy.normalizeAndValidate(email),
                         passwordHasher.hash(password),
                         AdminRole.SUPER_ADMIN,
                         true,

@@ -9,6 +9,12 @@ public final class PasswordPolicy {
     public static final int MIN_CODE_POINTS = 12;
     public static final int MAX_CODE_POINTS = 128;
     public static final int MAX_UTF8_BYTES = 512;
+    /**
+     * Local parts shorter than this are not checked as a substring: a one or two character local
+     * part would match nearly every password and make the policy unusable. The full email is
+     * always checked, and the username is checked regardless of length.
+     */
+    private static final int MIN_LOCAL_PART_LENGTH_FOR_CHECK = 3;
 
     private PasswordPolicy() {}
 
@@ -36,7 +42,8 @@ public final class PasswordPolicy {
                     ? normalizedEmail.substring(0, normalizedEmail.indexOf('@'))
                     : normalizedEmail;
             if (normalizedPassword.contains(normalizedEmail)
-                    || (localPart.length() >= 3 && normalizedPassword.contains(localPart))) {
+                    || (localPart.length() >= MIN_LOCAL_PART_LENGTH_FOR_CHECK
+                            && normalizedPassword.contains(localPart))) {
                 throw new InvalidPasswordException("Password contains the email.");
             }
         }

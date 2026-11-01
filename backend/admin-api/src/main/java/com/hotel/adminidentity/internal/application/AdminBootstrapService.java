@@ -7,14 +7,14 @@ import com.hotel.adminaudit.api.AuditResult;
 import com.hotel.adminidentity.api.AdminIdentityApi.AdminBootstrapCommand;
 import com.hotel.adminidentity.api.AdminIdentityApi.AdminBootstrapOutcome;
 import com.hotel.adminidentity.internal.domain.AdminRole;
-import com.hotel.adminidentity.internal.domain.Argon2PasswordHasher;
+import com.hotel.adminidentity.internal.domain.EmailPolicy;
+import com.hotel.adminidentity.internal.domain.InvalidIdentityException;
 import com.hotel.adminidentity.internal.domain.InvalidPasswordException;
 import com.hotel.adminidentity.internal.domain.PasswordPolicy;
+import com.hotel.adminidentity.internal.domain.UsernamePolicy;
 import com.hotel.adminidentity.internal.persistence.AdminUserEntity;
 import com.hotel.adminidentity.internal.persistence.AdminUserRepository;
 import java.time.Clock;
-import java.time.Instant;
-import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -51,21 +51,22 @@ public class AdminBootstrapService {
         if (userRepository.count() > 0) {
             return AdminBootstrapOutcome.GUARD_FAILED;
         }
+        String username;
+        String email;
         String password;
         try {
-            password =
-                    PasswordPolicy.validate(
-                            command.password(), command.username(), command.email());
-        } catch (InvalidPasswordException ex) {
-            return AdminBootstrapOutcome.GUARD_FAILED;
-        }
-        if (isBlank(command.username()) || isBlank(command.email())) {
+            username = UsernamePolicy.normalizeAndValidate(command.username());
+            email = EmailPolicy.normalizeAndValidate(command.email());
+            password = PasswordPolicy.validate(command.password(), username, email);
+        } catch (InvalidPasswordException | InvalidIdentityException ex) {
             return AdminBootstrapOutcome.GUARD_FAILED;
         }
 
         AdminUserEntity created;
         try {
-            created = userWriter.createSuperAdmin(command.username(), command.email(), password);
+            created = userWriter.createSuperAdmin(username, email, password);
+        } catch (InvalidIdentityException ex) {
+            return AdminBootstrapOutcome.GUARD_FAILED;
         } catch (DataIntegrityViolationException ex) {
             if (userRepository.existsByRoleAndActiveTrue(AdminRole.SUPER_ADMIN)) {
                 auditSkip();
@@ -109,7 +110,4 @@ public class AdminBootstrapService {
         }
     }
 
-    private boolean isBlank(String value) {
-        return value == null || value.isBlank();
-    }
 }
