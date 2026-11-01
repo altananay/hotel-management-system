@@ -4,8 +4,53 @@
 - **PR:** [#18](https://github.com/altananay/hotel-management-system/pull/18) — `feature/0004-admin-identity` → `integration`
 - **İncelenen head:** `6eeb710`
 - **Yöntem:** Statik kaynak kodu, migration, test, doküman ve GitHub PR/check-run incelemesi. Test veya derleme çalıştırılmadı.
-- **PR durumu:** `mergeable=true`, `mergeable_state=clean`, 144 dosya.
-- **CI:** Backend, Frontend, E2E ve CI Quality Gate **success**; GitGuardian check-run'ı **skipped**.
+- **PR durumu (ilk inceleme):** `mergeable=true`, `mergeable_state=clean`, 144 dosya.
+- **CI (ilk inceleme):** Backend, Frontend, E2E ve CI Quality Gate **success**; GitGuardian check-run'ı **skipped**.
+
+---
+
+## 0. Fix doğrulama — `cd5626d` (2026-11-01)
+
+Developer fix turu `8e94e98…cd5626d` ile incelendi. Güncel PR head `cd5626d`; `mergeable=true` ancak `mergeable_state=unstable`.
+
+| ID | Fix sonrası durum | Kısa kanıt |
+|---|---|---|
+| CR-1 | **Kapandı** | `@EnableMethodSecurity` üretim `SecurityConfig`'e taşındı; test konfigürasyonundan çıkarıldı. |
+| CR-2 | **Kapandı** | `AdminProductionSecurityValidator` non-local/ci profilde güvenli olmayan cookie/CSRF secret ile startup'ı durduruyor. |
+| CR-3 | **Kapandı** | `AdminClientContextFilter` login dahil tüm `/admin-api/**` için IP/requestId üretiyor. |
+| CR-4 | **Kapandı** | Malformed base64 `AdminCsrfException`'a çevrildi; test eklendi. |
+| CR-5 | **Kapandı** | Geçersiz XFF adayı doğrudan IP'ye düşüyor; testler eklendi. |
+| CR-6 | **Kapandı** | `UsernamePolicy`/`EmailPolicy` bootstrap ve writer'da kullanılıyor. |
+| CR-7 | **Kapandı** | JWKS cache/refresh/cooldown/timeout, iat kontrolü ve mock JWKS testleri eklendi. |
+| CR-8 | **Kapandı** | Eksik bootstrap/gateway/JWKS/audit testleri ve kanıt dosyaları eklendi. |
+| CR-9 | **Kabul edildi / ertelendi** | Thin facade gerekçesi makul; dört yeni public port bugün tüketicisiz. Kullanıcı yönetimi diliminde yeniden değerlendirilmeli. |
+| CR-10 | **Kabul edildi / doküman aksiyonu** | 1–2 karakter local-part substring kontrolünün pratikte politikayı kullanılamaz kılması haklı; `MIN_LOCAL_PART_LENGTH_FOR_CHECK=3` istisnası spec'e yazılmalı. |
+| CR-11 | **Kapandı** | Decode + canonicalize; encoded `//`, `\`, scheme, control karakter testleri eklendi. |
+
+### Fix sonrası yeni bulgular
+
+#### [CR-12] GitGuardian güvenlik kontrolü başarısız — **Blocker**
+
+**Kanıt:** PR head `cd5626d` için GitGuardian check-run'ı **failure**; 4 secret incident bildirildi:
+- `184f50a` — `.env.example` (`LocalOnly-Cappadocia-2026!`)
+- `1f9d3ee` — `PasswordPolicyTest.java`
+- `81b1d7d` — `AdminIdentityServiceTest.java`
+- `7bbaad4` — `AdminBootstrapServiceTest.java`
+
+Secrets local/CI-only olsa da `.gitguardian.yaml` allowlist'i bu PR taramasında yeterli olmamış; PR `mergeable_state=unstable`. CI Quality Gate diğer 4 job yeşil olsa da güvenlik kapısı kırmızı.
+
+**Etki:** PR bu haliyle güvenlik kapısından geçmiyor. Yerel fixture olsa bile scanner'ın gördüğü hardcoded değerler ve geçmiş commit'ler temizlenmeden/allowlist doğru uygulanmadan merge edilmemeli.
+
+**Öneri ve gerekçe:** Hardcoded test/E2E parolalarını ortak bir fixture veya runtime env'den üret; `.env.example` için scanner'ın kabul edeceği placeholder kullan; allowlist'i test et. Gerekçe: Güvenlik taraması "local-only" açıklamasını otomatik olarak kabul etmez; yeşil olmayan check, merge politikası açısından bloklayıcıdır.
+
+#### [CR-13] Yeni evidence loglarında EOF boş satırı — **Düşük**
+
+**Kanıt:** `git diff --check 6eeb710..cd5626d` şu dosyalarda “new blank line at EOF” bildiriyor:
+`AC-1-bootstrap-active-skip.log`, `AC-1-bootstrap-audit-fail.log`, `AC-1-bootstrap-cli-mode.log`, `AC-1-bootstrap-concurrent.log`, `AC-1-bootstrap-exit-codes.log`, `AC-1-bootstrap-passive-superadmin.log`, `AC-1-bootstrap-skip-audit.log`, `AC-1-bootstrap-superadmin.log`, `AC-2-login-context.log`, `AC-3-jwks-rotation.log`, `AC-4-allowlist.log`, `AC-4-request-id.log`, `AC-5-bootstrap-skip-audit.log`, `AC-5-rotation-audit.log`.
+
+**Etki:** Diff/quality gate gürültüsü; düşük.
+
+**Öneri:** Dosya sonundaki fazla boş satırları kaldır; `git diff --check` temiz olsun.
 
 ---
 
@@ -182,12 +227,12 @@ Kod tabanı 0004 kapsamını büyük ölçüde uyguluyor; migration, seed, boots
 - Session token'ı 32 byte CSPRNG, DB'de SHA-256; cookie `HttpOnly`, `SameSite=Lax`, `Path=/`.
 - Login/kilit/CSRF hata önceliği ve audit fail-closed akışları büyük ölçüde uygulanmış.
 - Gateway header allowlist'i ve response strip davranışı test edilmiş.
-- 0002/0003 arşiv izolasyonu ve CI 4/4 yeşil.
+- 0002/0003 arşiv izolasyonu korunmuş; CI Quality Gate ve dört ana job yeşil.
 
 ---
 
 ## 4. Sonuç
 
-**CR-1, CR-2 ve CR-3 merge öncesi kapatılmalı.** CR-4–CR-8 güvenlik/kanıt sertleştirmesi için aynı turda ele alınmalı. CR-9–CR-11 takip borcu olarak bırakılabilir; ancak CR-9'un ayrılması sonraki admin dilimlerinde değişiklik maliyetini düşürür.
+**Fix turu sonrası CR-1–CR-8 ve CR-11 kapandı.** CR-9'un ertelenmesi ve CR-10'un eşik istisnası gerekçeli kabul edilebilir; CR-10 için spec'e istisna notu eklenmeli.
 
-CI ve PR durumu iyi; fakat testlerin üretim güvenlik konfigürasyonunu değil test konfigürasyonunu doğruladığı CR-1 örneğinde olduğu gibi, yeşil pipeline tek başına yeterli değildir.
+**Tek merge engeli CR-12'dir:** GitGuardian 4 hardcoded local-only secret bildiriyor ve check `failure`; PR `unstable`. Bu güvenlik kapısı yeşile dönmeden koşulsuz onay önerilmez. CR-13 yalnız diff hijyeni olup düşük önceliklidir.
