@@ -246,3 +246,17 @@ ile çizilir.
   dosyadan üretilir.
 - `0002`'nin `data-testid` sözleşmesi ve sabit boş/hata/retry metinleri
   değişmez. `RoomCard` tıklanabilir değildir; kartlarda fiyat gösterilmez.
+
+## 7. Admin-web (0004 Admin Kimlik)
+
+- Admin-web TR ve sadedir; 0003 public tasarım sistemi uygulanmaz.
+- `/login` yükleme ve hata durumlarını gösterir; boş durum yoktur.
+- Login sayfası CSRF token'ını client-side alır; Next server-side fetch'in
+  `Set-Cookie`'si tarayıcıya taşınmaz.
+- Korumalı sayfalar server-side `/me` ve gelen oturum çerezi ile doğrulanır;
+  401'de login'e yönlendirilir, 5xx'te hata + retry gösterilir.
+- State-changing isteklerde `X-XSRF-TOKEN` taşınır; 403
+  `security.csrf_invalid` sonrası token bir kez yenilenip istek bir kez
+  tekrarlanır.
+- Tarayıcıda JWT/oturum token'ı saklanmaz; yalnız `HttpOnly` oturum çerezi
+  kullanılır.
