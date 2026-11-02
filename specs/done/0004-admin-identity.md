@@ -10,10 +10,10 @@
 
 - **Spec No:** `0004`
 - **Başlık:** Admin Kimlik ve Oturum (`admin-identity`)
-- **Durum:** Tamamlandı *(rev.9 — QA F-01…F-05 fixleri ve kapanış kontrolleri işlendi; `specs/done/` taşıma analist kapanışında)*
+- **Durum:** Tamamlandı *(rev.9 — QA F-01…F-05 fixleri ve kapanış kontrolleri işlendi)*
 - **Branch:** `feature/0004-admin-identity`
 - **İlgili doküman/kararlar:** `docs/architecture.md` (§2, §4, §5 R3/R6, §6, §8, §10 D2/D19, §11), `docs/domain.md` (§1 `AdminSession`/`AdminRole`/`AuditEntry`, §3 rol tablosu), `docs/conventions.md` (§2.3, §2.4, §4), `docs/frontend.md`, `docs/testing.md`, `docs/git.md`, `specs/done/0001-project-architecture.md` (`CLARIFY-3A`, `F5`, `F7`), `specs/done/0002-room-catalog.md` (seed konvansiyonu), `specs/done/0003-ui-design-system.md` (E2E kanıt helper'ı); Onaylı kararlar: `CLARIFY-1A`…`CLARIFY-9A`, `CLARIFY-11A`, `Q10=A` (CSRF double-submit + Origin, 2026-10-28); rev.4: identifier+IP kilidi, CSRF/Origin önceliği, gateway request-id, login rotasyonu audit'i ve 0003 40/40 CI koruması işlendi; rev.5: B-14 bootstrap aktif SUPER_ADMIN/audit rollback düzeltmesi işlendi; rev.6: bootstrap CLI/eşzamanlılık, `BOOTSTRAP_SKIPPED` skip audit'i, CSRF fetch hatası ve `@admin` test adları işlendi; rev.7: eşzamanlılık kapsamı aynı `ADMIN_BOOTSTRAP_USERNAME` ile netleştirildi, global tek-SUPER_ADMIN invariantı kapsam dışına alındı; rev.8: CR-10 — e-posta local-part kontrolünün 1–2 karakterlik local-part istisnası açıkça yazıldı; davranış değişmedi; rev.9: QA F-01…F-05 fixleri işlendi — bootstrap CLI web/JWT bean'lerinden ayrıldı, parola NFC login'de uygulandı, logout 401 retry yönlendirmesi, kanonik kullanıcı adı kilit anahtarı ve edge `X-Request-Id` tekilliği netleştirildi; DoD/SCORECARD dolduruldu.
-- **Tarih:** 2026-10-28 *(Son revizyon: 2026-11-01, rev.9)*
+- **Tarih:** 2026-10-28 *(Son revizyon: 2026-11-01, rev.9 — Kapanış: 2026-11-02)*
 - **Sahip:** Analist (`analyst`)
 - **Onaylayan (Takım Yöneticisi):** Takım Yöneticisi (Onaylandı - 2026-10-29)
 
@@ -224,7 +224,7 @@ Otel personeli (`SUPER_ADMIN`, `MANAGER`, `FRONT_DESK`) ve otel yönetimi, bugü
   - Korumalı sayfalar sunucu tarafında `/me` çağrısı ve gelen oturum çerezi ile doğrulanmadan render edilmez; geçersiz/expired oturumda giriş sayfasına yönlendirilir ve korumalı içerik görünmez. Giriş sonrası korumalı ana sayfa açılır; çıkış oturumu iptal eder ve giriş sayfasına döner.
   - Oturum çerezi same-origin rewrite üzerinden taşınır; tarayıcıda JWT/oturum token'ı saklanmaz. Admin-web API client'ı state-changing isteklerde CSRF başlığını taşır; 401'de girişe yönlendirir, **403 `security.csrf_invalid` durumunda token'ı yeniden çekip otomatik tekrar deneme sunar**. Admin-web sade kalır; 0003 tasarım sistemi uygulanmaz.
   - `admin-api` scaffold ucu ve admin-web "sistem durumu" kartı, i18n anahtarları ve testleri kaldırılmıştır; `GET /admin-api/system/sample-items` kimliksiz erişimde 401, kimlikli erişimde 404 döner (scaffold kodu yoktur). `0002` canlı admin-web smoke testi 0004 login smoke'u ile değiştirilmiş, `0002`/`0003` arşiv kanıtları değişmemiştir.
-  - **Kanıt:** `AC-6-admin-login-tr.png`, `AC-6-admin-login-error.png`, `AC-6-admin-home-protected.png`, `AC-6-admin-redirect-401.png`, `AC-6-admin-logout.png`, `AC-6-csrf-retry.png`, `AC-6-csrf-fetch-fail.png`, `AC-6-scaffold-removed.log`.
+  - **Kanıt:** `AC-6-admin-login-tr.png`, `AC-6-admin-login-error.png`, `AC-6-admin-home-protected.png`, `AC-6-admin-redirect-401.png`, `AC-6-admin-logout.png`, `AC-6-admin-csrf-retry.png`, `AC-6-admin-csrf-fetch-fail.png`, `AC-6-scaffold-removed.log`.
   - **Sözleşme:** §2.2.11'deki testid/CSRF fetch/returnTo/5xx/retry/logout kuralları test edilir.
 - **AC-7 (Testler, Kanıtlar, Arşiv İzolasyonu ve CI/Doküman Etkisi — `REQ-7`):**
   - Admin-api birim + Testcontainers IT; login/logout, çerez öznitelikleri, oturum TTL/rotasyon/iptal, kilit, JWT claim'leri, Argon2id, CSRF, audit sırası/fail-closed ve bootstrap guard testleri yeşildir.
@@ -241,7 +241,7 @@ Otel personeli (`SUPER_ADMIN`, `MANAGER`, `FRONT_DESK`) ve otel yönetimi, bugü
 - [x] Pipeline yeşil (lint + build + test + kritik akış smoke)
 - [x] Kod incelemesi onaylandı (Takım Yöneticisi)
 - [x] Davranış değiştiyse dokümanlar güncellendi
-- [ ] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi *(analist kapanışında)*
+- [x] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi *(2026-11-02)*
 - [x] SCORECARD dolduruldu
 
 ## 7. SCORECARD
