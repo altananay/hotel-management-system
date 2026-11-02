@@ -1,0 +1,9 @@
+# AC-5 bootstrap skip audit and skip-audit failure
+# generated_at=2026-11-01T14:10:01.134449+00:00
+# source: local Maven Surefire XML reports and GitHub Actions run 41314089811
+
+Test set: com.hotel.adminidentity.AdminBootstrapServiceTest
+Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time: 0.114s
+Selected scenarios: shouldKeepSkippedOutcome_whenSkipAuditFails, shouldSkipWithoutReadingEnv_whenActiveSuperAdminExists
+  PASS shouldKeepSkippedOutcome_whenSkipAuditFails (0.005s)
+  PASS shouldSkipWithoutReadingEnv_whenActiveSuperAdminExists (0.001s)

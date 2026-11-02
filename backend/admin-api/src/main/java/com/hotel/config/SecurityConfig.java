@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ import tools.jackson.databind.ObjectMapper;
 
 @Configuration
 @EnableWebSecurity
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class SecurityConfig {
 
     private final ObjectMapper objectMapper;
@@ -39,7 +41,11 @@ public class SecurityConfig {
                                         .permitAll()
                                         .requestMatchers("/actuator/**")
                                         .denyAll()
-                                        .requestMatchers("/admin-api/system/sample-items")
+                                        .requestMatchers("/admin-api/auth/**")
+                                        .permitAll()
+                                        .requestMatchers("/admin-api/.well-known/**")
+                                        .permitAll()
+                                        .requestMatchers("/admin-api/**")
                                         .permitAll()
                                         .requestMatchers("/error")
                                         .permitAll()
