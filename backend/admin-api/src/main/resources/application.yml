@@ -33,6 +33,24 @@ spring:
 admin:
   gateway:
     upstream-hotel-api-url: ${ADMIN_API_UPSTREAM_HOTEL_API_URL:http://localhost:8081}
+    timeout: ${ADMIN_GATEWAY_TIMEOUT_MS:3000}ms
+  jwt:
+    issuer: ${ADMIN_JWT_ISSUER:admin-api}
+    audience: ${ADMIN_JWT_AUDIENCE:hotel-admin-api}
+    ttl: ${ADMIN_JWT_TTL_SECONDS:300}s
+    active-key-path: ${ADMIN_JWT_ACTIVE_KEY_PATH:.local/admin-jwt-active.pem}
+    previous-public-key-path: ${ADMIN_JWT_PREVIOUS_PUBLIC_KEY_PATH:}
+    allow-generated-dev-key: ${ADMIN_JWT_ALLOW_GENERATED_DEV_KEY:false}
+  session:
+    idle-timeout: ${ADMIN_SESSION_IDLE_MINUTES:30}m
+    absolute-timeout: ${ADMIN_SESSION_ABSOLUTE_HOURS:8}h
+  cookie:
+    secure: ${ADMIN_COOKIE_SECURE:false}
+  csrf:
+    secret: ${ADMIN_CSRF_SECRET:local-admin-csrf-secret-32-bytes-min!!}
+    pre-auth-ttl: 15m
+  allowed-origins: ${ADMIN_ALLOWED_ORIGINS:http://localhost:3001}
+  trusted-proxy-cidrs: ${ADMIN_TRUSTED_PROXY_CIDRS:}
 
 management:
   endpoints:

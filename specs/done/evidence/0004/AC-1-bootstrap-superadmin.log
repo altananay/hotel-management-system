@@ -1,0 +1,9 @@
+# AC-1 bootstrap creates one active SUPER_ADMIN
+# generated_at=2026-11-01T14:10:01.115486+00:00
+# source: local Maven Surefire XML reports and GitHub Actions run 41314089811
+
+Test set: com.hotel.adminidentity.AdminBootstrapServiceTest
+Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time: 0.114s
+Selected scenarios: shouldCreateSuperAdminWithNormalizedIdentity_whenNoAdminRowsAndEnvIsValid, shouldSkipWithoutReadingEnv_whenActiveSuperAdminExists
+  PASS shouldSkipWithoutReadingEnv_whenActiveSuperAdminExists (0.001s)
+  PASS shouldCreateSuperAdminWithNormalizedIdentity_whenNoAdminRowsAndEnvIsValid (0.002s)
