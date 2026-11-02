@@ -1,0 +1,13 @@
+# GitGuardian configuration.
+#
+# 0004 admin seed credentials are documented, local/CI-only fixtures
+# (specs/done/0004-admin-identity.md §2.2.10). They are never used in production
+# and must not be copied to any deployed environment. The allowlist is
+# value-specific; do not replace it with broad path exclusions.
+version: 2
+secret:
+  ignored_matches:
+    - name: 0004 local-only admin seed and E2E password
+      match: "LocalOnly-Cappadocia-2026!"
+    - name: password policy unit-test fixture
+      match: "Kapadokya-Guvenli-2026!"
