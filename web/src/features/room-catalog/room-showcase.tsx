@@ -3,11 +3,12 @@
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { RoomCard } from "@/components/ui/room-card";
+import { RoomCard, type RoomCardImage } from "@/components/ui/room-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatePanel } from "@/components/ui/state-panel";
 import { getDictionary, type Locale } from "@/lib/i18n";
-import type { RoomTypeDto } from "./schema";
+import type { MediaItemDto, RoomTypeDto } from "./schema";
+import { useRoomMediaQuery } from "./use-room-media-query";
 import { useRoomTypesQuery } from "./use-room-types-query";
 
 interface RoomShowcaseProps {
@@ -52,9 +53,49 @@ function LoadingShowcase({ label }: { label: string }) {
   );
 }
 
+function selectCover(
+  items: MediaItemDto[],
+  roomTypeId: string,
+): MediaItemDto | undefined {
+  const roomItems = items
+    .filter((item) => item.roomTypeId === roomTypeId)
+    .sort((left, right) => left.displayOrder - right.displayOrder);
+  return roomItems.find((item) => item.cover) ?? roomItems[0];
+}
+
+function coverImage(
+  items: MediaItemDto[],
+  room: RoomTypeDto,
+  locale: Locale,
+): RoomCardImage | undefined {
+  const cover = selectCover(items, room.id);
+  if (!cover) {
+    return undefined;
+  }
+  const main = cover.variants.card ?? cover.variants.cover ?? cover.variants.thumb;
+  if (!main) {
+    return undefined;
+  }
+  const candidates = [cover.variants.thumb, cover.variants.card, cover.variants.cover]
+    .filter((variant): variant is NonNullable<typeof variant> => variant !== null)
+    .map((variant) => `${variant.url} ${variant.width}w`);
+  const preferredAlt =
+    locale === "tr" ? cover.altTextTr : cover.altTextEn;
+  return {
+    src: main.url,
+    srcSet: candidates.length > 1 ? candidates.join(", ") : undefined,
+    alt: preferredAlt?.trim() || (locale === "tr" ? room.nameTr : room.nameEn),
+    width: main.width,
+    height: main.height,
+  };
+}
+
 export function RoomShowcase({ locale }: RoomShowcaseProps) {
   const dict = getDictionary(locale);
   const { data, isLoading, isError, refetch } = useRoomTypesQuery();
+  const roomTypeIds = data?.items.map((room: RoomTypeDto) => room.id) ?? [];
+  const mediaQuery = useRoomMediaQuery(roomTypeIds);
+  const mediaItems = mediaQuery.data ?? [];
 
   if (isLoading) {
     return <LoadingShowcase label={dict.rooms.loadingText} />;
@@ -101,6 +142,7 @@ export function RoomShowcase({ locale }: RoomShowcaseProps) {
           key={room.id}
           room={room}
           locale={locale}
+          image={coverImage(mediaItems, room, locale)}
           labels={{
             placeholderBadge: dict.rooms.placeholderBadge,
             placeholderCaption: dict.rooms.placeholderCaption,
