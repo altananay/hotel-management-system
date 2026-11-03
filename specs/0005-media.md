@@ -10,7 +10,7 @@
 
 - **Spec No:** `0005`
 - **Başlık:** Medya ve Fotoğraf Yönetimi (`media`)
-- **Durum:** Onaylandı *(rev.1 — CLARIFY Q1–Q10 A kararları işlendi)*
+- **Durum:** Onaylandı *(rev.2 — CLARIFY Q1–Q10 A kararları ve uygulama kararları D1–D12 işlendi)*
 - **Branch:** `feature/0005-media`
 - **İlgili doküman/kararlar:** `docs/architecture.md` (§3 `media`, §5 R3, §7 Medya, §8, §10 D10, §11), `docs/domain.md` (§1 `MediaAsset`/`Scene`/`Hotspot`/`Tour`, §3.12, §3 rol tablosu), `docs/conventions.md` (§1, §2.1, §2.3, §2.4, §3, §4), `docs/frontend.md`, `docs/testing.md`, `docs/git.md`, `specs/done/0002-room-catalog.md` (oda tipi/detay notu), `specs/done/0004-admin-identity.md` (auth, gateway, roller, CSRF); Onaylı CLARIFY kararları: Q1–Q10 A seçenekleri (2026-11-03)
 - **Tarih:** 2026-11-03
@@ -100,7 +100,7 @@ Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media mod
 
 ### 2.7 Depolama, Local/CI ve Testler (REQ-5, REQ-6)
 
-- **MinIO:** Local/CI `hotel-media` bucket'ı `minio-init` ile oluşturulur; init ayrıca yalnız yayınlanmış varyant öneki için public-read policy ve admin-web origin'i için CORS ekler. Public write ve listeleme kapalıdır. Tarayıcı presigned PUT için `http://localhost:9000` gibi erişilebilir host kullanır; uygulama içi endpoint ayrı env'dir.
+- **MinIO:** Local/CI `hotel-media` bucket'ı ve yalnız `public/*` öneki için public-read policy `minio-init` ile kurulur; tarayıcı CORS'u MinIO server'ında `MINIO_CORS_ALLOW_ORIGIN` ile verilir (local/CI `*`). Public write ve listeleme kapalıdır. Tarayıcı presigned PUT için `http://localhost:9000` gibi erişilebilir host kullanır; uygulama içi endpoint ayrı env'dir.
 - **IT:** En az bir gerçek MinIO Testcontainers IT'si depolama, presigned, public/private ayrımı ve işleme hattını kanıtlar; birim testlerde depo portu mock'lanır. PostgreSQL Testcontainers migration/şema ve sorguları doğrular.
 - **E2E sırası:** 0002 `@empty` **1/1** → catalog seed → 0002 `@seeded` **2/2** → 0003 `@seeded` design **40/40** → `@admin` **3/3** → `@media`. `@media` gerçek admin yüklemesiyle çalışır; standart seed'e medya eklenmez. 0002/0003 testleri ve arşivleri değişmez.
 - **`@media` kapsamı:** Yetkili admin login → dosya yükle → `PROCESSING`/`READY` bekle → oda tipine ata/kapak yap/yayınla → public vitrinde `room-card-image` ve alt metni doğrula; yayından kaldır/arşivle → placeholder'a dön. Ayrıca FRONT_DESK **403**, geçersiz tür/boyut/SVG reddi ve yayında olmayan medyanın public'te görünmemesi negatif testleri. Presigned TTL ve EXIF/GPS temizliği backend IT'sinde doğrulanır.
@@ -222,5 +222,22 @@ Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media mod
 | Q6=A | Standart seed'e medya yok; `@media` `@admin` sonrası gerçek yükleme; 0002/0003 testleri değişmez | REQ-6, AC-6 |
 | Q7=A | Taslak/atamasız yükleme; bir medya en fazla bir oda tipi; yayında tek kapak + ilk sıra fallback; benzersiz sıra | REQ-1, REQ-2, AC-1/AC-4 |
 | Q8=A | TR/EN alt metin opsiyonel; fallback oda tipi adı; arşivleme, kalıcı silme yok | REQ-2, REQ-4, AC-4/AC-5 |
-| Q9=A | MinIO `minio-init` public-read policy + CORS; tarayıcı erişilebilir presign host; gerçek MinIO IT | REQ-5, REQ-6, AC-2/AC-6 |
+| Q9=A | MinIO `minio-init` public-read policy + server CORS env; tarayıcı erişilebilir presign host; gerçek MinIO IT | REQ-5, REQ-6, AC-2/AC-6 |
 | Q10=A | Medya audit'i 0005'te yok; uygulama logları/request-id; ayrı spec | REQ-6, AC-6 |
+
+## 9. Uygulama Kararları (rev.2, onaylı)
+
+| Kod | Karar | Gerekçe / Etki |
+|---|---|---|
+| D1 | `GET /admin-api/media/room-types` aktif oda tipi seçeneklerini döner | Admin-web'in catalog internal'ına erişmeden atama yapabilmesi; REQ-2, AC-4 |
+| D2 | Görsel işleme `org.sejda.imageio:webp-imageio` + TwelveMonkeys JPEG + `metadata-extractor` ile yapılır | WebP yazımı ve EXIF/GPS okuma; native WebP kütüphanesi CI'da doğrulanır; REQ-3, AC-3 |
+| D3 | `processing_started_at` ve DB lease/claim (`claimForProcessing`) eklendi | Restart/gövde çökmesinde aynı işin iki worker'ca işlenmemesi; REQ-3, AC-3 |
+| D4 | Kapak yalnız yayınlanmış, `READY`, oda tipi atanmış ve arşivsiz medya için seçilebilir | Public'te kapak tutarlılığı; REQ-2, AC-4 |
+| D5 | Public API her varyant için WebP tercihli URL döner; admin önizlemesi kısa ömürlü signed GET URL kullanır | Private/public ayrımı ve admin önizleme; REQ-2, REQ-4, AC-4/AC-5 |
+| D6 | `complete` yalnız HEAD + magic-byte + boyut/piksel doğrulaması yapar; derin işleme asenkron worker'dadır | Gateway zaman aşımını korumak; REQ-3, AC-3 |
+| D7 | Web RoomCard native `<img>` + `srcset` kullanır; `next/image` kullanılmaz | MinIO hazır varyantları zaten optimize eder; Next image optimizer gereksiz; REQ-4, AC-5 |
+| D8 | Reorder arşivsiz tüm medya listesini ister; oda değişiminde yeni sıra `max+1` olur | Sıra tekilliği ve atomiklik; REQ-2, AC-4 |
+| D9 | Manuel retry otomatik deneme bütçesini sıfırlar | Operatörün FAILED kaydı yeniden işleyebilmesi; REQ-3, AC-3 |
+| D10 | Web public medya isteklerini 50 oda tipi ID'siyle parçalar | Public API üst sınırıyla uyum; REQ-4, AC-5 |
+| D11 | Local/CI/test dışında güvenlik açısından zayıf depolama config'i başlangıçta fail-fast eder | Prod'da varsayılan MinIO kimlik bilgisi/localhost URL ile açılmayı engeller; REQ-5, AC-2 |
+| D12 | MinIO CORS'u `minio-init` yerine MinIO server `MINIO_CORS_ALLOW_ORIGIN` env'i ile verilir | Kullanılan `mc` sürümünde `mc cors` yok; server env'i tekrarlanabilir ve local/CI'da `*` |
