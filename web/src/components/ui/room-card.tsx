@@ -1,4 +1,5 @@
-﻿import { Sparkles, Users } from "lucide-react";
+﻿import { useEffect, useState } from "react";
+import { Sparkles, Users } from "lucide-react";
 import { Badge } from "./badge";
 import { Card } from "./card";
 import type { Locale } from "@/lib/i18n";
@@ -24,10 +25,19 @@ export interface RoomCardLabels {
   amenitiesHeading: string;
 }
 
+export interface RoomCardImage {
+  src: string;
+  srcSet?: string;
+  alt: string;
+  width: number;
+  height: number;
+}
+
 export interface RoomCardProps {
   room: RoomCardRoom;
   locale: Locale;
   labels: RoomCardLabels;
+  image?: RoomCardImage;
 }
 
 function RoomVisualPlaceholder({
@@ -107,9 +117,14 @@ function formatCapacity(template: string, count: number): string {
   return template.replace("{count}", String(count));
 }
 
-export function RoomCard({ room, locale, labels }: RoomCardProps) {
+export function RoomCard({ room, locale, labels, image }: RoomCardProps) {
   const roomName = locale === "tr" ? room.nameTr : room.nameEn;
   const roomDescription = locale === "tr" ? room.descriptionTr : room.descriptionEn;
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [image?.src]);
 
   return (
     <Card
@@ -118,10 +133,29 @@ export function RoomCard({ room, locale, labels }: RoomCardProps) {
     >
       <div className="grid gap-0 lg:grid-cols-12 lg:items-stretch">
         <div className="p-4 lg:col-span-5 lg:p-6">
-          <RoomVisualPlaceholder
-            badge={labels.placeholderBadge}
-            caption={labels.placeholderCaption}
-          />
+          {image && !imageFailed ? (
+            <div className="relative aspect-[3/2] min-h-64 overflow-hidden rounded-[1.5rem_1.5rem_0.5rem_0.5rem] bg-surface-inverse">
+              {/* MinIO serves pre-sized variants; no Next.js image optimizer is needed. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                data-testid="room-card-image"
+                src={image.src}
+                srcSet={image.srcSet}
+                sizes="(min-width: 1024px) 40vw, 100vw"
+                alt={image.alt}
+                width={image.width}
+                height={image.height}
+                loading="lazy"
+                className="h-full w-full object-cover"
+                onError={() => setImageFailed(true)}
+              />
+            </div>
+          ) : (
+            <RoomVisualPlaceholder
+              badge={labels.placeholderBadge}
+              caption={labels.placeholderCaption}
+            />
+          )}
         </div>
 
         <div className="flex flex-col justify-between p-6 lg:col-span-7 lg:p-8">

@@ -1,0 +1,33 @@
+# 0005 Media IT — Real PostgreSQL + MinIO
+
+Command:
+`backend/hotel-api ./mvnw.cmd -B verify`
+
+Testcontainers:
+- `postgres:17.4-alpine` (real `infra/postgres/init/01-init-roles-and-dbs.sql`)
+- `alpine/minio:RELEASE.2025-10-15T17-29-55Z`
+
+Result (2026-11-04):
+```
+Running com.hotel.media.MediaIT
+Tests run: 9, Failures: 0, Errors: 0, Skipped: 0
+```
+Backend total: 173 unit + 56 integration tests, Spotless clean.
+
+Covered:
+- presigned PUT directly to MinIO, content-length-bound
+- `complete` HEAD/magic-byte/dimension validation; expired completion -> `media.upload_expired`
+- async `PROCESSING -> READY` worker with UUID lease fencing
+- six WebP/JPEG variants (thumb/card/cover) for a 2400×1600 source; the no-upscale 800×600 case is covered by `JavaMediaImageProcessorTest`
+- source EXIF/GPS exists; generated JPEG variants contain no EXIF/GPS
+- private original: anonymous `403`, signed GET `200`
+- published public WebP: anonymous `200`, `Content-Type: image/webp`, immutable cache
+- public API `Cache-Control: no-store`; unpublish/archive hides API and public object
+- schema constraints: unique room order, single published cover, unsafe alt text
+- reorder writes complete unique sequence; inactive room type assignment rejected
+- archived PROCESSING row is excluded from claim/recovery
+- lease fencing: stale lease cannot mark READY/release a newer claim
+- exhausted processing is written FAILED by the real SQL path
+- concurrent cover changes serialize without deadlock and leave exactly one cover
+
+Result: PASS.

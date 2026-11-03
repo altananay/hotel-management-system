@@ -1,0 +1,5 @@
+upload -> READY verified
+room type assigned
+publish -> public variants copied
+cover selected on published READY media
+reorder endpoint guarded by complete non-archived list (unit + backend tests)

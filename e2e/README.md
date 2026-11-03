@@ -117,3 +117,14 @@ Ayrıntılı altyapı, migration, seed ve backend/frontend başlatma adımları 
   hatalı login generic hata, logout + login'e dönüş (3/3).
 - 0002 canlı admin-web smoke testi kaldırıldı; 0002 smoke artık 3/3'tür (1 `@empty` + 2 `@seeded`).
 - 0003 design 40/40 korunur; 0004 kanıtları `specs/done/evidence/0004/` altına yazılır.
+
+## 0005 medya E2E
+
+- Testler: `npx playwright test tests/media --grep @media` (`@admin` sonrası).
+- Gerçek yükleme fixture'ı: `web/public/media/hero/home-hero-poster-1280.webp`
+  (mevcut Pexels lisanslı hero posteri; yeni lisans/asset eklenmez).
+- Akış: SUPER_ADMIN login → SVG/boyut reddi → yükleme → READY → oda atama →
+  yayın → kapak → public `room-card-image` (WebP) → FRONT_DESK 403 →
+  unpublish/placeholder → archive onayı.
+- Kanıtlar: `specs/done/evidence/0005/`; `E2E_EVIDENCE_DIR` verilmezse bu dizine
+  yazılır. 0001–0004 arşivleri SHA-256 manifestiyle korunur.

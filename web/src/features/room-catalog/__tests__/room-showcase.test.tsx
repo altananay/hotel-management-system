@@ -6,7 +6,11 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { RoomShowcase } from "../room-showcase";
 import { createAppQueryClient } from "@/lib/query-client";
 
-const server = setupServer();
+const server = setupServer(
+  http.get("http://localhost:8081/api/media", () =>
+    HttpResponse.json({ items: [] }),
+  ),
+);
 
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterEach(() => server.resetHandlers());
@@ -268,5 +272,163 @@ describe("RoomShowcase (AC-3, QA-10, QA-11, QA-15)", () => {
     const enAmenities = firstEnCard.getAllByTestId("room-card-amenity");
     expect(enAmenities[0]).toHaveTextContent("Private Carved-Stone Jacuzzi");
     expect(enAmenities[1]).toHaveTextContent("High-Speed Wireless Internet");
+  });
+
+  it("shouldRenderCoverImageWithSrcsetAndLocalizedAlt_whenMediaIsPublished", async () => {
+    let capturedIds: string | null = null;
+
+    server.use(
+      http.get("http://localhost:8081/api/room-types", () =>
+        HttpResponse.json(SAMPLE_ROOMS_RESPONSE),
+      ),
+      http.get("http://localhost:8081/api/media", ({ request }) => {
+        capturedIds = new URL(request.url).searchParams.get("roomTypeIds");
+        return HttpResponse.json({
+          items: [
+            {
+              id: "0199f2c0-0000-7000-8000-000000000401",
+              roomTypeId: "0199f2c0-0000-7000-8000-000000000301",
+              cover: true,
+              displayOrder: 0,
+              altTextTr: "Kemerli mağara süit yatak odası",
+              altTextEn: "Arched cave suite bedroom",
+              variants: {
+                thumb: {
+                  url: "http://localhost:9000/hotel-media/public/thumb.webp",
+                  width: 480,
+                  height: 320,
+                  format: "webp",
+                },
+                card: {
+                  url: "http://localhost:9000/hotel-media/public/card.webp",
+                  width: 1200,
+                  height: 800,
+                  format: "webp",
+                },
+                cover: {
+                  url: "http://localhost:9000/hotel-media/public/cover.webp",
+                  width: 1920,
+                  height: 1280,
+                  format: "webp",
+                },
+              },
+            },
+          ],
+        });
+      }),
+    );
+
+    renderWithQuery("tr");
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId("room-card-image")).toHaveLength(1);
+    });
+
+    expect(capturedIds).toBe("0199f2c0-0000-7000-8000-000000000301,0199f2c0-0000-7000-8000-000000000302");
+
+    const image = screen.getByTestId("room-card-image") as HTMLImageElement;
+    expect(image.src).toBe("http://localhost:9000/hotel-media/public/card.webp");
+    expect(image.alt).toBe("Kemerli mağara süit yatak odası");
+    expect(image.width).toBe(1200);
+    expect(image.height).toBe(800);
+    expect(image.getAttribute("srcset")).toContain(
+      "http://localhost:9000/hotel-media/public/card.webp 1200w",
+    );
+    expect(image.getAttribute("srcset")).not.toContain(
+      "http://localhost:9000/hotel-media/public/cover.webp",
+    );
+    expect(image.getAttribute("loading")).toBe("lazy");
+
+    const firstCard = within(screen.getAllByTestId("room-card")[0]);
+    expect(firstCard.queryByTestId("room-card-placeholder")).not.toBeInTheDocument();
+  });
+
+  it("shouldUseFirstOrderedMediaAsCoverAndRoomNameAsAltFallback_whenNoExplicitCoverExists", async () => {
+    server.use(
+      http.get("http://localhost:8081/api/room-types", () =>
+        HttpResponse.json(SAMPLE_ROOMS_RESPONSE),
+      ),
+      http.get("http://localhost:8081/api/media", () =>
+        HttpResponse.json({
+          items: [
+            {
+              id: "0199f2c0-0000-7000-8000-000000000402",
+              roomTypeId: "0199f2c0-0000-7000-8000-000000000301",
+              cover: false,
+              displayOrder: 2,
+              altTextTr: null,
+              altTextEn: null,
+              variants: {
+                thumb: null,
+                card: {
+                  url: "http://localhost:9000/hotel-media/public/second.webp",
+                  width: 1200,
+                  height: 800,
+                  format: "webp",
+                },
+                cover: null,
+              },
+            },
+            {
+              id: "0199f2c0-0000-7000-8000-000000000403",
+              roomTypeId: "0199f2c0-0000-7000-8000-000000000301",
+              cover: false,
+              displayOrder: 1,
+              altTextTr: null,
+              altTextEn: null,
+              variants: {
+                thumb: null,
+                card: {
+                  url: "http://localhost:9000/hotel-media/public/first.webp",
+                  width: 1200,
+                  height: 800,
+                  format: "webp",
+                },
+                cover: null,
+              },
+            },
+          ],
+        }),
+      ),
+    );
+
+    renderWithQuery("en");
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId("room-card-image")).toHaveLength(1);
+    });
+
+    const image = screen.getByTestId("room-card-image") as HTMLImageElement;
+    expect(image.src).toBe("http://localhost:9000/hotel-media/public/first.webp");
+    expect(image.alt).toBe("Arched Cave Suite");
+  });
+
+  it("shouldKeepPlaceholder_whenMediaServiceFails", async () => {
+    server.use(
+      http.get("http://localhost:8081/api/room-types", () =>
+        HttpResponse.json(SAMPLE_ROOMS_RESPONSE),
+      ),
+      http.get("http://localhost:8081/api/media", () =>
+        HttpResponse.json(
+          {
+            type: "about:blank",
+            title: "Service Unavailable",
+            status: 503,
+            code: "media.storage_unavailable",
+            instance: "/api/media",
+          },
+          { status: 503, headers: { "Content-Type": "application/problem+json" } },
+        ),
+      ),
+    );
+
+    renderWithQuery("tr");
+
+    await waitFor(() => {
+      expect(screen.getByTestId("rooms-list")).toBeInTheDocument();
+    });
+
+    expect(screen.queryAllByTestId("room-card-image")).toHaveLength(0);
+    expect(screen.getAllByTestId("room-card-placeholder")).toHaveLength(2);
   });
 });

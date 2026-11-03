@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdminHomeError } from "@/components/auth/home-error";
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -48,6 +49,14 @@ export default async function AdminHomePage() {
         <p className="mt-2 text-sm text-slate-600">
           Oturumunuz doğrulandı. Yönetim modülleri bir sonraki dilimlerde etkinleştirilecek.
         </p>
+        {session.role !== "FRONT_DESK" && (
+          <Link
+            className="mt-4 inline-flex text-sm font-semibold text-slate-900 underline"
+            href="/media"
+          >
+            Medya yönetimine git
+          </Link>
+        )}
       </section>
     </main>
   );

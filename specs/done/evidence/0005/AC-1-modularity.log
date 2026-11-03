@@ -1,0 +1,15 @@
+# AC-1 — Modularity
+
+Command:
+```
+backend/hotel-api ./mvnw.cmd -B verify
+```
+
+Assertions:
+- `HotelApiModularityTest` passed.
+- `media` imports `catalog.api.ActiveRoomType`, `catalog.api.RoomTypeId`, `catalog.api.RoomTypeLookup`; no `catalog.internal` import.
+- No reverse `catalog -> media` dependency.
+- No media SQL against catalog tables; `RoomTypeLookup` is the only read path.
+- `catalog.RoomCatalogQueryService` implements the new public read port.
+
+Result: PASS.

@@ -7,7 +7,7 @@ Bu dizin, geliştirme ortamı için gerekli altyapı servislerini (`PostgreSQL`,
 | Servis | Portlar | Açıklama |
 |---|---|---|
 | `postgres` | `5432` | Tek sunucuda iki veritabanı: `hotel_core` ve `hotel_admin`; roller: `migrator` (DDL) ve `app` (yalnız DML; `public` şemasına erişemez) |
-| `minio` | `9000` (API) / `9001` (Konsol) | S3 uyumlu medya deposu; `hotel-media` bucket'ı tek seferlik `minio-init` init job'u ile açılır |
+| `minio` | `9000` (API) / `9001` (Konsol) | S3 uyumlu medya deposu; `hotel-media` bucket'ı tek seferlik `minio-init` init job'u ile açılır, `public/*` prefix'ine public-read policy uygulanır; tarayıcı CORS'u `MINIO_CORS_ALLOW_ORIGIN` ile verilir |
 | `mailpit` | `1025` (SMTP) / `8025` (Web UI) | Yerel e-posta yakalama ve test servisi |
 
 > **Bucket init ayrı adımdır:** `docker compose up -d --wait` yalnız üç servisi healthy duruma getirir. `hotel-media` bucket'ı tek seferlik init job'uyla oluşturulur: `docker compose --env-file .env -f infra/docker-compose.yml --profile init run --rm minio-init`. Gerekçe: `up --wait`, exit eden tek seferlik job'u hata sayar (docker/compose#10596). Bu nedenle init, `--profile init` altında tutulur ve kendi exit koduyla doğrulanır.
@@ -129,3 +129,9 @@ docker compose --env-file .env -f infra/docker-compose.yml down -v
   yalnız local/CI için `ADMIN_JWT_ALLOW_GENERATED_DEV_KEY=true`. Dosya git'e girmez.
 - Yerel doğrulamada backend çalışırken `mvn verify` jar kilidine takılırsa
   `-Dspring-boot.repackage.skip=true` kullanın.
+
+## Medya Depolama (0005)
+
+- `minio-init` bucket'ı idempotent açar; `hotel-media/public` prefix'i public-read olur, `private/*` yalnız uygulama kimliğiyle okunur. `MINIO_CORS_ALLOW_ORIGIN` (local/CI: `*`) tarayıcı GET/HEAD/PUT isteklerine izin verir.
+- `hotel-api` local profilinde `.env` içindeki `MEDIA_S3_*` ve `MEDIA_PUBLIC_BASE_URL` değerlerini okur. Tarayıcı presigned PUT için `MEDIA_S3_PUBLIC_ENDPOINT`'e, public görseller için `MEDIA_PUBLIC_BASE_URL`'e erişebilmelidir.
+- Local/CI dışında zayıf varsayılan kimlik bilgisi, `localhost` veya HTTP endpoint kullanılırsa `hotel-api` başlangıçta fail-fast eder; prod'da HTTPS ve gerçek kimlik bilgileri zorunludur.

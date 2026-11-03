@@ -117,7 +117,7 @@ Motion ile, pin/parallax GSAP ile, smooth scroll Lenis ile yapılır.
 | **Card** | İçerik yüzeyi | Varsayılan / özelleştirilmiş | Semantik başlık kullanan içerikle; dekoratif değil |
 | **Section** | Bölüm + maksimum genişlik | `paper`, `raised`, `inverse`, `transparent`; `default`/`compact`/`none` | `Container` Section'ın parçası; landmark/heading sahibi sayfa |
 | **Badge** | Etiket / durum | `accent`, `outline`, `inverse`, `muted` | Metin alternatifi; renk tek başına anlam taşımaz |
-| **RoomCard** | Oda vitrini kartı | Dolu / placeholder | **Tıklanabilir değil**, pointer cursor yok; fiyat yok; başlık `h2` |
+| **RoomCard** | Oda vitrini kartı | Görselli / placeholder | `room-card-image` + `srcset` (thumb/card), seçili dilde alt metin; görsel yoksa/hatalıysa placeholder; **tıklanabilir değil**, pointer cursor yok; fiyat yok; başlık `h2` |
 | **StatePanel** | Yükleme / boş / hata | `loading`, `empty`, `error` | Loading `role="status"`, error `role="alert"`; retry düğmesi |
 | **Skeleton** | Yükleme iskeleti | Alt bileşen | `aria-hidden` tercih edilir; StatePanel içinde kullanılır |
 
@@ -125,6 +125,9 @@ Kurallar:
 
 - `RoomCard` detay sayfası olmadığı için tıklanabilir değildir; hover'da yalnız
   hafif kenarlık/gölge değişir, `cursor: pointer` kullanılmaz.
+- Oda görseli `roomTypeId` ile eşlenir; `card` varyantı `src`/`srcset`'te,
+  `thumb` yalnız küçük ekran adayıdır. `cover` varyantı kartta kullanılmaz.
+  Alt metin boşsa oda tipi adı fallback olur; API hatası sayfayı düşürmez.
 - `Section` tek primitiftir; `Container` ayrı bir bileşen değildir.
 - Mevcut `Button`, `Card`, `Skeleton` API'leri korunur; yeni zorunlu prop
   eklenmez.
