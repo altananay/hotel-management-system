@@ -33,6 +33,22 @@ spring:
 hotel:
   cors:
     allowed-origins: ${HOTEL_API_CORS_ALLOWED_ORIGINS:http://localhost:3000}
+  media:
+    s3:
+      endpoint: ${MEDIA_S3_ENDPOINT:http://localhost:9000}
+      public-endpoint: ${MEDIA_S3_PUBLIC_ENDPOINT:http://localhost:9000}
+      bucket: ${MEDIA_S3_BUCKET:hotel-media}
+      access-key: ${MEDIA_S3_ACCESS_KEY:minioadmin}
+      secret-key: ${MEDIA_S3_SECRET_KEY:minioadmin_local_dev}
+      region: ${MEDIA_S3_REGION:us-east-1}
+    public-base-url: ${MEDIA_PUBLIC_BASE_URL:http://localhost:9000/hotel-media/public}
+    upload:
+      presign-ttl: ${MEDIA_PRESIGN_TTL:10m}
+    processing:
+      max-attempts: ${MEDIA_PROCESSING_MAX_ATTEMPTS:3}
+      stale-threshold: ${MEDIA_PROCESSING_STALE_THRESHOLD:10m}
+      recovery-initial-delay: ${MEDIA_PROCESSING_RECOVERY_INITIAL_DELAY:30s}
+      recovery-interval: ${MEDIA_PROCESSING_RECOVERY_INTERVAL:60s}
   admin:
     jwks-uri: ${HOTEL_ADMIN_JWKS_URI:http://localhost:8082/admin-api/.well-known/jwks.json}
     issuer: ${HOTEL_ADMIN_JWT_ISSUER:admin-api}

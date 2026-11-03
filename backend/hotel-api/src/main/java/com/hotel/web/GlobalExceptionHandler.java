@@ -1,5 +1,6 @@
 package com.hotel.web;
 
+import com.hotel.media.api.MediaStorageException;
 import com.hotel.sharedkernel.api.DomainError;
 import com.hotel.sharedkernel.api.DomainErrorCategory;
 import jakarta.servlet.http.HttpServletRequest;
@@ -88,6 +89,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ProblemDetail> handleNotAcceptable(
             HttpMediaTypeNotAcceptableException ex, HttpServletRequest request) {
         return problem(HttpStatus.NOT_ACCEPTABLE, request);
+    }
+
+    @ExceptionHandler(MediaStorageException.class)
+    public ResponseEntity<ProblemDetail> handleMediaStorageUnavailable(
+            MediaStorageException ex, HttpServletRequest request) {
+        log.warn("Media storage is unavailable for request {}", request.getRequestURI(), ex);
+        return problem(HttpStatus.SERVICE_UNAVAILABLE, request);
     }
 
     @ExceptionHandler(AccessDeniedException.class)

@@ -1,0 +1,177 @@
+package com.hotel.media.internal.application;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.hotel.media.api.MediaReady;
+import com.hotel.media.internal.domain.MediaErrorCodes;
+import com.hotel.media.internal.domain.MediaStatus;
+import com.hotel.media.internal.domain.MediaType;
+import com.hotel.media.internal.domain.MediaVariantFormat;
+import com.hotel.media.internal.domain.MediaVariantType;
+import com.hotel.media.internal.persistence.MediaAssetEntity;
+import com.hotel.media.internal.persistence.MediaAssetJpaRepository;
+import com.hotel.media.internal.persistence.MediaVariantEntity;
+import com.hotel.media.internal.persistence.MediaVariantJpaRepository;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
+
+/** Unit tests for async processing claims, retries and variant persistence (AC-3, D3, D9). */
+@ExtendWith(MockitoExtension.class)
+class MediaProcessingWorkerTest {
+
+    private static final Instant NOW = Instant.parse("2026-11-03T10:00:00Z");
+    private static final UUID MEDIA_ID = UUID.fromString("0199f2c0-0000-7000-8000-000000000401");
+    private static final Duration STALE = Duration.ofMinutes(10);
+
+    @Mock private MediaAssetJpaRepository assetRepository;
+    @Mock private MediaVariantJpaRepository variantRepository;
+    @Mock private MediaStoragePort storage;
+    @Mock private MediaImageProcessor imageProcessor;
+    @Mock private ApplicationEventPublisher events;
+
+    private MediaProcessingWorker worker;
+
+    @BeforeEach
+    void setUp() {
+        worker =
+                new MediaProcessingWorker(
+                        assetRepository,
+                        variantRepository,
+                        storage,
+                        imageProcessor,
+                        events,
+                        Clock.fixed(NOW, ZoneOffset.UTC),
+                        2,
+                        STALE);
+    }
+
+    @Test
+    void shouldDoNothingWhenClaimIsLost() {
+        when(assetRepository.claimForProcessing(MEDIA_ID, MediaStatus.PROCESSING, NOW, NOW.minus(STALE)))
+                .thenReturn(0);
+
+        worker.process(MEDIA_ID);
+
+        verify(assetRepository, never()).findById(any());
+        verify(storage, never()).get(anyString());
+        verify(events, never()).publishEvent(any());
+    }
+
+    @Test
+    void shouldProcessClaimedMediaAndPublishReadyEvent() {
+        MediaAssetEntity asset = processingAsset();
+        byte[] bytes = new byte[] {1, 2, 3};
+        when(assetRepository.claimForProcessing(MEDIA_ID, MediaStatus.PROCESSING, NOW, NOW.minus(STALE)))
+                .thenReturn(1);
+        when(assetRepository.findById(MEDIA_ID)).thenReturn(Optional.of(asset));
+        when(storage.get("private/original")).thenReturn(bytes);
+        when(imageProcessor.process(bytes))
+                .thenReturn(
+                        new MediaImageProcessor.ProcessedImage(
+                                1200,
+                                800,
+                                List.of(
+                                        new MediaImageProcessor.GeneratedVariant(
+                                                MediaVariantType.CARD,
+                                                MediaVariantFormat.WEBP,
+                                                1200,
+                                                800,
+                                                bytes))));
+        when(assetRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        worker.process(MEDIA_ID);
+
+        assertThat(asset.getStatus()).isEqualTo(MediaStatus.READY);
+        assertThat(asset.getProcessingStartedAt()).isNull();
+        ArgumentCaptor<MediaVariantEntity> variantCaptor =
+                ArgumentCaptor.forClass(MediaVariantEntity.class);
+        verify(variantRepository).save(variantCaptor.capture());
+        assertThat(variantCaptor.getValue().getPrivateStorageKey())
+                .isEqualTo("private/" + MEDIA_ID + "/card.webp");
+        verify(storage).put("private/" + MEDIA_ID + "/card.webp", bytes, "image/webp");
+        verify(variantRepository).deleteByMediaAssetId(MEDIA_ID);
+        ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(events).publishEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue()).isInstanceOf(MediaReady.class);
+        verify(assetRepository, never()).releaseProcessingClaim(any(), any());
+    }
+
+    @Test
+    void shouldReleaseClaimAndRetryOnTransientFailure() {
+        MediaAssetEntity asset = processingAsset();
+        byte[] bytes = new byte[] {1, 2, 3};
+        when(assetRepository.claimForProcessing(MEDIA_ID, MediaStatus.PROCESSING, NOW, NOW.minus(STALE)))
+                .thenReturn(1, 1);
+        when(assetRepository.findById(MEDIA_ID)).thenReturn(Optional.of(asset));
+        when(storage.get("private/original"))
+                .thenThrow(new com.hotel.media.api.MediaStorageException("down", new RuntimeException()))
+                .thenReturn(bytes);
+        when(imageProcessor.process(bytes))
+                .thenReturn(
+                        new MediaImageProcessor.ProcessedImage(
+                                1200,
+                                800,
+                                List.of(
+                                        new MediaImageProcessor.GeneratedVariant(
+                                                MediaVariantType.THUMB,
+                                                MediaVariantFormat.JPEG,
+                                                480,
+                                                320,
+                                                bytes))));
+        when(assetRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        worker.process(MEDIA_ID);
+
+        verify(assetRepository).releaseProcessingClaim(MEDIA_ID, NOW);
+        assertThat(asset.getStatus()).isEqualTo(MediaStatus.READY);
+        verify(assetRepository, times(2))
+                .claimForProcessing(MEDIA_ID, MediaStatus.PROCESSING, NOW, NOW.minus(STALE));
+    }
+
+    @Test
+    void shouldMarkFailedAfterMaxAttemptsAndNotReleaseFinalClaim() {
+        MediaAssetEntity asset = processingAsset();
+        when(assetRepository.claimForProcessing(MEDIA_ID, MediaStatus.PROCESSING, NOW, NOW.minus(STALE)))
+                .thenReturn(1);
+        when(assetRepository.findById(MEDIA_ID)).thenReturn(Optional.of(asset));
+        when(storage.get("private/original"))
+                .thenThrow(new com.hotel.media.api.MediaStorageException("down", new RuntimeException()));
+        when(assetRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        worker.process(MEDIA_ID);
+
+        assertThat(asset.getStatus()).isEqualTo(MediaStatus.FAILED);
+        assertThat(asset.getFailureCode()).isEqualTo(MediaErrorCodes.PROCESSING_FAILED);
+        verify(assetRepository, times(1)).releaseProcessingClaim(eq(MEDIA_ID), any());
+        verify(assetRepository, times(2))
+                .claimForProcessing(MEDIA_ID, MediaStatus.PROCESSING, NOW, NOW.minus(STALE));
+        verify(events, never()).publishEvent(any());
+    }
+
+    private static MediaAssetEntity processingAsset() {
+        MediaAssetEntity asset =
+                new MediaAssetEntity(
+                        MEDIA_ID, MediaType.PHOTO, "private/original", "image/jpeg", 3, NOW);
+        asset.markProcessing("image/jpeg", 3, 1200, 800, NOW);
+        return asset;
+    }
+}

@@ -1,13 +1,18 @@
 package com.hotel.catalog.internal.application;
 
+import com.hotel.catalog.api.ActiveRoomType;
+import com.hotel.catalog.api.RoomTypeId;
+import com.hotel.catalog.api.RoomTypeLookup;
 import com.hotel.catalog.internal.domain.RoomType;
 import com.hotel.catalog.internal.persistence.RoomTypeEntity;
 import com.hotel.catalog.internal.persistence.RoomTypeJpaRepository;
 import com.hotel.sharedkernel.api.DomainError;
 import com.hotel.sharedkernel.api.DomainErrorCategory;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -15,7 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class RoomCatalogQueryService {
+public class RoomCatalogQueryService implements RoomTypeLookup {
 
     public static final String INVALID_PAGINATION_CODE = "validation.invalid_request";
 
@@ -59,6 +64,40 @@ public class RoomCatalogQueryService {
                         .toList();
 
         return new PagedRoomTypesResult(items, page, size, total);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<ActiveRoomType> findActive(RoomTypeId id) {
+        if (id == null) {
+            return Optional.empty();
+        }
+        return roomTypeRepository.findActiveById(id.value()).map(RoomCatalogQueryService::toActive);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ActiveRoomType> findActiveByIds(Collection<RoomTypeId> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        List<UUID> values = ids.stream().map(RoomTypeId::value).toList();
+        return roomTypeRepository.findActiveByIdIn(values).stream()
+                .map(RoomCatalogQueryService::toActive)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ActiveRoomType> findAllActive() {
+        return roomTypeRepository.findAllActiveOrdered().stream()
+                .map(RoomCatalogQueryService::toActive)
+                .toList();
+    }
+
+    private static ActiveRoomType toActive(RoomTypeEntity entity) {
+        return new ActiveRoomType(
+                RoomTypeId.of(entity.getId()), entity.getNameTr(), entity.getNameEn());
     }
 
     public record PagedRoomTypesResult(List<RoomType> items, int page, int size, long total) {}
