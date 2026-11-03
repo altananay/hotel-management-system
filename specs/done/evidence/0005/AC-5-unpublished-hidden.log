@@ -1,0 +1,1 @@
+after unpublish: public API returns 200 {items: []} and room-card-image is absent

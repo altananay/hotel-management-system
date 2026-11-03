@@ -7,12 +7,12 @@ Date: 2026-11-03 (local CI-equivalent run, Docker Desktop 28.5.1)
 ```
 backend/hotel-api  ./mvnw.cmd -B verify
 Spotless: clean
-Unit tests: 161 passed
-Integration tests: 51 passed
+Unit tests: 173 passed
+Integration tests: 56 passed
   - CatalogSeedIT 2/2
   - RoomCatalogIT 40/40
   - DatabaseSchemaAndRoleSeparationIT 5/5
-  - MediaIT 4/4 (real PostgreSQL 17.4 + alpine/minio RELEASE.2025-10-15T17-29-55Z)
+  - MediaIT 9/9 (real PostgreSQL 17.4 + alpine/minio RELEASE.2025-10-15T17-29-55Z)
 ```
 
 ## Frontend
@@ -34,10 +34,10 @@ seed catalog
 ```
 
 Notes:
-- `@media` used a real browser screenshot as the upload fixture and exercised
-  SUPER_ADMIN login -> SVG rejection -> upload -> READY -> assign -> publish ->
-  cover -> public `room-card-image` WebP -> FRONT_DESK 403 -> unpublish
-  placeholder -> archive confirmation.
+- `@media` used the committed Pexels hero poster as the upload fixture and exercised
+  SUPER_ADMIN login -> SVG/oversize rejection -> WebP upload -> READY -> assign ->
+  publish -> cover -> public `room-card-image` WebP -> FRONT_DESK 403 -> unpublish
+  (`{items: []}`) -> archive confirmation.
 - 0002/0003 E2E suites were not modified; all passed.
 - GitHub Actions CI: **success** — https://github.com/altananay/hotel-management-system/actions/runs/41717715249
   (`Backend`, `Frontend`, `E2E Smoke` and `CI Quality Gate` all green).

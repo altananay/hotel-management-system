@@ -10,7 +10,7 @@
 
 - **Spec No:** `0005`
 - **Başlık:** Medya ve Fotoğraf Yönetimi (`media`)
-- **Durum:** Onaylandı *(rev.2 — CLARIFY Q1–Q10 A kararları ve uygulama kararları D1–D12 işlendi)*
+- **Durum:** Onaylandı *(rev.2 — CLARIFY Q1–Q10 A kararları ve uygulama kararları D1–D14 işlendi)*
 - **Branch:** `feature/0005-media`
 - **İlgili doküman/kararlar:** `docs/architecture.md` (§3 `media`, §5 R3, §7 Medya, §8, §10 D10, §11), `docs/domain.md` (§1 `MediaAsset`/`Scene`/`Hotspot`/`Tour`, §3.12, §3 rol tablosu), `docs/conventions.md` (§1, §2.1, §2.3, §2.4, §3, §4), `docs/frontend.md`, `docs/testing.md`, `docs/git.md`, `specs/done/0002-room-catalog.md` (oda tipi/detay notu), `specs/done/0004-admin-identity.md` (auth, gateway, roller, CSRF); Onaylı CLARIFY kararları: Q1–Q10 A seçenekleri (2026-11-03)
 - **Tarih:** 2026-11-03
@@ -59,7 +59,7 @@ Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media mod
 ### 2.2 Veri Modeli ve Şema (REQ-1)
 
 - **Migration:** `db/migration/media/V8__create_media_assets.sql` (global sıradaki numara V8; V5 init korunur). Yalnız `media` şemasına tablo/indeks/kısıt ekler; başka şemaya dokunamaz. `HotelApiModularityTest` migration/schema ve modül sınırı kontrolleri yeşil kalmalıdır.
-- **`media.media_assets`:** `id UUID PK` (UUIDv7), `type` (`PHOTO`/`PANORAMA`; 0005'te yalnız `PHOTO`), `status` (`UPLOADED`/`PROCESSING`/`READY`/`FAILED`), `storage_key` (orijinal, unique, rastgele), `mime_type`, `size_bytes BIGINT`, `width INT`, `height INT`, `room_type_id UUID NULL` (catalog'a FK değil), `published_at TIMESTAMPTZ NULL`, `archived_at TIMESTAMPTZ NULL`, `display_order INT`, `is_cover BOOLEAN`, `alt_text_tr VARCHAR(200) NULL`, `alt_text_en VARCHAR(200) NULL`, `failure_code VARCHAR(100) NULL`, `processing_attempts SMALLINT`, `created_at`/`updated_at TIMESTAMPTZ`.
+- **`media.media_assets`:** `id UUID PK` (UUIDv7), `type` (`PHOTO`/`PANORAMA`; 0005'te yalnız `PHOTO`), `status` (`UPLOADED`/`PROCESSING`/`READY`/`FAILED`), `storage_key` (orijinal, unique, rastgele), `mime_type`, `size_bytes BIGINT`, `width INT`, `height INT`, `room_type_id UUID NULL` (catalog'a FK değil), `published_at TIMESTAMPTZ NULL`, `archived_at TIMESTAMPTZ NULL`, `display_order INT`, `is_cover BOOLEAN`, `alt_text_tr VARCHAR(200) NULL`, `alt_text_en VARCHAR(200) NULL`, `failure_code VARCHAR(100) NULL`, `processing_attempts SMALLINT`, `processing_started_at TIMESTAMPTZ NULL`, `processing_lease_id UUID NULL`, `created_at`/`updated_at TIMESTAMPTZ`.
 - **`media.media_variants`:** `media_asset_id` FK (media içi), `variant` (`THUMB`/`CARD`/`COVER`), `format` (`WEBP`/`JPEG`), `private_storage_key` (unique), `public_storage_key` (nullable, unique), `width`, `height`, `size_bytes`; aynı asset+variant+format için tek kayıt. Public kopya yalnız yayında oluşturulur; unpublish/archive public kopyayı kaldırır, private anahtar korunur.
 - **Kısıtlar:** `type`, `status`, `variant` ve `format` check'leri; `display_order >= 0`; `size_bytes > 0`; `width/height > 0`; alt metinlerde HTML/kontrol karakteri yok. `room_type_id` için indeks; yayınlanmış medya için `(room_type_id, display_order)` kısmi indeksi; oda tipi başına en fazla bir yayınlanmış kapak için kısmi unique indeks; arşivsiz kayıtlar için sıra tekilliği. Cross-schema FK yoktur.
 - **Yaşam döngüsü:** `UPLOADED` → `PROCESSING` → `READY`/`FAILED`. `published_at` yalnız `READY` + atanmış + arşivsizken set edilir. `unpublish` `published_at` ve `is_cover` değerlerini temizler; public kopyaları kaldırır. `archive` `archived_at` set eder, yayını kaldırır ve public kopyaları kaldırır; arşiv geri alınmaz, yeniden yükleme gerekir. `PANORAMA` türü rezerve edilir; `Scene`/`Hotspot`/`Tour` tabloları 0005'te oluşturulmaz.
@@ -76,7 +76,7 @@ Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media mod
 ### 2.4 İşleme ve Varyantlar (REQ-3)
 
 - **Asenkron:** `complete` başarılıysa medya `PROCESSING` olur ve yanıt `202` döner. İşlem uygulama içi worker'da yapılır; V1'de broker yoktur. Admin ekranı durumu yoklar; public yalnız `READY` görür.
-- **Dönüşüm:** Orijinal private kalır; orientation uygulanır; EXIF/GPS ve diğer metadata temizlenir; renkler web için normalize edilir. Varyantlar **WebP + JPEG** olarak üretilir: `thumb` **480×320**, `card` **1200×800**, `cover` **1920×1280**; hedef oran 3:2, merkezden kırpma, orijinalden büyütme yok.
+- **Dönüşüm:** Orijinal private kalır; orientation uygulanır; EXIF/GPS ve diğer metadata temizlenir; renkler web için normalize edilir. Varyantlar **WebP + JPEG** olarak üretilir: `thumb` **480×320**, `card` **1200×800**, `cover` **1920×1280**; hedef oran 3:2, merkezden kırpma, orijinalden büyütme yok (küçük geçerli görselde çıktı kaynak kırpım boyutuyla sınırlanır).
 - **Durum ve hata:** Başarılı işlem `READY`; hata `FAILED` + stabil `failure_code`. En fazla **3 otomatik deneme**; `FAILED` için manuel retry. Retry orijinali yeniden işler; orijinal geçersizse `422` döner. Uygulama restart'ında belirli eşikten eski `PROCESSING` kayıtları yeniden kuyruğa alınır; işlem idempotenttir.
 - **Public gizlilik:** `UPLOADED`, `PROCESSING` ve `FAILED` medya public API'de ve vitrinde görünmez. İşleme tamamlanana kadar oda kartı placeholder gösterir.
 - **Depolama:** Orijinal ve private varyantlar public bucket önekine yazılmaz; yayınlanan varyantlar public-read önekine kopyalanır ve public anahtar üretilir; private anahtar korunur. Public anahtarlar immutable ve rastgele UUID tabanlıdır.
@@ -95,7 +95,7 @@ Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media mod
 - **Public API:** Yalnız `READY` + `published_at` dolu + `archived_at` boş + aktif oda tipi. Oda tipi başına `displayOrder` sırası; `cover` tam bir kez true. Public yanıt catalog alanlarını kopyalamaz; web, catalog oda tipleriyle `roomTypeId` üzerinden eşler. Bu eşleme yalnız sunum birleştirmesidir; fiyat/uygunluk gibi iş kuralı üretmez.
 - **Web RoomCard:** Yayınlanmış medya varsa `room-card-image` testid'li gerçek görsel; `alt` seçili dildeki alt metin, yoksa oda tipi adı. RoomCard, kapak olarak seçilen medyanın `card` varyantını `thumb` srcset ile kullanır; `cover` varyantı gelecekteki detay sayfası içindir. Görsel `next/image` veya `srcset` ile optimize edilir; `width`/`height` ve 3:2 oranla layout shift önlenir; kart tıklanabilir değildir, fiyat gösterilmez.
 - **Fallback:** Medya yoksa, medya `PROCESSING`/`FAILED`/yayında değilse veya public medya isteği hata verirse mevcut `room-card-placeholder` görünür; medya hatası tüm vitrini düşürmez. Oda tipi/katalog hatası mevcut 0002 hata durumunu kullanır.
-- **Erişim/cache:** Yalnız yayınlanmış varyantlar public-read; orijinaller private; bucket listeleme ve public write kapalı. Varyant URL'leri immutable ve uzun cache (`public, max-age=31536000, immutable`); public JSON yanıtı kısa cache/no-cache. Unpublish/archive public kopyaları kaldırır; daha önce indirilmiş tarayıcı kopyası V1 kabulüdür. CDN yoktur.
+- **Erişim/cache:** Yalnız yayınlanmış varyantlar public-read; orijinaller private; bucket listeleme ve public write kapalı. Varyant URL'leri immutable ve uzun cache (`public, max-age=31536000, immutable`); public JSON yanıtı `no-store` (yayın/kaldırma anında görünür). Unpublish/archive public kopyaları kaldırır; daha önce indirilmiş tarayıcı kopyası V1 kabulüdür. CDN yoktur.
 - **Kapsam:** Oda detay sayfası, galeri sayfası ve 360 tur bu dilimde yoktur; yalnız mevcut oda vitrini kartı.
 
 ### 2.7 Depolama, Local/CI ve Testler (REQ-5, REQ-6)
@@ -137,9 +137,9 @@ Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media mod
   1. **`docs/architecture.md` §3/§7/§11:** media hattı, MinIO public/private ayrımı, presigned/public URL, `media → catalog` read portu ve `@media` CI notu.
   2. **`docs/frontend.md`:** RoomCard gerçek görsel, alt metin/fallback, placeholder, `room-card-image` ve görsel optimizasyonu.
   3. **`infra/README.md`:** `hotel-media` bucket policy/CORS, public/private önekler, presign host ve local/CI komutları.
-  4. **`.env.example`:** `MEDIA_S3_ENDPOINT`, `MEDIA_S3_PUBLIC_ENDPOINT`, `MEDIA_S3_BUCKET`, `MEDIA_S3_ACCESS_KEY`, `MEDIA_S3_SECRET_KEY`, `MEDIA_PUBLIC_BASE_URL`, `MEDIA_PRESIGN_TTL_SECONDS`, `MEDIA_MAX_UPLOAD_BYTES`, `MEDIA_MAX_PIXELS`, `MEDIA_MIN_WIDTH`, `MEDIA_MIN_HEIGHT`, `MEDIA_PROCESSING_MAX_ATTEMPTS`; local değerler açıkça işaretli, prod sırları repoda yok.
+  4. **`.env.example`:** `MEDIA_S3_ENDPOINT`, `MEDIA_S3_PUBLIC_ENDPOINT`, `MEDIA_S3_BUCKET`, `MEDIA_S3_ACCESS_KEY`, `MEDIA_S3_SECRET_KEY`, `MEDIA_PUBLIC_BASE_URL`, `MEDIA_PRESIGN_TTL` (Duration, ör. `10m`), `MEDIA_PROCESSING_MAX_ATTEMPTS`, `MEDIA_PROCESSING_STALE_THRESHOLD`, `MINIO_CORS_ALLOW_ORIGIN`; boyut/piksel limitleri V1'de `MediaRules` sabitleridir. Local değerler açıkça işaretli, prod sırları repoda yok.
   5. **`.github/workflows/ci.yml`:** MinIO policy/CORS init, gerçek MinIO IT'si, `@media` aşaması ve 0002/0003/`@admin` sırasının korunması.
-  6. **`CREDITS.md`:** `@media` için kullanılan CC0 test görselinin kaynağı/lisansı; `e2e/README.md` `@media` çalıştırma notu.
+  6. **`CREDITS.md`:** `@media` fixture'ı olarak kullanılan mevcut Pexels lisanslı hero posterinin kaynağı/lisansı; `e2e/README.md` `@media` çalıştırma notu.
   7. **`HotelApiModularityTest`:** `media → catalog` read portu allowlist'i ve migration şema kontrolü yeşil.
 
 ## 4. Context
@@ -195,20 +195,20 @@ Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media mod
 
 ## 6. Definition of Done
 
-- [ ] Tüm AC'ler doğrulandı (test ve/veya görsel kanıt)
-- [ ] Pipeline yeşil (lint + build + test + kritik akış smoke)
-- [ ] Kod incelemesi onaylandı (Takım Yöneticisi)
-- [ ] Davranış değiştiyse dokümanlar güncellendi
-- [ ] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi
-- [ ] SCORECARD dolduruldu
+- [x] Tüm AC'ler doğrulandı (test ve/veya görsel kanıt)
+- [x] Pipeline yeşil (lint + build + test + kritik akış smoke)
+- [x] Kod incelemesi onaylandı (Code Reviewer: APPROVE — `evidence/0005/AC-6-code-review.md`)
+- [x] Davranış değiştiyse dokümanlar güncellendi
+- [x] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi
+- [x] SCORECARD dolduruldu
 
 ## 7. SCORECARD
 
-- **Spec revizyon sayısı:** 1
-- **Düzeltme turu sayısı:**
-- **Bulgu gerçek/gürültü oranı:**
-- **Regresyon sayısı:**
-- **Kaçan hata (escaped bug):**
+- **Spec revizyon sayısı:** 2
+- **Düzeltme turu sayısı:** 1 (bağımsız kod incelemesi; B1–B13 bulguları)
+- **Bulgu gerçek/gürültü oranı:** 13 gerçek / 1 harici yanlış pozitif (GitGuardian, base commit `c9e7da4`)
+- **Regresyon sayısı:** 0
+- **Kaçan hata (escaped bug):** 0 (inceleme merge öncesi yakaladı)
 
 ## 8. Ek A — Onaylanan CLARIFY Kararları (Q1–Q10)
 
@@ -241,3 +241,5 @@ Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media mod
 | D10 | Web public medya isteklerini 50 oda tipi ID'siyle parçalar | Public API üst sınırıyla uyum; REQ-4, AC-5 |
 | D11 | Local/CI/test dışında güvenlik açısından zayıf depolama config'i başlangıçta fail-fast eder | Prod'da varsayılan MinIO kimlik bilgisi/localhost URL ile açılmayı engeller; REQ-5, AC-2 |
 | D12 | MinIO CORS'u `minio-init` yerine MinIO server `MINIO_CORS_ALLOW_ORIGIN` env'i ile verilir | Kullanılan `mc` sürümünde `mc cors` yok; server env'i tekrarlanabilir ve local/CI'da `*` |
+| D13 | Varyant çıktısı kaynak kırpımından büyük olamaz | "Orijinalden büyütme yok" kuralını 800×600 gibi küçük geçerli görsellerde de uygular; REQ-3, AC-3 |
+| D14 | Worker claim'i `processing_lease_id` ile fencing yapar; ready/failed geçişleri lease koşulludur | Arşiv/paralel worker yarışında eski worker'ın yazmasını engeller; REQ-3, AC-3/AC-4 |

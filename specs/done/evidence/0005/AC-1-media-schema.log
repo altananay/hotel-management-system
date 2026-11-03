@@ -1,0 +1,16 @@
+# AC-1 — Media schema and catalog boundary
+
+Commands:
+```
+backend/hotel-api ./mvnw.cmd -B verify
+```
+
+Verified:
+- `db/migration/media/V8__create_media_assets.sql` creates only `media.media_assets` and `media.media_variants`.
+- `V9__add_media_processing_lease.sql` adds only `media.media_assets.processing_lease_id`.
+- JPA entities use `@Table(schema = "media")`; no `double`/`float`.
+- `media` depends on `catalog` only through `com.hotel.catalog.api.RoomTypeLookup`.
+- `HotelApiModularityTest` and `DatabaseSchemaAndRoleSeparationIT` passed.
+- `MediaIT` verifies unique room order, single published cover, invalid status/alt text, UUID/foreign-key behavior and inactive room type rejection.
+
+Result: PASS (54 integration tests, including MediaIT 7/7).
