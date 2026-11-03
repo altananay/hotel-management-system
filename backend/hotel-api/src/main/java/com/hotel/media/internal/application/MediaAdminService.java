@@ -21,6 +21,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,7 @@ public class MediaAdminService {
     private final MediaVariantJpaRepository variantRepository;
     private final RoomTypeLookup roomTypeLookup;
     private final MediaStoragePort storage;
+    private final MediaImageProcessor imageProcessor;
     private final MediaProcessingScheduler scheduler;
     private final Clock clock;
 
@@ -45,12 +47,14 @@ public class MediaAdminService {
             MediaVariantJpaRepository variantRepository,
             RoomTypeLookup roomTypeLookup,
             MediaStoragePort storage,
+            MediaImageProcessor imageProcessor,
             MediaProcessingScheduler scheduler,
             Clock clock) {
         this.assetRepository = assetRepository;
         this.variantRepository = variantRepository;
         this.roomTypeLookup = roomTypeLookup;
         this.storage = storage;
+        this.imageProcessor = imageProcessor;
         this.scheduler = scheduler;
         this.clock = clock;
     }
@@ -98,7 +102,11 @@ public class MediaAdminService {
 
     @Transactional
     public AdminMediaView update(UUID id, UpdateCommand command) {
+        if (command.roomTypeIdProvided() && command.roomTypeId() != null) {
+            assetRepository.lockRoomMedia(command.roomTypeId());
+        }
         MediaAssetEntity asset = locked(id);
+        requireNotArchived(asset);
         String altTr =
                 command.altTextTrProvided()
                         ? MediaRules.validateAltText(command.altTextTr())
@@ -123,7 +131,13 @@ public class MediaAdminService {
             }
         }
         asset.updateAltText(altTr, altEn, now);
-        assetRepository.save(asset);
+        try {
+            assetRepository.saveAndFlush(asset);
+        } catch (DataIntegrityViolationException ex) {
+            throw conflict(
+                    MediaErrorCodes.ORDER_CONFLICT,
+                    "The media order changed concurrently; refresh and retry.");
+        }
         return view(asset);
     }
 
@@ -133,8 +147,7 @@ public class MediaAdminService {
         if (mediaIds == null || mediaIds.isEmpty()) {
             throw conflict(MediaErrorCodes.ORDER_CONFLICT, "The media order list is empty.");
         }
-        List<MediaAssetEntity> current =
-                assetRepository.findNonArchivedByRoomTypeOrdered(roomTypeId);
+        List<MediaAssetEntity> current = assetRepository.lockRoomMedia(roomTypeId);
         Set<UUID> currentIds =
                 current.stream().map(MediaAssetEntity::getId).collect(java.util.stream.Collectors.toSet());
         if (currentIds.size() != mediaIds.size()
@@ -145,14 +158,24 @@ public class MediaAdminService {
                     "The media order must contain every non-archived media of the room type.");
         }
         Instant now = clock.instant();
-        assetRepository.shiftDisplayOrders(roomTypeId, now);
-        for (int index = 0; index < mediaIds.size(); index++) {
-            assetRepository.setDisplayOrder(mediaIds.get(index), index, now);
+        try {
+            assetRepository.shiftDisplayOrders(roomTypeId, now);
+            for (int index = 0; index < mediaIds.size(); index++) {
+                assetRepository.setDisplayOrder(mediaIds.get(index), index, now);
+            }
+        } catch (DataIntegrityViolationException ex) {
+            throw conflict(
+                    MediaErrorCodes.ORDER_CONFLICT,
+                    "The media order changed concurrently; refresh and retry.");
         }
     }
 
     @Transactional
     public AdminMediaView cover(UUID id) {
+        UUID roomTypeId = assetRepository.findRoomTypeIdById(id).orElseThrow(this::notFound);
+        if (roomTypeId != null) {
+            assetRepository.lockRoomMedia(roomTypeId);
+        }
         MediaAssetEntity asset = locked(id);
         requirePublished(asset);
         if (asset.getStatus() != MediaStatus.READY) {
@@ -161,7 +184,13 @@ public class MediaAdminService {
         Instant now = clock.instant();
         assetRepository.clearCoverForRoom(asset.getRoomTypeId(), now);
         asset.setCover(true, now);
-        assetRepository.save(asset);
+        try {
+            assetRepository.saveAndFlush(asset);
+        } catch (DataIntegrityViolationException ex) {
+            throw conflict(
+                    MediaErrorCodes.COVER_CONFLICT,
+                    "The cover changed concurrently; refresh and retry.");
+        }
         return view(asset);
     }
 
@@ -241,10 +270,12 @@ public class MediaAdminService {
     @Transactional
     public void retry(UUID id) {
         MediaAssetEntity asset = locked(id);
+        requireNotArchived(asset);
         if (asset.getStatus() != MediaStatus.FAILED) {
             throw conflict(
                     MediaErrorCodes.NOT_READY, "Only FAILED media can be retried.");
         }
+        validateOriginal(asset);
         asset.prepareRetry(clock.instant());
         assetRepository.save(asset);
         afterCommit(() -> scheduler.enqueue(id));
@@ -261,6 +292,37 @@ public class MediaAdminService {
                 variantRepository.findByMediaAssetId(asset.getId()).stream()
                         .map(MediaVariantEntity::toDomain)
                         .toList());
+    }
+
+    private void validateOriginal(MediaAssetEntity asset) {
+        MediaStoragePort.StoredObject stored = storage.head(asset.getStorageKey());
+        if (stored == null || stored.sizeBytes() <= 0) {
+            throw new DomainError(
+                    MediaErrorCodes.INVALID_IMAGE,
+                    "The original image was not found.",
+                    DomainErrorCategory.VALIDATION);
+        }
+        if (stored.sizeBytes() > MediaRules.MAX_UPLOAD_BYTES) {
+            throw new DomainError(
+                    MediaErrorCodes.INVALID_IMAGE,
+                    "The original image exceeds the allowed size.",
+                    DomainErrorCategory.VALIDATION);
+        }
+        byte[] bytes = storage.get(asset.getStorageKey());
+        try {
+            imageProcessor.inspect(bytes);
+        } catch (DomainError ex) {
+            throw new DomainError(
+                    MediaErrorCodes.INVALID_IMAGE,
+                    "The original image is invalid.",
+                    DomainErrorCategory.VALIDATION);
+        }
+    }
+
+    private void requireNotArchived(MediaAssetEntity asset) {
+        if (asset.getArchivedAt() != null) {
+            throw conflict(MediaErrorCodes.ALREADY_ARCHIVED, "Archived media is immutable.");
+        }
     }
 
     private void removePublicCopies(UUID id) {

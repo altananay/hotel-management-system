@@ -76,7 +76,7 @@ function coverImage(
   if (!main) {
     return undefined;
   }
-  const candidates = [cover.variants.thumb, cover.variants.card, cover.variants.cover]
+  const candidates = [cover.variants.thumb, cover.variants.card]
     .filter((variant): variant is NonNullable<typeof variant> => variant !== null)
     .map((variant) => `${variant.url} ${variant.width}w`);
   const preferredAlt =

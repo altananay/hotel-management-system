@@ -100,11 +100,15 @@ class PublicMediaControllerTest {
     }
 
     @Test
-    void shouldReturn400_whenRoomTypeIdsParameterIsMissing() throws Exception {
+    void shouldReturn400_whenRoomTypeIdsParameterIsMissingOrEmpty() throws Exception {
         mockMvc.perform(get("/api/media"))
                 .andExpect(status().isBadRequest())
                 .andExpect(
                         content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code").value("validation.invalid_request"));
+
+        mockMvc.perform(get("/api/media").param("roomTypeIds", ""))
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("validation.invalid_request"));
     }
 }

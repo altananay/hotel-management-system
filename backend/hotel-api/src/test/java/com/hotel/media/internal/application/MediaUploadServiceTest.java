@@ -3,6 +3,7 @@ package com.hotel.media.internal.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -58,7 +59,7 @@ class MediaUploadServiceTest {
     @Test
     void shouldCreatePrivateUploadAndReturnPresignedUrl() {
         when(assetRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(storage.presignPut(anyString(), eq("image/jpeg"), eq(TTL)))
+        when(storage.presignPut(anyString(), eq("image/jpeg"), eq(1000L), eq(TTL)))
                 .thenReturn(
                         new MediaStoragePort.PresignedUpload(
                                 "http://localhost:9000/upload", NOW.plus(TTL)));
@@ -100,7 +101,7 @@ class MediaUploadServiceTest {
                                 assertThat(((DomainError) error).code())
                                         .isEqualTo(MediaErrorCodes.FILE_TOO_LARGE));
 
-        verify(storage, never()).presignPut(anyString(), anyString(), any());
+        verify(storage, never()).presignPut(anyString(), anyString(), anyLong(), any());
         verify(assetRepository, never()).save(any());
     }
 

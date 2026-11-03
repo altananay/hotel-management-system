@@ -46,6 +46,7 @@ class MediaAdminServiceTest {
     @Mock private MediaVariantJpaRepository variantRepository;
     @Mock private RoomTypeLookup roomTypeLookup;
     @Mock private MediaStoragePort storage;
+    @Mock private MediaImageProcessor imageProcessor;
     @Mock private MediaProcessingScheduler scheduler;
 
     private MediaAdminService service;
@@ -58,6 +59,7 @@ class MediaAdminServiceTest {
                         variantRepository,
                         roomTypeLookup,
                         storage,
+                        imageProcessor,
                         scheduler,
                         Clock.fixed(NOW, ZoneOffset.UTC));
     }
@@ -94,7 +96,7 @@ class MediaAdminServiceTest {
         assertThat(asset.getDisplayOrder()).isEqualTo(5);
         assertThat(asset.getAltTextTr()).isEqualTo("Taş süit");
         assertThat(asset.getAltTextEn()).isEqualTo("Stone suite");
-        verify(assetRepository).save(asset);
+        verify(assetRepository).saveAndFlush(asset);
     }
 
     @Test
@@ -112,6 +114,29 @@ class MediaAdminServiceTest {
 
         assertThat(asset.getAltTextTr()).isEqualTo("Mevcut TR");
         assertThat(asset.getAltTextEn()).isEqualTo("Existing EN");
+    }
+
+    @Test
+    void shouldTranslateUniqueConstraintToOrderConflictOnAssignment() {
+        MediaAssetEntity asset = readyAsset(null, 0);
+        when(assetRepository.findLockedById(MEDIA_ID)).thenReturn(Optional.of(asset));
+        when(roomTypeLookup.findActive(RoomTypeId.of(ROOM_TYPE_ID)))
+                .thenReturn(Optional.of(activeRoom()));
+        when(assetRepository.maxDisplayOrder(ROOM_TYPE_ID)).thenReturn(0);
+        when(assetRepository.saveAndFlush(asset))
+                .thenThrow(new org.springframework.dao.DataIntegrityViolationException("duplicate"));
+
+        assertThatThrownBy(
+                        () ->
+                                service.update(
+                                        MEDIA_ID,
+                                        new MediaAdminService.UpdateCommand(
+                                                true, ROOM_TYPE_ID, false, null, false, null)))
+                .isInstanceOf(DomainError.class)
+                .satisfies(
+                        error ->
+                                assertThat(((DomainError) error).code())
+                                        .isEqualTo(MediaErrorCodes.ORDER_CONFLICT));
     }
 
     @Test
@@ -145,7 +170,7 @@ class MediaAdminServiceTest {
                 second, UUID.fromString("0199f2c0-0000-7000-8000-000000000402"));
         when(roomTypeLookup.findActive(RoomTypeId.of(ROOM_TYPE_ID)))
                 .thenReturn(Optional.of(activeRoom()));
-        when(assetRepository.findNonArchivedByRoomTypeOrdered(ROOM_TYPE_ID))
+        when(assetRepository.lockRoomMedia(ROOM_TYPE_ID))
                 .thenReturn(List.of(first, second));
 
         assertThatThrownBy(() -> service.reorder(ROOM_TYPE_ID, List.of(MEDIA_ID)))
@@ -166,7 +191,7 @@ class MediaAdminServiceTest {
         ReflectionId.set(second, secondId);
         when(roomTypeLookup.findActive(RoomTypeId.of(ROOM_TYPE_ID)))
                 .thenReturn(Optional.of(activeRoom()));
-        when(assetRepository.findNonArchivedByRoomTypeOrdered(ROOM_TYPE_ID))
+        when(assetRepository.lockRoomMedia(ROOM_TYPE_ID))
                 .thenReturn(List.of(first, second));
 
         service.reorder(ROOM_TYPE_ID, List.of(secondId, MEDIA_ID));
@@ -237,7 +262,10 @@ class MediaAdminServiceTest {
     void shouldOnlyAllowPublishedReadyNonArchivedMediaAsCover() {
         MediaAssetEntity available = readyAsset(ROOM_TYPE_ID, 0);
         available.publish(NOW);
+        when(assetRepository.findRoomTypeIdById(MEDIA_ID))
+                .thenReturn(Optional.of(ROOM_TYPE_ID));
         when(assetRepository.findLockedById(MEDIA_ID)).thenReturn(Optional.of(available));
+        when(assetRepository.lockRoomMedia(ROOM_TYPE_ID)).thenReturn(List.of(available));
         when(variantRepository.findByMediaAssetId(MEDIA_ID)).thenReturn(List.of());
 
         service.cover(MEDIA_ID);
@@ -246,6 +274,8 @@ class MediaAdminServiceTest {
         assertThat(available.isCover()).isTrue();
 
         MediaAssetEntity draft = readyAsset(ROOM_TYPE_ID, 0);
+        when(assetRepository.findRoomTypeIdById(MEDIA_ID))
+                .thenReturn(Optional.of(ROOM_TYPE_ID));
         when(assetRepository.findLockedById(MEDIA_ID)).thenReturn(Optional.of(draft));
 
         assertThatThrownBy(() -> service.cover(MEDIA_ID))
@@ -254,6 +284,26 @@ class MediaAdminServiceTest {
                         error ->
                                 assertThat(((DomainError) error).code())
                                         .isEqualTo(MediaErrorCodes.NOT_PUBLISHED));
+    }
+
+    @Test
+    void shouldNotResurrectArchivedMediaWhenCoverLosesTheRace() {
+        MediaAssetEntity archived = readyAsset(ROOM_TYPE_ID, 0);
+        archived.publish(NOW);
+        archived.archive(NOW);
+        when(assetRepository.findRoomTypeIdById(MEDIA_ID))
+                .thenReturn(Optional.of(ROOM_TYPE_ID));
+        when(assetRepository.findLockedById(MEDIA_ID)).thenReturn(Optional.of(archived));
+
+        assertThatThrownBy(() -> service.cover(MEDIA_ID))
+                .isInstanceOf(DomainError.class)
+                .satisfies(
+                        error ->
+                                assertThat(((DomainError) error).code())
+                                        .isEqualTo(MediaErrorCodes.NOT_PUBLISHED));
+        verify(assetRepository, never()).clearCoverForRoom(any(), any());
+        verify(assetRepository, never()).saveAndFlush(any());
+        assertThat(archived.getArchivedAt()).isNotNull();
     }
 
     @Test
@@ -296,10 +346,40 @@ class MediaAdminServiceTest {
     }
 
     @Test
+    void shouldRejectRetryWhenOriginalIsInvalidAndNotEnqueue() {
+        MediaAssetEntity asset = readyAsset(ROOM_TYPE_ID, 0);
+        asset.markFailed(MediaErrorCodes.INVALID_IMAGE, NOW);
+        when(assetRepository.findLockedById(MEDIA_ID)).thenReturn(Optional.of(asset));
+        when(storage.head("private/original"))
+                .thenReturn(new MediaStoragePort.StoredObject(1000, "image/jpeg"));
+        when(storage.get("private/original")).thenReturn(new byte[] {1, 2, 3});
+        when(imageProcessor.inspect(any()))
+                .thenThrow(
+                        new DomainError(
+                                MediaErrorCodes.INVALID_IMAGE,
+                                "invalid",
+                                com.hotel.sharedkernel.api.DomainErrorCategory.VALIDATION));
+
+        assertThatThrownBy(() -> service.retry(MEDIA_ID))
+                .isInstanceOf(DomainError.class)
+                .satisfies(
+                        error ->
+                                assertThat(((DomainError) error).code())
+                                        .isEqualTo(MediaErrorCodes.INVALID_IMAGE));
+        assertThat(asset.getStatus()).isEqualTo(MediaStatus.FAILED);
+        verify(scheduler, never()).enqueue(any());
+    }
+
+    @Test
     void shouldResetFailureAndRenqueueOnlyFailedMedia() {
         MediaAssetEntity asset = readyAsset(ROOM_TYPE_ID, 0);
         asset.markFailed(MediaErrorCodes.INVALID_IMAGE, NOW);
         when(assetRepository.findLockedById(MEDIA_ID)).thenReturn(Optional.of(asset));
+        when(storage.head("private/original"))
+                .thenReturn(new MediaStoragePort.StoredObject(1000, "image/jpeg"));
+        when(storage.get("private/original")).thenReturn(new byte[] {1, 2, 3});
+        when(imageProcessor.inspect(any()))
+                .thenReturn(new MediaImageProcessor.ImageInfo("image/jpeg", 1200, 800));
 
         service.retry(MEDIA_ID);
 

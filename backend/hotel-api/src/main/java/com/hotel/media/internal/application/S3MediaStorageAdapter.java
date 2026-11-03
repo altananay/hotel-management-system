@@ -38,13 +38,15 @@ public class S3MediaStorageAdapter implements MediaStoragePort {
     }
 
     @Override
-    public PresignedUpload presignPut(String key, String contentType, Duration ttl) {
+    public PresignedUpload presignPut(
+            String key, String contentType, long sizeBytes, Duration ttl) {
         Duration effectiveTtl = ttl == null ? defaultTtl : ttl;
         PutObjectRequest request =
                 PutObjectRequest.builder()
                         .bucket(bucket)
                         .key(key)
                         .contentType(contentType)
+                        .contentLength(sizeBytes)
                         .build();
         PresignedPutObjectRequest presigned =
                 presigner.presignPutObject(

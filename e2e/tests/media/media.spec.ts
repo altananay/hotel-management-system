@@ -1,6 +1,10 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
-import { ADMIN_WEB_BASE_URL, WEB_BASE_URL } from "../../helpers/config";
+import { ADMIN_WEB_BASE_URL, API_BASE_URL, WEB_BASE_URL } from "../../helpers/config";
 import { capture, writeEvidence } from "../../helpers/evidence";
+
+test.describe.configure({ timeout: 150_000 });
 
 const SUPERADMIN_USERNAME =
   process.env.E2E_ADMIN_SUPERADMIN_USERNAME ?? "superadmin";
@@ -46,15 +50,41 @@ test.describe("Media management (AC-4, AC-5, AC-6)", () => {
         mimeType: "image/svg+xml",
         buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"></svg>'),
       });
+      const svgAttempt = page.waitForResponse(
+        (response) =>
+          response.url().includes("/admin-api/media/uploads") &&
+          response.request().method() === "POST",
+      );
       await page.getByTestId("admin-media-upload-submit").click();
+      expect((await svgAttempt).status()).toBe(415);
       await expect(page.getByTestId("admin-media-upload").getByRole("alert")).toBeVisible();
       await expect(page.getByTestId("admin-media-item")).toHaveCount(0);
 
-      // A real browser screenshot is a genuine, deterministic upload fixture.
-      const fixture = await page.screenshot({ fullPage: false });
+      // Oversized input is rejected before a presigned URL is issued.
       await page.getByTestId("admin-media-file-input").setInputFiles({
-        name: "e2e-cave-room.png",
-        mimeType: "image/png",
+        name: "too-large.jpg",
+        mimeType: "image/jpeg",
+        buffer: Buffer.alloc(15 * 1024 * 1024 + 1),
+      });
+      const oversizedAttempt = page.waitForResponse(
+        (response) =>
+          response.url().includes("/admin-api/media/uploads") &&
+          response.request().method() === "POST",
+      );
+      await page.getByTestId("admin-media-upload-submit").click();
+      expect((await oversizedAttempt).status()).toBe(400);
+      await expect(page.getByTestId("admin-media-item")).toHaveCount(0);
+
+      // The committed Pexels-licensed hero poster is a real, deterministic upload fixture.
+      const fixture = readFileSync(
+        path.resolve(
+          process.cwd(),
+          "../web/public/media/hero/home-hero-poster-1280.webp",
+        ),
+      );
+      await page.getByTestId("admin-media-file-input").setInputFiles({
+        name: "e2e-hero-poster.webp",
+        mimeType: "image/webp",
         buffer: fixture,
       });
       await page.getByTestId("admin-media-upload-submit").click();
@@ -119,10 +149,14 @@ test.describe("Media management (AC-4, AC-5, AC-6)", () => {
       await expect(page.getByTestId("admin-media-error")).toBeVisible({
         timeout: 15_000,
       });
+      const frontDeskApi = await page.request.get(
+        `${ADMIN_WEB_BASE_URL}/admin-api/media`,
+      );
+      expect(frontDeskApi.status()).toBe(403);
       writeEvidence(
         "0005",
         "AC-4-frontdesk-403.log",
-        "FRONT_DESK GET /admin-api/media -> 403 security.forbidden (UI shows generic error)",
+        `FRONT_DESK GET /admin-api/media -> ${frontDeskApi.status()} security.forbidden (UI shows generic error)`,
       );
 
       // Back as SUPER_ADMIN: unpublish must hide the public image immediately.
@@ -135,11 +169,16 @@ test.describe("Media management (AC-4, AC-5, AC-6)", () => {
       await page.goto(`${WEB_BASE_URL}/tr/rooms`, { waitUntil: "networkidle" });
       await expect(page.getByTestId("rooms-list")).toBeVisible();
       await expect(page.getByTestId("room-card-image")).toHaveCount(0);
+      const hiddenApi = await page.request.get(
+        `${API_BASE_URL}/api/media?roomTypeIds=${roomTypeId}`,
+      );
+      expect(hiddenApi.status()).toBe(200);
+      expect((await hiddenApi.json()).items).toHaveLength(0);
       await capture(page, "0005", "AC-5-placeholder-fallback.png");
       writeEvidence(
         "0005",
         "AC-5-unpublished-hidden.log",
-        "after unpublish: public API returns no media and room-card-image is absent",
+        "after unpublish: public API returns 200 {items: []} and room-card-image is absent",
       );
 
       // Archive is irreversible and removes the public copies.

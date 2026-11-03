@@ -332,7 +332,10 @@ describe("RoomShowcase (AC-3, QA-10, QA-11, QA-15)", () => {
     expect(image.width).toBe(1200);
     expect(image.height).toBe(800);
     expect(image.getAttribute("srcset")).toContain(
-      "http://localhost:9000/hotel-media/public/cover.webp 1920w",
+      "http://localhost:9000/hotel-media/public/card.webp 1200w",
+    );
+    expect(image.getAttribute("srcset")).not.toContain(
+      "http://localhost:9000/hotel-media/public/cover.webp",
     );
     expect(image.getAttribute("loading")).toBe("lazy");
 

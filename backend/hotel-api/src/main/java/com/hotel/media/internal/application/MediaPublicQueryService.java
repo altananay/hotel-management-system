@@ -53,14 +53,14 @@ public class MediaPublicQueryService {
         if (roomTypeIds == null || roomTypeIds.isEmpty()) {
             return List.of();
         }
-        if (roomTypeIds.size() > MAX_ROOM_TYPE_IDS) {
+        List<RoomTypeId> requested =
+                roomTypeIds.stream().distinct().map(RoomTypeId::of).toList();
+        if (requested.size() > MAX_ROOM_TYPE_IDS) {
             throw new DomainError(
                     "validation.invalid_request",
                     "At most 50 room type ids can be requested.",
                     DomainErrorCategory.VALIDATION);
         }
-        List<RoomTypeId> requested =
-                roomTypeIds.stream().distinct().map(RoomTypeId::of).toList();
         Set<UUID> activeIds =
                 roomTypeLookup.findActiveByIds(requested).stream()
                         .map(ActiveRoomType::id)

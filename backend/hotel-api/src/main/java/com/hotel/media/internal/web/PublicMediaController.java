@@ -41,6 +41,12 @@ public class PublicMediaController {
                     "roomTypeIds contains an invalid UUID.",
                     DomainErrorCategory.VALIDATION);
         }
+        if (ids.isEmpty()) {
+            throw new DomainError(
+                    "validation.invalid_request",
+                    "At least one room type id is required.",
+                    DomainErrorCategory.VALIDATION);
+        }
         List<PublicMediaItemResponse> items =
                 publicQueryService.findPublished(ids).stream()
                         .map(PublicMediaItemResponse::from)

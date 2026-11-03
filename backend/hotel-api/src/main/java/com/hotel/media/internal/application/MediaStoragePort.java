@@ -4,7 +4,7 @@ import java.time.Duration;
 
 public interface MediaStoragePort {
 
-    PresignedUpload presignPut(String key, String contentType, Duration ttl);
+    PresignedUpload presignPut(String key, String contentType, long sizeBytes, Duration ttl);
 
     String presignGet(String key, Duration ttl);
 

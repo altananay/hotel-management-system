@@ -33,12 +33,23 @@ public interface MediaAssetJpaRepository extends JpaRepository<MediaAssetEntity,
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<MediaAssetEntity> findLockedById(UUID id);
 
+    @Query("SELECT a.roomTypeId FROM MediaAssetEntity a WHERE a.id = :id")
+    Optional<UUID> findRoomTypeIdById(@Param("id") UUID id);
+
     @Query(
             "SELECT a FROM MediaAssetEntity a "
                     + "WHERE a.roomTypeId = :roomTypeId AND a.archivedAt IS NULL "
                     + "ORDER BY a.displayOrder ASC, a.id ASC")
     List<MediaAssetEntity> findNonArchivedByRoomTypeOrdered(
             @Param("roomTypeId") UUID roomTypeId);
+
+    /** Serializes cover/order/assignment mutations for one room in a stable id order. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query(
+            "SELECT a FROM MediaAssetEntity a "
+                    + "WHERE a.roomTypeId = :roomTypeId AND a.archivedAt IS NULL "
+                    + "ORDER BY a.id ASC")
+    List<MediaAssetEntity> lockRoomMedia(@Param("roomTypeId") UUID roomTypeId);
 
     @Query(
             "SELECT COALESCE(MAX(a.displayOrder), -1) FROM MediaAssetEntity a "
@@ -47,7 +58,8 @@ public interface MediaAssetJpaRepository extends JpaRepository<MediaAssetEntity,
 
     @Query(
             "SELECT a FROM MediaAssetEntity a "
-                    + "WHERE a.status = :status AND (a.processingStartedAt IS NULL "
+                    + "WHERE a.status = :status AND a.archivedAt IS NULL "
+                    + "AND (a.processingStartedAt IS NULL "
                     + "OR a.processingStartedAt < :staleBefore)")
     List<MediaAssetEntity> findStaleProcessing(
             @Param("status") MediaStatus status, @Param("staleBefore") Instant staleBefore);
@@ -65,21 +77,69 @@ public interface MediaAssetJpaRepository extends JpaRepository<MediaAssetEntity,
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(
             "UPDATE MediaAssetEntity a SET a.processingStartedAt = :now, "
+                    + "a.processingLeaseId = :leaseId, "
                     + "a.processingAttempts = a.processingAttempts + 1, a.updatedAt = :now "
-                    + "WHERE a.id = :id AND a.status = :status "
+                    + "WHERE a.id = :id AND a.status = :status AND a.archivedAt IS NULL "
+                    + "AND a.processingAttempts < :maxAttempts "
                     + "AND (a.processingStartedAt IS NULL OR a.processingStartedAt < :staleBefore)")
     int claimForProcessing(
             @Param("id") UUID id,
             @Param("status") MediaStatus status,
             @Param("now") Instant now,
-            @Param("staleBefore") Instant staleBefore);
+            @Param("staleBefore") Instant staleBefore,
+            @Param("leaseId") UUID leaseId,
+            @Param("maxAttempts") int maxAttempts);
 
     @Transactional
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(
-            "UPDATE MediaAssetEntity a SET a.processingStartedAt = NULL, a.updatedAt = :now "
-                    + "WHERE a.id = :id")
-    void releaseProcessingClaim(@Param("id") UUID id, @Param("now") Instant now);
+            "UPDATE MediaAssetEntity a SET a.processingStartedAt = NULL, "
+                    + "a.processingLeaseId = NULL, a.updatedAt = :now "
+                    + "WHERE a.id = :id AND a.processingLeaseId = :leaseId")
+    int releaseProcessingClaim(
+            @Param("id") UUID id, @Param("leaseId") UUID leaseId, @Param("now") Instant now);
+
+    @Transactional
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(
+            "UPDATE MediaAssetEntity a SET a.status = com.hotel.media.internal.domain.MediaStatus.READY, "
+                    + "a.failureCode = NULL, a.processingStartedAt = NULL, "
+                    + "a.processingLeaseId = NULL, a.updatedAt = :now "
+                    + "WHERE a.id = :id AND a.status = com.hotel.media.internal.domain.MediaStatus.PROCESSING "
+                    + "AND a.processingLeaseId = :leaseId AND a.archivedAt IS NULL")
+    int markReadyIfClaimed(
+            @Param("id") UUID id, @Param("leaseId") UUID leaseId, @Param("now") Instant now);
+
+    @Transactional
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(
+            "UPDATE MediaAssetEntity a SET a.status = com.hotel.media.internal.domain.MediaStatus.FAILED, "
+                    + "a.failureCode = :failureCode, a.processingStartedAt = NULL, "
+                    + "a.processingLeaseId = NULL, a.updatedAt = :now "
+                    + "WHERE a.id = :id AND a.status = com.hotel.media.internal.domain.MediaStatus.PROCESSING "
+                    + "AND (a.processingLeaseId = :leaseId OR a.processingLeaseId IS NULL) "
+                    + "AND a.archivedAt IS NULL")
+    int markFailedIfClaimed(
+            @Param("id") UUID id,
+            @Param("leaseId") UUID leaseId,
+            @Param("failureCode") String failureCode,
+            @Param("now") Instant now);
+
+    @Transactional
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(
+            "UPDATE MediaAssetEntity a SET a.status = com.hotel.media.internal.domain.MediaStatus.FAILED, "
+                    + "a.failureCode = :failureCode, a.processingStartedAt = NULL, "
+                    + "a.processingLeaseId = NULL, a.updatedAt = :now "
+                    + "WHERE a.id = :id AND a.status = com.hotel.media.internal.domain.MediaStatus.PROCESSING "
+                    + "AND a.archivedAt IS NULL AND a.processingAttempts >= :maxAttempts "
+                    + "AND (a.processingStartedAt IS NULL OR a.processingStartedAt < :staleBefore)")
+    int markFailedIfExhausted(
+            @Param("id") UUID id,
+            @Param("failureCode") String failureCode,
+            @Param("now") Instant now,
+            @Param("staleBefore") Instant staleBefore,
+            @Param("maxAttempts") int maxAttempts);
 
     @Transactional
     @Modifying(clearAutomatically = true, flushAutomatically = true)

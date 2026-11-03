@@ -65,24 +65,44 @@ class MediaProcessingWorkerTest {
     }
 
     @Test
-    void shouldDoNothingWhenClaimIsLost() {
-        when(assetRepository.claimForProcessing(MEDIA_ID, MediaStatus.PROCESSING, NOW, NOW.minus(STALE)))
+    void shouldMarkExhaustedWhenClaimIsLost() {
+        when(assetRepository.claimForProcessing(
+                        eq(MEDIA_ID),
+                        eq(MediaStatus.PROCESSING),
+                        eq(NOW),
+                        eq(NOW.minus(STALE)),
+                        any(UUID.class),
+                        eq(2)))
                 .thenReturn(0);
 
         worker.process(MEDIA_ID);
 
-        verify(assetRepository, never()).findById(any());
+        verify(assetRepository)
+                .markFailedIfExhausted(
+                        eq(MEDIA_ID),
+                        eq(MediaErrorCodes.PROCESSING_FAILED),
+                        eq(NOW),
+                        eq(NOW.minus(STALE)),
+                        eq(2));
         verify(storage, never()).get(anyString());
         verify(events, never()).publishEvent(any());
     }
 
     @Test
-    void shouldProcessClaimedMediaAndPublishReadyEvent() {
+    void shouldProcessClaimedMediaAndPublishReadyEventWithFencedLease() {
         MediaAssetEntity asset = processingAsset();
         byte[] bytes = new byte[] {1, 2, 3};
-        when(assetRepository.claimForProcessing(MEDIA_ID, MediaStatus.PROCESSING, NOW, NOW.minus(STALE)))
+        when(assetRepository.claimForProcessing(
+                        eq(MEDIA_ID),
+                        eq(MediaStatus.PROCESSING),
+                        eq(NOW),
+                        eq(NOW.minus(STALE)),
+                        any(UUID.class),
+                        eq(2)))
                 .thenReturn(1);
         when(assetRepository.findById(MEDIA_ID)).thenReturn(Optional.of(asset));
+        when(storage.head("private/original"))
+                .thenReturn(new MediaStoragePort.StoredObject(3, "image/jpeg"));
         when(storage.get("private/original")).thenReturn(bytes);
         when(imageProcessor.process(bytes))
                 .thenReturn(
@@ -96,12 +116,11 @@ class MediaProcessingWorkerTest {
                                                 1200,
                                                 800,
                                                 bytes))));
-        when(assetRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(assetRepository.markReadyIfClaimed(eq(MEDIA_ID), any(UUID.class), eq(NOW)))
+                .thenReturn(1);
 
         worker.process(MEDIA_ID);
 
-        assertThat(asset.getStatus()).isEqualTo(MediaStatus.READY);
-        assertThat(asset.getProcessingStartedAt()).isNull();
         ArgumentCaptor<MediaVariantEntity> variantCaptor =
                 ArgumentCaptor.forClass(MediaVariantEntity.class);
         verify(variantRepository).save(variantCaptor.capture());
@@ -112,16 +131,60 @@ class MediaProcessingWorkerTest {
         ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
         verify(events).publishEvent(eventCaptor.capture());
         assertThat(eventCaptor.getValue()).isInstanceOf(MediaReady.class);
-        verify(assetRepository, never()).releaseProcessingClaim(any(), any());
+        verify(assetRepository, never()).releaseProcessingClaim(any(), any(), any());
+    }
+
+    @Test
+    void shouldNotPublishReadyEventWhenArchiveWinsDuringProcessing() {
+        MediaAssetEntity asset = processingAsset();
+        byte[] bytes = new byte[] {1, 2, 3};
+        when(assetRepository.claimForProcessing(
+                        eq(MEDIA_ID),
+                        eq(MediaStatus.PROCESSING),
+                        eq(NOW),
+                        eq(NOW.minus(STALE)),
+                        any(UUID.class),
+                        eq(2)))
+                .thenReturn(1);
+        when(assetRepository.findById(MEDIA_ID)).thenReturn(Optional.of(asset));
+        when(storage.head("private/original"))
+                .thenReturn(new MediaStoragePort.StoredObject(3, "image/jpeg"));
+        when(storage.get("private/original")).thenReturn(bytes);
+        when(imageProcessor.process(bytes))
+                .thenReturn(
+                        new MediaImageProcessor.ProcessedImage(
+                                1200,
+                                800,
+                                List.of(
+                                        new MediaImageProcessor.GeneratedVariant(
+                                                MediaVariantType.CARD,
+                                                MediaVariantFormat.WEBP,
+                                                1200,
+                                                800,
+                                                bytes))));
+        when(assetRepository.markReadyIfClaimed(eq(MEDIA_ID), any(UUID.class), eq(NOW)))
+                .thenReturn(0);
+
+        worker.process(MEDIA_ID);
+
+        verify(events, never()).publishEvent(any());
     }
 
     @Test
     void shouldReleaseClaimAndRetryOnTransientFailure() {
         MediaAssetEntity asset = processingAsset();
         byte[] bytes = new byte[] {1, 2, 3};
-        when(assetRepository.claimForProcessing(MEDIA_ID, MediaStatus.PROCESSING, NOW, NOW.minus(STALE)))
+        when(assetRepository.claimForProcessing(
+                        eq(MEDIA_ID),
+                        eq(MediaStatus.PROCESSING),
+                        eq(NOW),
+                        eq(NOW.minus(STALE)),
+                        any(UUID.class),
+                        eq(2)))
                 .thenReturn(1, 1);
         when(assetRepository.findById(MEDIA_ID)).thenReturn(Optional.of(asset));
+        when(storage.head("private/original"))
+                .thenReturn(new MediaStoragePort.StoredObject(3, "image/jpeg"));
         when(storage.get("private/original"))
                 .thenThrow(new com.hotel.media.api.MediaStorageException("down", new RuntimeException()))
                 .thenReturn(bytes);
@@ -137,34 +200,88 @@ class MediaProcessingWorkerTest {
                                                 480,
                                                 320,
                                                 bytes))));
-        when(assetRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(assetRepository.releaseProcessingClaim(eq(MEDIA_ID), any(UUID.class), eq(NOW)))
+                .thenReturn(1);
+        when(assetRepository.markReadyIfClaimed(eq(MEDIA_ID), any(UUID.class), eq(NOW)))
+                .thenReturn(1);
 
         worker.process(MEDIA_ID);
 
-        verify(assetRepository).releaseProcessingClaim(MEDIA_ID, NOW);
-        assertThat(asset.getStatus()).isEqualTo(MediaStatus.READY);
+        verify(assetRepository)
+                .releaseProcessingClaim(eq(MEDIA_ID), any(UUID.class), eq(NOW));
         verify(assetRepository, times(2))
-                .claimForProcessing(MEDIA_ID, MediaStatus.PROCESSING, NOW, NOW.minus(STALE));
+                .claimForProcessing(
+                        eq(MEDIA_ID),
+                        eq(MediaStatus.PROCESSING),
+                        eq(NOW),
+                        eq(NOW.minus(STALE)),
+                        any(UUID.class),
+                        eq(2));
+        verify(assetRepository).markReadyIfClaimed(eq(MEDIA_ID), any(UUID.class), eq(NOW));
     }
 
     @Test
-    void shouldMarkFailedAfterMaxAttemptsAndNotReleaseFinalClaim() {
+    void shouldMarkExhaustedAfterMaxAttempts() {
         MediaAssetEntity asset = processingAsset();
-        when(assetRepository.claimForProcessing(MEDIA_ID, MediaStatus.PROCESSING, NOW, NOW.minus(STALE)))
-                .thenReturn(1);
+        when(assetRepository.claimForProcessing(
+                        eq(MEDIA_ID),
+                        eq(MediaStatus.PROCESSING),
+                        eq(NOW),
+                        eq(NOW.minus(STALE)),
+                        any(UUID.class),
+                        eq(2)))
+                .thenReturn(1, 1);
         when(assetRepository.findById(MEDIA_ID)).thenReturn(Optional.of(asset));
+        when(storage.head("private/original"))
+                .thenReturn(new MediaStoragePort.StoredObject(3, "image/jpeg"));
         when(storage.get("private/original"))
                 .thenThrow(new com.hotel.media.api.MediaStorageException("down", new RuntimeException()));
-        when(assetRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(assetRepository.releaseProcessingClaim(eq(MEDIA_ID), any(UUID.class), eq(NOW)))
+                .thenReturn(1);
 
         worker.process(MEDIA_ID);
 
-        assertThat(asset.getStatus()).isEqualTo(MediaStatus.FAILED);
-        assertThat(asset.getFailureCode()).isEqualTo(MediaErrorCodes.PROCESSING_FAILED);
-        verify(assetRepository, times(1)).releaseProcessingClaim(eq(MEDIA_ID), any());
         verify(assetRepository, times(2))
-                .claimForProcessing(MEDIA_ID, MediaStatus.PROCESSING, NOW, NOW.minus(STALE));
+                .releaseProcessingClaim(eq(MEDIA_ID), any(UUID.class), eq(NOW));
+        verify(assetRepository)
+                .markFailedIfExhausted(
+                        eq(MEDIA_ID),
+                        eq(MediaErrorCodes.PROCESSING_FAILED),
+                        eq(NOW),
+                        eq(NOW.minus(STALE)),
+                        eq(2));
         verify(events, never()).publishEvent(any());
+    }
+
+    @Test
+    void shouldRejectOversizedStoredOriginalBeforeReadingIt() {
+        MediaAssetEntity asset = processingAsset();
+        when(assetRepository.claimForProcessing(
+                        eq(MEDIA_ID),
+                        eq(MediaStatus.PROCESSING),
+                        eq(NOW),
+                        eq(NOW.minus(STALE)),
+                        any(UUID.class),
+                        eq(2)))
+                .thenReturn(1, 0);
+        when(assetRepository.findById(MEDIA_ID)).thenReturn(Optional.of(asset));
+        when(storage.head("private/original"))
+                .thenReturn(
+                        new MediaStoragePort.StoredObject(
+                                16L * 1024 * 1024, "image/jpeg"));
+        when(assetRepository.releaseProcessingClaim(eq(MEDIA_ID), any(UUID.class), eq(NOW)))
+                .thenReturn(1);
+
+        worker.process(MEDIA_ID);
+
+        verify(storage, never()).get(anyString());
+        verify(assetRepository)
+                .markFailedIfExhausted(
+                        eq(MEDIA_ID),
+                        eq(MediaErrorCodes.FILE_TOO_LARGE),
+                        eq(NOW),
+                        eq(NOW.minus(STALE)),
+                        eq(2));
     }
 
     private static MediaAssetEntity processingAsset() {

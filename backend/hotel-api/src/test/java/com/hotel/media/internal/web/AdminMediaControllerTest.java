@@ -13,10 +13,14 @@ import com.hotel.catalog.api.ActiveRoomType;
 import com.hotel.catalog.api.RoomTypeId;
 import com.hotel.config.ClockConfig;
 import com.hotel.config.SecurityConfig;
+import com.hotel.media.api.MediaStorageException;
 import com.hotel.media.internal.application.MediaAdminService;
 import com.hotel.media.internal.application.MediaAdminService.PageResult;
 import com.hotel.media.internal.application.MediaStoragePort;
 import com.hotel.media.internal.application.MediaUploadService;
+import com.hotel.media.internal.domain.MediaErrorCodes;
+import com.hotel.sharedkernel.api.DomainError;
+import com.hotel.sharedkernel.api.DomainErrorCategory;
 import com.hotel.web.AdminJwtAuthenticationEntryPoint;
 import com.hotel.web.AdminJwtTestConfiguration;
 import com.hotel.web.GlobalExceptionHandler;
@@ -104,6 +108,18 @@ class AdminMediaControllerTest {
     }
 
     @Test
+    void shouldReturn503WithMediaCodeWhenStorageIsUnavailable() throws Exception {
+        when(adminService.list(null, null, false, 0, 20))
+                .thenThrow(new MediaStorageException("down", new RuntimeException()));
+
+        mockMvc.perform(
+                        get("/admin-api/media")
+                                .header("Authorization", "Bearer " + token("MANAGER")))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("media.storage_unavailable"));
+    }
+
+    @Test
     void shouldExposeActiveRoomTypesForMediaAssignment() throws Exception {
         when(adminService.activeRoomTypes())
                 .thenReturn(
@@ -125,6 +141,84 @@ class AdminMediaControllerTest {
                                 .value("0199f2c0-0000-7000-8000-000000000301"))
                 .andExpect(jsonPath("$[0].nameTr").value("Kemerli Mağara Süit"))
                 .andExpect(jsonPath("$[0].nameEn").value("Arched Cave Suite"));
+    }
+
+    @Test
+    void shouldReturn415WhenUploadContentTypeIsUnsupported() throws Exception {
+        when(uploadService.start(org.mockito.ArgumentMatchers.any()))
+                .thenThrow(
+                        new DomainError(
+                                MediaErrorCodes.INVALID_CONTENT_TYPE,
+                                "unsupported",
+                                DomainErrorCategory.VALIDATION));
+
+        mockMvc.perform(
+                        post("/admin-api/media/uploads")
+                                .header("Authorization", "Bearer " + token("MANAGER"))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
+                                        {"fileName":"x.svg","contentType":"image/svg+xml","sizeBytes":1000}
+                                        """))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(jsonPath("$.code").value(MediaErrorCodes.INVALID_CONTENT_TYPE));
+    }
+
+    @Test
+    void shouldReturn422WhenStoredImageIsInvalid() throws Exception {
+        UUID mediaId = UUID.fromString("0199f2c0-0000-7000-8000-000000000401");
+        when(uploadService.complete(mediaId))
+                .thenThrow(
+                        new DomainError(
+                                MediaErrorCodes.INVALID_IMAGE,
+                                "invalid",
+                                DomainErrorCategory.VALIDATION));
+
+        mockMvc.perform(
+                        post("/admin-api/media/{id}/complete", mediaId)
+                                .header("Authorization", "Bearer " + token("MANAGER")))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.code").value(MediaErrorCodes.INVALID_IMAGE));
+    }
+
+    @Test
+    void shouldReturn409WhenUploadPresignExpired() throws Exception {
+        UUID mediaId = UUID.fromString("0199f2c0-0000-7000-8000-000000000401");
+        when(uploadService.complete(mediaId))
+                .thenThrow(
+                        new DomainError(
+                                MediaErrorCodes.UPLOAD_EXPIRED,
+                                "expired",
+                                DomainErrorCategory.VALIDATION));
+
+        mockMvc.perform(
+                        post("/admin-api/media/{id}/complete", mediaId)
+                                .header("Authorization", "Bearer " + token("MANAGER")))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value(MediaErrorCodes.UPLOAD_EXPIRED));
+    }
+
+    @Test
+    void shouldReturn201WithPresignedUploadForManager() throws Exception {
+        UUID mediaId = UUID.fromString("0199f2c0-0000-7000-8000-000000000401");
+        when(uploadService.start(org.mockito.ArgumentMatchers.any()))
+                .thenReturn(
+                        new MediaUploadService.StartResult(
+                                mediaId,
+                                "http://localhost:9000/upload",
+                                Instant.parse("2026-11-03T10:10:00Z")));
+
+        mockMvc.perform(
+                        post("/admin-api/media/uploads")
+                                .header("Authorization", "Bearer " + token("MANAGER"))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
+                                        {"fileName":"room.jpg","contentType":"image/jpeg","sizeBytes":1000}
+                                        """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.mediaId").value(mediaId.toString()))
+                .andExpect(jsonPath("$.uploadUrl").value("http://localhost:9000/upload"));
     }
 
     @Test

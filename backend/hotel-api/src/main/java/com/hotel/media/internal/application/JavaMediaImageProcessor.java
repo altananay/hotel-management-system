@@ -222,8 +222,11 @@ public class JavaMediaImageProcessor implements MediaImageProcessor {
         }
         int cropX = (source.getWidth() - cropWidth) / 2;
         int cropY = (source.getHeight() - cropHeight) / 2;
+        // Never upscale: small-but-valid images keep their native crop dimensions.
+        int outputWidth = Math.min(targetWidth, cropWidth);
+        int outputHeight = Math.min(targetHeight, cropHeight);
         BufferedImage target =
-                new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
+                new BufferedImage(outputWidth, outputHeight, BufferedImage.TYPE_INT_RGB);
         Graphics2D graphics = target.createGraphics();
         try {
             graphics.setRenderingHint(
@@ -235,8 +238,8 @@ public class JavaMediaImageProcessor implements MediaImageProcessor {
                     source,
                     0,
                     0,
-                    targetWidth,
-                    targetHeight,
+                    outputWidth,
+                    outputHeight,
                     cropX,
                     cropY,
                     cropX + cropWidth,

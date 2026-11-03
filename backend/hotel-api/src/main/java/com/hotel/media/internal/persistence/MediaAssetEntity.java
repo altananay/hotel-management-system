@@ -69,6 +69,9 @@ public class MediaAssetEntity {
     @Column(name = "processing_started_at")
     private Instant processingStartedAt;
 
+    @Column(name = "processing_lease_id")
+    private UUID processingLeaseId;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -110,6 +113,7 @@ public class MediaAssetEntity {
         this.failureCode = null;
         this.processingAttempts = 0;
         this.processingStartedAt = null;
+        this.processingLeaseId = null;
         this.updatedAt = now;
     }
 
@@ -117,6 +121,7 @@ public class MediaAssetEntity {
         this.status = MediaStatus.READY;
         this.failureCode = null;
         this.processingStartedAt = null;
+        this.processingLeaseId = null;
         this.updatedAt = now;
     }
 
@@ -124,6 +129,7 @@ public class MediaAssetEntity {
         this.status = MediaStatus.FAILED;
         this.failureCode = failureCode;
         this.processingStartedAt = null;
+        this.processingLeaseId = null;
         this.updatedAt = now;
     }
 
@@ -132,6 +138,7 @@ public class MediaAssetEntity {
         this.failureCode = null;
         this.processingAttempts = 0;
         this.processingStartedAt = null;
+        this.processingLeaseId = null;
         this.updatedAt = now;
     }
 
@@ -172,6 +179,8 @@ public class MediaAssetEntity {
         this.archivedAt = now;
         this.publishedAt = null;
         this.cover = false;
+        this.processingStartedAt = null;
+        this.processingLeaseId = null;
         this.updatedAt = now;
     }
 
@@ -269,6 +278,10 @@ public class MediaAssetEntity {
 
     public Instant getProcessingStartedAt() {
         return processingStartedAt;
+    }
+
+    public UUID getProcessingLeaseId() {
+        return processingLeaseId;
     }
 
     public Instant getCreatedAt() {

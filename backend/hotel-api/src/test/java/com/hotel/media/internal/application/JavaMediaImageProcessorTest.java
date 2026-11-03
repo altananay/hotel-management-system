@@ -59,12 +59,15 @@ class JavaMediaImageProcessorTest {
     }
 
     @Test
-    void shouldAcceptPngInput() throws Exception {
+    void shouldAcceptPngInputWithoutUpscalingSmallValidImages() throws Exception {
         byte[] png = png(800, 600);
 
         MediaImageProcessor.ProcessedImage processed = processor.process(png);
 
         assertThat(processed.variants()).hasSize(6);
+        assertVariant(processed, MediaVariantType.THUMB, 480, 320);
+        assertVariant(processed, MediaVariantType.CARD, 800, 533);
+        assertVariant(processed, MediaVariantType.COVER, 800, 533);
     }
 
     @Test
@@ -86,6 +89,8 @@ class JavaMediaImageProcessorTest {
         assertThat(original.getDirectoriesOfType(GpsDirectory.class)).isNotEmpty();
 
         MediaImageProcessor.ProcessedImage processed = processor.process(withMetadata);
+        // Orientation 6 rotates 1200x800 to 800x1200; 3:2 crop caps card at 800x533.
+        assertVariant(processed, MediaVariantType.CARD, 800, 533);
         for (MediaImageProcessor.GeneratedVariant variant : processed.variants()) {
             if (variant.format() != MediaVariantFormat.JPEG) {
                 continue;

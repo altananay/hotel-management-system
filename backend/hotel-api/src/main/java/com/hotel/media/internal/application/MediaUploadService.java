@@ -56,7 +56,7 @@ public class MediaUploadService {
                         id, MediaType.PHOTO, key, contentType, command.sizeBytes(), now);
         assetRepository.save(asset);
         MediaStoragePort.PresignedUpload upload =
-                storage.presignPut(key, contentType, presignTtl);
+                storage.presignPut(key, contentType, command.sizeBytes(), presignTtl);
         return new StartResult(id, upload.url(), upload.expiresAt());
     }
 

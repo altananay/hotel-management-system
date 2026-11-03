@@ -259,6 +259,7 @@ jobs:
           name: admin-e2e-failure
           path: |
             e2e/test-results
+            /tmp/hotel-api.log
             /tmp/admin-api.log
             /tmp/web.log
             /tmp/admin-web.log

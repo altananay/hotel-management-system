@@ -3,6 +3,8 @@ package com.hotel.media;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.metadata.exif.GpsDirectory;
 import com.hotel.media.internal.application.MediaAdminService;
 import com.hotel.media.internal.application.MediaAdminService.UpdateCommand;
 import com.hotel.media.internal.application.MediaStoragePort;
@@ -10,14 +12,18 @@ import com.hotel.media.internal.application.MediaUploadService;
 import com.hotel.media.internal.application.MediaUploadService.StartCommand;
 import com.hotel.media.internal.domain.MediaErrorCodes;
 import com.hotel.media.internal.domain.MediaStatus;
+import com.hotel.media.internal.domain.MediaVariantFormat;
 import com.hotel.media.internal.persistence.MediaAssetEntity;
 import com.hotel.media.internal.persistence.MediaAssetJpaRepository;
+import com.hotel.media.internal.persistence.MediaVariantEntity;
 import com.hotel.media.internal.persistence.MediaVariantJpaRepository;
 import com.hotel.sharedkernel.api.DomainError;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -25,6 +31,7 @@ import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import javax.imageio.ImageIO;
 import org.flywaydb.core.Flyway;
@@ -195,7 +202,11 @@ class MediaIT {
     @Test
     void shouldUploadProcessPublishExposeAndThenHideMedia() throws Exception {
         UUID roomTypeId = insertRoomType(true);
-        byte[] jpeg = jpeg(2400, 1600);
+        byte[] jpeg = withExifGps(jpeg(2400, 1600));
+        assertThat(
+                        ImageMetadataReader.readMetadata(new ByteArrayInputStream(jpeg))
+                                .getDirectoriesOfType(GpsDirectory.class))
+                .isNotEmpty();
 
         UUID mediaId = uploadAndWaitReady(jpeg);
 
@@ -204,6 +215,17 @@ class MediaIT {
         assertThat(ready.getWidth()).isEqualTo(2400);
         assertThat(ready.getHeight()).isEqualTo(1600);
         assertThat(variantRepository.findByMediaAssetId(mediaId)).hasSize(6);
+        for (MediaVariantEntity variant : variantRepository.findByMediaAssetId(mediaId)) {
+            if (variant.getFormat() != MediaVariantFormat.JPEG) {
+                continue;
+            }
+            byte[] variantBytes = storage.get(variant.getPrivateStorageKey());
+            assertThat(
+                            ImageMetadataReader.readMetadata(
+                                            new ByteArrayInputStream(variantBytes))
+                                    .getDirectoriesOfType(GpsDirectory.class))
+                    .isEmpty();
+        }
         assertThat(storage.head("private/" + mediaId + "/original")).isNotNull();
         assertThat(storage.head("private/" + mediaId + "/card.webp")).isNotNull();
         assertThat(storage.head("private/" + mediaId + "/card.jpg")).isNotNull();
@@ -309,7 +331,20 @@ class MediaIT {
                         HttpResponse.BodyHandlers.ofString());
         assertThat(hiddenObject.statusCode()).isIn(403, 404);
 
+        // Re-publish, then archive while published: public copies must be removed.
+        adminService.publish(mediaId);
+        HttpResponse<String> republishedObject =
+                httpClient.send(
+                        HttpRequest.newBuilder(URI.create(publicCardUrl)).GET().build(),
+                        HttpResponse.BodyHandlers.ofString());
+        assertThat(republishedObject.statusCode()).isEqualTo(200);
+
         adminService.archive(mediaId);
+        HttpResponse<String> archivedObject =
+                httpClient.send(
+                        HttpRequest.newBuilder(URI.create(publicCardUrl)).GET().build(),
+                        HttpResponse.BodyHandlers.ofString());
+        assertThat(archivedObject.statusCode()).isIn(403, 404);
         MediaAssetEntity archived = assetRepository.findById(mediaId).orElseThrow();
         assertThat(archived.getArchivedAt()).isNotNull();
         assertThat(archived.getPublishedAt()).isNull();
@@ -323,12 +358,15 @@ class MediaIT {
                 uploadService.start(new StartCommand("room.jpg", "image/jpeg", jpeg.length));
         assertThat(start.expiresAt()).isAfter(Instant.now().plus(Duration.ofMinutes(9)));
 
-        byte[] svg = "<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>".getBytes();
+        byte[] invalid =
+                java.util.Arrays.copyOf(
+                        "<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>".getBytes(),
+                        jpeg.length);
         HttpResponse<String> put =
                 httpClient.send(
                         HttpRequest.newBuilder(URI.create(start.uploadUrl()))
                                 .header("Content-Type", "image/jpeg")
-                                .PUT(HttpRequest.BodyPublishers.ofByteArray(svg))
+                                .PUT(HttpRequest.BodyPublishers.ofByteArray(invalid))
                                 .build(),
                         HttpResponse.BodyHandlers.ofString());
         assertThat(put.statusCode()).isEqualTo(200);
@@ -393,6 +431,186 @@ class MediaIT {
                                         .isEqualTo(MediaErrorCodes.ROOM_TYPE_NOT_FOUND));
     }
 
+    @Test
+    void shouldRejectExpiredUploadCompletion() {
+        UUID mediaId = UUID.randomUUID();
+        assetRepository.save(
+                new MediaAssetEntity(
+                        mediaId,
+                        com.hotel.media.internal.domain.MediaType.PHOTO,
+                        "private/" + mediaId + "/original",
+                        "image/jpeg",
+                        1000,
+                        Instant.now().minus(Duration.ofMinutes(11))));
+
+        assertThatThrownBy(() -> uploadService.complete(mediaId))
+                .isInstanceOf(DomainError.class)
+                .satisfies(
+                        error ->
+                                assertThat(((DomainError) error).code())
+                                        .isEqualTo(MediaErrorCodes.UPLOAD_EXPIRED));
+    }
+
+    @Test
+    void shouldReorderAllNonArchivedMediaAtomically() {
+        UUID roomTypeId = insertRoomType(true);
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        insertMedia(first, roomTypeId, 0, false, "Oda", "Room");
+        insertMedia(second, roomTypeId, 1, false, "Oda", "Room");
+
+        adminService.reorder(roomTypeId, List.of(second, first));
+
+        assertThat(
+                        jdbcTemplate.queryForList(
+                                "SELECT display_order FROM media.media_assets "
+                                        + "WHERE room_type_id = ? ORDER BY display_order",
+                                Integer.class,
+                                roomTypeId))
+                .containsExactly(0, 1);
+        assertThat(
+                        jdbcTemplate.queryForObject(
+                                "SELECT display_order FROM media.media_assets WHERE id = ?",
+                                Integer.class,
+                                second))
+                .isZero();
+    }
+
+    @Test
+    void shouldSerializeConcurrentCoverChangesWithoutDeadlockOr500() throws Exception {
+        UUID roomTypeId = insertRoomType(true);
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        insertMedia(first, roomTypeId, 0, false, "Oda", "Room");
+        insertMedia(second, roomTypeId, 1, false, "Oda", "Room");
+        jdbcTemplate.update(
+                "UPDATE media.media_assets SET published_at = now() WHERE id IN (?, ?)",
+                first,
+                second);
+
+        java.util.concurrent.ExecutorService pool =
+                java.util.concurrent.Executors.newFixedThreadPool(2);
+        java.util.concurrent.CountDownLatch start =
+                new java.util.concurrent.CountDownLatch(1);
+        try {
+            java.util.concurrent.Future<String> firstCall =
+                    pool.submit(
+                            () -> {
+                                start.await();
+                                try {
+                                    adminService.cover(first);
+                                    return "ok";
+                                } catch (DomainError error) {
+                                    return error.code();
+                                }
+                            });
+            java.util.concurrent.Future<String> secondCall =
+                    pool.submit(
+                            () -> {
+                                start.await();
+                                try {
+                                    adminService.cover(second);
+                                    return "ok";
+                                } catch (DomainError error) {
+                                    return error.code();
+                                }
+                            });
+            start.countDown();
+            assertThat(firstCall.get()).isIn("ok", MediaErrorCodes.COVER_CONFLICT);
+            assertThat(secondCall.get()).isIn("ok", MediaErrorCodes.COVER_CONFLICT);
+        } finally {
+            pool.shutdownNow();
+        }
+
+        assertThat(
+                        jdbcTemplate.queryForObject(
+                                "SELECT count(*) FROM media.media_assets "
+                                        + "WHERE room_type_id = ? AND is_cover = TRUE "
+                                        + "AND archived_at IS NULL",
+                                Integer.class,
+                                roomTypeId))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void shouldFenceLeaseAndMarkExhaustedProcessingFailed() {
+        UUID mediaId = UUID.randomUUID();
+        MediaAssetEntity asset =
+                new MediaAssetEntity(
+                        mediaId,
+                        com.hotel.media.internal.domain.MediaType.PHOTO,
+                        "private/" + mediaId + "/original",
+                        "image/jpeg",
+                        1000,
+                        Instant.now());
+        asset.markProcessing("image/jpeg", 1000, 1200, 800, Instant.now());
+        assetRepository.save(asset);
+        UUID claimed = UUID.randomUUID();
+        UUID stale = UUID.randomUUID();
+        assetRepository.claimForProcessing(
+                mediaId,
+                MediaStatus.PROCESSING,
+                Instant.now(),
+                Instant.now().minus(Duration.ofMinutes(10)),
+                claimed,
+                3);
+
+        assertThat(assetRepository.markReadyIfClaimed(mediaId, stale, Instant.now()))
+                .isZero();
+        assertThat(assetRepository.findById(mediaId).orElseThrow().getStatus())
+                .isEqualTo(MediaStatus.PROCESSING);
+        assertThat(assetRepository.releaseProcessingClaim(mediaId, stale, Instant.now()))
+                .isZero();
+
+        jdbcTemplate.update(
+                "UPDATE media.media_assets SET processing_attempts = 3, "
+                        + "processing_started_at = now() - interval '11 minutes' WHERE id = ?",
+                mediaId);
+        int exhausted =
+                assetRepository.markFailedIfExhausted(
+                        mediaId,
+                        MediaErrorCodes.PROCESSING_FAILED,
+                        Instant.now(),
+                        Instant.now().minus(Duration.ofMinutes(10)),
+                        3);
+        assertThat(exhausted).isEqualTo(1);
+        MediaAssetEntity failed = assetRepository.findById(mediaId).orElseThrow();
+        assertThat(failed.getStatus()).isEqualTo(MediaStatus.FAILED);
+        assertThat(failed.getProcessingLeaseId()).isNull();
+    }
+
+    @Test
+    void shouldExcludeArchivedProcessingMediaFromClaimAndRecovery() {
+        UUID mediaId = UUID.randomUUID();
+        MediaAssetEntity asset =
+                new MediaAssetEntity(
+                        mediaId,
+                        com.hotel.media.internal.domain.MediaType.PHOTO,
+                        "private/" + mediaId + "/original",
+                        "image/jpeg",
+                        1000,
+                        Instant.now());
+        asset.markProcessing("image/jpeg", 1000, 1200, 800, Instant.now());
+        asset.archive(Instant.now());
+        assetRepository.save(asset);
+
+        int claimed =
+                assetRepository.claimForProcessing(
+                        mediaId,
+                        MediaStatus.PROCESSING,
+                        Instant.now(),
+                        Instant.now().minus(Duration.ofMinutes(10)),
+                        UUID.randomUUID(),
+                        3);
+
+        assertThat(claimed).isZero();
+        assertThat(
+                        assetRepository.findStaleProcessing(
+                                MediaStatus.PROCESSING,
+                                Instant.now().plus(Duration.ofMinutes(1))))
+                .isEmpty();
+    }
+
     private UUID uploadAndWaitReady(byte[] jpeg) throws Exception {
         MediaUploadService.StartResult start =
                 uploadService.start(new StartCommand("room.jpg", "image/jpeg", jpeg.length));
@@ -455,6 +673,51 @@ class MediaIT {
                 cover,
                 altTr,
                 altEn);
+    }
+
+    /** Inserts a minimal EXIF APP1 segment with orientation and one GPS tag into a JPEG. */
+    private static byte[] withExifGps(byte[] jpeg) throws Exception {
+        ByteArrayOutputStream tiff = new ByteArrayOutputStream();
+        DataOutputStream data = new DataOutputStream(tiff);
+        data.write(new byte[] {'I', 'I', 0x2A, 0x00});
+        data.writeInt(Integer.reverseBytes(8));
+        data.writeShort(Short.reverseBytes((short) 2));
+        writeEntry(data, 0x0112, 3, 1, 6);
+        writeEntry(data, 0x8825, 4, 1, 38);
+        data.writeInt(0);
+        data.writeShort(Short.reverseBytes((short) 1));
+        writeEntry(data, 0x0001, 2, 2, 'N');
+        data.writeInt(0);
+        data.flush();
+
+        ByteArrayOutputStream app1 = new ByteArrayOutputStream();
+        DataOutputStream segment = new DataOutputStream(app1);
+        segment.writeByte(0xFF);
+        segment.writeByte(0xE1);
+        segment.writeShort(2 + 6 + tiff.size());
+        segment.write(new byte[] {'E', 'x', 'i', 'f', 0, 0});
+        segment.write(tiff.toByteArray());
+        segment.flush();
+
+        byte[] result = new byte[jpeg.length + app1.size()];
+        result[0] = jpeg[0];
+        result[1] = jpeg[1];
+        System.arraycopy(app1.toByteArray(), 0, result, 2, app1.size());
+        System.arraycopy(jpeg, 2, result, 2 + app1.size(), jpeg.length - 2);
+        return result;
+    }
+
+    private static void writeEntry(
+            DataOutputStream data, int tag, int type, int count, int value) throws Exception {
+        data.writeShort(Short.reverseBytes((short) tag));
+        data.writeShort(Short.reverseBytes((short) type));
+        data.writeInt(Integer.reverseBytes(count));
+        if (type == 3) {
+            data.writeShort(Short.reverseBytes((short) value));
+            data.writeShort(0);
+        } else {
+            data.writeInt(Integer.reverseBytes(value));
+        }
     }
 
     private static byte[] jpeg(int width, int height) throws Exception {

@@ -7,6 +7,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -31,6 +34,11 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final String MEDIA_STORAGE_UNAVAILABLE = "media.storage_unavailable";
+    private static final String MEDIA_INVALID_CONTENT_TYPE = "media.invalid_content_type";
+    private static final String MEDIA_INVALID_IMAGE = "media.invalid_image";
+    private static final String MEDIA_IMAGE_TOO_LARGE = "media.image_too_large";
+    private static final String MEDIA_UPLOAD_EXPIRED = "media.upload_expired";
 
     @ExceptionHandler({
         MethodArgumentNotValidException.class,
@@ -49,14 +57,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DomainError.class)
     public ResponseEntity<ProblemDetail> handleDomainError(
             DomainError ex, HttpServletRequest request) {
-        HttpStatus status =
-                switch (ex.category()) {
-                    case VALIDATION -> HttpStatus.BAD_REQUEST;
-                    case NOT_FOUND -> HttpStatus.NOT_FOUND;
-                    case CONFLICT -> HttpStatus.CONFLICT;
-                    case FORBIDDEN -> HttpStatus.FORBIDDEN;
-                    case INTERNAL -> HttpStatus.INTERNAL_SERVER_ERROR;
-                };
+        HttpStatus status = statusFor(ex);
         String detail =
                 ex.category() == DomainErrorCategory.INTERNAL
                         ? ProblemDetailFactory.defaultDetailFor(status)
@@ -95,7 +96,32 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ProblemDetail> handleMediaStorageUnavailable(
             MediaStorageException ex, HttpServletRequest request) {
         log.warn("Media storage is unavailable for request {}", request.getRequestURI(), ex);
-        return problem(HttpStatus.SERVICE_UNAVAILABLE, request);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(
+                        ProblemDetailFactory.forStatus(
+                                HttpStatus.SERVICE_UNAVAILABLE,
+                                request,
+                                MEDIA_STORAGE_UNAVAILABLE,
+                                ProblemDetailFactory.defaultDetailFor(
+                                        HttpStatus.SERVICE_UNAVAILABLE)));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ProblemDetail> handleDataIntegrityViolation(
+            DataIntegrityViolationException ex, HttpServletRequest request) {
+        log.warn("Database constraint conflict for request {}", request.getRequestURI(), ex);
+        return problem(HttpStatus.CONFLICT, request);
+    }
+
+    @ExceptionHandler({
+        CannotAcquireLockException.class,
+        PessimisticLockingFailureException.class
+    })
+    public ResponseEntity<ProblemDetail> handleConcurrentLockConflict(
+            RuntimeException ex, HttpServletRequest request) {
+        log.warn("Concurrent database lock conflict for request {}", request.getRequestURI(), ex);
+        return problem(HttpStatus.CONFLICT, request);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
@@ -112,6 +138,22 @@ public class GlobalExceptionHandler {
             status = HttpStatus.INTERNAL_SERVER_ERROR;
         }
         return problem(status, request);
+    }
+
+    private static HttpStatus statusFor(DomainError error) {
+        return switch (error.code()) {
+            case MEDIA_INVALID_CONTENT_TYPE -> HttpStatus.UNSUPPORTED_MEDIA_TYPE;
+            case MEDIA_INVALID_IMAGE, MEDIA_IMAGE_TOO_LARGE -> HttpStatus.UNPROCESSABLE_ENTITY;
+            case MEDIA_UPLOAD_EXPIRED -> HttpStatus.CONFLICT;
+            default ->
+                    switch (error.category()) {
+                        case VALIDATION -> HttpStatus.BAD_REQUEST;
+                        case NOT_FOUND -> HttpStatus.NOT_FOUND;
+                        case CONFLICT -> HttpStatus.CONFLICT;
+                        case FORBIDDEN -> HttpStatus.FORBIDDEN;
+                        case INTERNAL -> HttpStatus.INTERNAL_SERVER_ERROR;
+                    };
+        };
     }
 
     @ExceptionHandler(Exception.class)

@@ -3,6 +3,7 @@ package com.hotel.media.internal.application;
 import com.fasterxml.uuid.Generators;
 import com.hotel.media.api.MediaReady;
 import com.hotel.media.internal.domain.MediaErrorCodes;
+import com.hotel.media.internal.domain.MediaRules;
 import com.hotel.media.internal.domain.MediaStatus;
 import com.hotel.media.internal.domain.MediaVariantFormat;
 import com.hotel.media.internal.domain.MediaVariantType;
@@ -52,33 +53,64 @@ public class MediaProcessingWorker {
     }
 
     public void process(UUID mediaId) {
+        String lastFailure = MediaErrorCodes.PROCESSING_FAILED;
         for (int attempt = 0; attempt < maxAttempts; attempt++) {
             Instant now = clock.instant();
+            UUID leaseId = UUID.randomUUID();
             int claimed =
                     assetRepository.claimForProcessing(
-                            mediaId, MediaStatus.PROCESSING, now, now.minus(staleThreshold));
+                            mediaId,
+                            MediaStatus.PROCESSING,
+                            now,
+                            now.minus(staleThreshold),
+                            leaseId,
+                            maxAttempts);
             if (claimed == 0) {
+                markExhausted(mediaId, now, lastFailure);
                 return;
             }
             try {
-                processOnce(mediaId);
-                return;
-            } catch (RuntimeException ex) {
-                if (attempt + 1 >= maxAttempts) {
-                    markFailed(mediaId, failureCode(ex));
+                if (!processOnce(mediaId, leaseId)) {
                     return;
                 }
-                assetRepository.releaseProcessingClaim(mediaId, clock.instant());
+                return;
+            } catch (RuntimeException ex) {
+                lastFailure = failureCode(ex);
+                if (assetRepository.releaseProcessingClaim(
+                                mediaId, leaseId, clock.instant())
+                        == 0) {
+                    return;
+                }
             }
         }
+        markExhausted(mediaId, clock.instant(), lastFailure);
     }
 
-    private void processOnce(UUID mediaId) {
+    private boolean processOnce(UUID mediaId, UUID leaseId) {
         MediaAssetEntity asset =
                 assetRepository
                         .findById(mediaId)
                         .orElseThrow(() -> notFound());
+        MediaStoragePort.StoredObject stored = storage.head(asset.getStorageKey());
+        if (stored == null) {
+            throw new DomainError(
+                    MediaErrorCodes.INVALID_IMAGE,
+                    "The uploaded image was not found.",
+                    DomainErrorCategory.VALIDATION);
+        }
+        if (stored.sizeBytes() > MediaRules.MAX_UPLOAD_BYTES) {
+            throw new DomainError(
+                    MediaErrorCodes.FILE_TOO_LARGE,
+                    "The uploaded image exceeds the allowed size.",
+                    DomainErrorCategory.VALIDATION);
+        }
         byte[] original = storage.get(asset.getStorageKey());
+        if (original.length > MediaRules.MAX_UPLOAD_BYTES) {
+            throw new DomainError(
+                    MediaErrorCodes.FILE_TOO_LARGE,
+                    "The uploaded image exceeds the allowed size.",
+                    DomainErrorCategory.VALIDATION);
+        }
         MediaImageProcessor.ProcessedImage processed = imageProcessor.process(original);
         variantRepository.deleteByMediaAssetId(mediaId);
         Instant now = clock.instant();
@@ -104,19 +136,27 @@ public class MediaProcessingWorker {
                             generated.bytes().length,
                             now));
         }
-        asset.markReady(now);
-        assetRepository.save(asset);
-        events.publishEvent(new MediaReady(asset.getId(), asset.getRoomTypeId()));
-    }
-
-    private void markFailed(UUID mediaId, String failureCode) {
+        int updated = assetRepository.markReadyIfClaimed(mediaId, leaseId, now);
+        if (updated == 0) {
+            return false;
+        }
         assetRepository
                 .findById(mediaId)
                 .ifPresent(
-                        asset -> {
-                            asset.markFailed(failureCode, clock.instant());
-                            assetRepository.save(asset);
-                        });
+                        current ->
+                                events.publishEvent(
+                                        new MediaReady(
+                                                current.getId(), current.getRoomTypeId())));
+        return true;
+    }
+
+    private void markExhausted(UUID mediaId, Instant now, String failureCode) {
+        assetRepository.markFailedIfExhausted(
+                mediaId,
+                failureCode,
+                now,
+                now.minus(staleThreshold),
+                maxAttempts);
     }
 
     private String failureCode(RuntimeException ex) {
