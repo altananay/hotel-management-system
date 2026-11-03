@@ -95,7 +95,7 @@ export function RoomShowcase({ locale }: RoomShowcaseProps) {
   const { data, isLoading, isError, refetch } = useRoomTypesQuery();
   const roomTypeIds = data?.items.map((room: RoomTypeDto) => room.id) ?? [];
   const mediaQuery = useRoomMediaQuery(roomTypeIds);
-  const mediaItems = mediaQuery.data ?? [];
+  const mediaItems = mediaQuery.isError ? [] : (mediaQuery.data ?? []);
 
   if (isLoading) {
     return <LoadingShowcase label={dict.rooms.loadingText} />;

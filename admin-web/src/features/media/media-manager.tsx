@@ -142,6 +142,24 @@ export function MediaManager() {
         </div>
       )}
 
+      {roomTypesQuery.isError && (
+        <div
+          role="alert"
+          data-testid="admin-media-room-types-error"
+          className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800"
+        >
+          <span>Oda tipleri yüklenemedi; atama yapılamıyor.</span>
+          <Button
+            size="sm"
+            variant="secondary"
+            data-testid="admin-media-room-types-retry"
+            onClick={() => void roomTypesQuery.refetch()}
+          >
+            Tekrar Dene
+          </Button>
+        </div>
+      )}
+
       <Card className="mt-6 p-6">
         <form data-testid="admin-media-upload" onSubmit={(event) => void submitUpload(event)}>
           <label className="text-sm font-medium text-slate-700" htmlFor="media-file">
@@ -188,6 +206,9 @@ export function MediaManager() {
               key={item.id}
               item={item}
               roomTypes={roomTypes}
+              roomTypesDisabled={
+                roomTypesQuery.isLoading || roomTypesQuery.isError
+              }
               mutations={mutations}
               onMove={move}
               run={run}
@@ -202,12 +223,14 @@ export function MediaManager() {
 function MediaRow({
   item,
   roomTypes,
+  roomTypesDisabled,
   mutations,
   onMove,
   run,
 }: {
   item: MediaItem;
   roomTypes: Array<{ id: string; nameTr: string; nameEn: string }>;
+  roomTypesDisabled: boolean;
   mutations: ReturnType<typeof useMediaMutations>;
   onMove: (item: MediaItem, direction: -1 | 1) => void;
   run: (action: () => Promise<unknown>) => Promise<void>;
@@ -263,6 +286,7 @@ function MediaRow({
               className="mt-1 w-full rounded border border-slate-300 p-1.5 text-sm"
               data-testid="admin-media-room-type"
               value={item.roomTypeId ?? ""}
+              disabled={item.published || roomTypesDisabled}
               onChange={(event) => {
                 if (!event.target.value) {
                   return;
@@ -286,6 +310,15 @@ function MediaRow({
                 </option>
               ))}
             </select>
+            {item.published && (
+              <p
+                className="mt-1 text-xs text-amber-700"
+                data-testid="admin-media-room-type-locked"
+              >
+                Yayındaki medyanın oda tipi değiştirilemez; önce yayından
+                kaldırın.
+              </p>
+            )}
           </label>
         </div>
         <div className="lg:col-span-3">

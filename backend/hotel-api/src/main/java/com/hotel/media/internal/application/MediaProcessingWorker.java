@@ -16,6 +16,9 @@ import com.hotel.sharedkernel.api.DomainErrorCategory;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -112,7 +115,13 @@ public class MediaProcessingWorker {
                     DomainErrorCategory.VALIDATION);
         }
         MediaImageProcessor.ProcessedImage processed = imageProcessor.process(original);
-        variantRepository.deleteByMediaAssetId(mediaId);
+        List<MediaVariantEntity> existing =
+                variantRepository.findByMediaAssetId(mediaId);
+        Map<String, MediaVariantEntity> byTypeAndFormat = new LinkedHashMap<>();
+        for (MediaVariantEntity variant : existing) {
+            byTypeAndFormat.put(
+                    variant.getVariant().name() + ":" + variant.getFormat().name(), variant);
+        }
         Instant now = clock.instant();
         for (MediaImageProcessor.GeneratedVariant generated : processed.variants()) {
             String extension = extension(generated.format());
@@ -124,18 +133,30 @@ public class MediaProcessingWorker {
                             + "."
                             + extension;
             storage.put(privateKey, generated.bytes(), contentType(generated.format()));
-            variantRepository.save(
-                    new MediaVariantEntity(
-                            Generators.timeBasedEpochGenerator().generate(),
-                            mediaId,
-                            generated.variant(),
-                            generated.format(),
-                            privateKey,
-                            generated.width(),
-                            generated.height(),
-                            generated.bytes().length,
-                            now));
+            String key = generated.variant().name() + ":" + generated.format().name();
+            MediaVariantEntity variant = byTypeAndFormat.remove(key);
+            if (variant == null) {
+                variant =
+                        new MediaVariantEntity(
+                                Generators.timeBasedEpochGenerator().generate(),
+                                mediaId,
+                                generated.variant(),
+                                generated.format(),
+                                privateKey,
+                                generated.width(),
+                                generated.height(),
+                                generated.bytes().length,
+                                now);
+            } else {
+                variant.regenerate(
+                        privateKey,
+                        generated.width(),
+                        generated.height(),
+                        generated.bytes().length);
+            }
+            variantRepository.save(variant);
         }
+        byTypeAndFormat.values().forEach(variantRepository::delete);
         int updated = assetRepository.markReadyIfClaimed(mediaId, leaseId, now);
         if (updated == 0) {
             return false;

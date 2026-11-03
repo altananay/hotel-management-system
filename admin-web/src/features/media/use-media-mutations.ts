@@ -1,31 +1,9 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  AdminApiClientError,
-  adminApiRequest,
-  adminApiSend,
-} from "@/lib/api-client";
-import { fetchCsrfToken, readCsrfToken } from "@/lib/csrf";
+import { adminApiRequest, adminApiSend } from "@/lib/api-client";
+import { withCsrfRetry } from "@/lib/csrf-retry";
 import { MediaItemSchema } from "./schema";
-
-async function withCsrf<T>(
-  action: (csrfToken: string) => Promise<T>,
-): Promise<T> {
-  let token = readCsrfToken() ?? (await fetchCsrfToken());
-  try {
-    return await action(token);
-  } catch (error) {
-    if (
-      error instanceof AdminApiClientError &&
-      error.code === "security.csrf_invalid"
-    ) {
-      token = await fetchCsrfToken();
-      return action(token);
-    }
-    throw error;
-  }
-}
 
 export function useMediaMutations() {
   const queryClient = useQueryClient();
@@ -39,7 +17,7 @@ export function useMediaMutations() {
       altTextTr?: string;
       altTextEn?: string;
     }) =>
-      withCsrf((csrfToken) =>
+      withCsrfRetry((csrfToken) =>
         adminApiRequest(`/admin-api/media/${input.id}`, MediaItemSchema, {
           method: "PATCH",
           body: {
@@ -55,7 +33,7 @@ export function useMediaMutations() {
 
   const reorder = useMutation({
     mutationFn: (input: { roomTypeId: string; mediaIds: string[] }) =>
-      withCsrf((csrfToken) =>
+      withCsrfRetry((csrfToken) =>
         adminApiSend("/admin-api/media/order", {
           method: "PUT",
           body: { roomTypeId: input.roomTypeId, mediaIds: input.mediaIds },
@@ -67,7 +45,7 @@ export function useMediaMutations() {
 
   const cover = useMutation({
     mutationFn: (id: string) =>
-      withCsrf((csrfToken) =>
+      withCsrfRetry((csrfToken) =>
         adminApiRequest(`/admin-api/media/${id}/cover`, MediaItemSchema, {
           method: "PUT",
           csrfToken,
@@ -78,7 +56,7 @@ export function useMediaMutations() {
 
   const publish = useMutation({
     mutationFn: (id: string) =>
-      withCsrf((csrfToken) =>
+      withCsrfRetry((csrfToken) =>
         adminApiSend(`/admin-api/media/${id}/publish`, {
           method: "POST",
           csrfToken,
@@ -89,7 +67,7 @@ export function useMediaMutations() {
 
   const unpublish = useMutation({
     mutationFn: (id: string) =>
-      withCsrf((csrfToken) =>
+      withCsrfRetry((csrfToken) =>
         adminApiSend(`/admin-api/media/${id}/unpublish`, {
           method: "POST",
           csrfToken,
@@ -100,7 +78,7 @@ export function useMediaMutations() {
 
   const retry = useMutation({
     mutationFn: (id: string) =>
-      withCsrf((csrfToken) =>
+      withCsrfRetry((csrfToken) =>
         adminApiSend(`/admin-api/media/${id}/retry`, {
           method: "POST",
           csrfToken,
@@ -111,7 +89,7 @@ export function useMediaMutations() {
 
   const archive = useMutation({
     mutationFn: (id: string) =>
-      withCsrf((csrfToken) =>
+      withCsrfRetry((csrfToken) =>
         adminApiSend(`/admin-api/media/${id}`, {
           method: "DELETE",
           csrfToken,

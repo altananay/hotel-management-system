@@ -127,7 +127,7 @@ class MediaProcessingWorkerTest {
         assertThat(variantCaptor.getValue().getPrivateStorageKey())
                 .isEqualTo("private/" + MEDIA_ID + "/card.webp");
         verify(storage).put("private/" + MEDIA_ID + "/card.webp", bytes, "image/webp");
-        verify(variantRepository).deleteByMediaAssetId(MEDIA_ID);
+        verify(variantRepository, never()).deleteByMediaAssetId(any());
         ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
         verify(events).publishEvent(eventCaptor.capture());
         assertThat(eventCaptor.getValue()).isInstanceOf(MediaReady.class);

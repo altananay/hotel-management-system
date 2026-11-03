@@ -49,6 +49,9 @@ hotel:
       stale-threshold: ${MEDIA_PROCESSING_STALE_THRESHOLD:10m}
       recovery-initial-delay: ${MEDIA_PROCESSING_RECOVERY_INITIAL_DELAY:30s}
       recovery-interval: ${MEDIA_PROCESSING_RECOVERY_INTERVAL:60s}
+    cleanup:
+      initial-delay: ${MEDIA_CLEANUP_INITIAL_DELAY:30s}
+      interval: ${MEDIA_CLEANUP_INTERVAL:60s}
   admin:
     jwks-uri: ${HOTEL_ADMIN_JWKS_URI:http://localhost:8082/admin-api/.well-known/jwks.json}
     issuer: ${HOTEL_ADMIN_JWT_ISSUER:admin-api}

@@ -13,6 +13,7 @@ import com.hotel.media.internal.application.MediaUploadService.StartCommand;
 import com.hotel.media.internal.domain.MediaErrorCodes;
 import com.hotel.media.internal.domain.MediaStatus;
 import com.hotel.media.internal.domain.MediaVariantFormat;
+import com.hotel.media.internal.domain.MediaVariantType;
 import com.hotel.media.internal.persistence.MediaAssetEntity;
 import com.hotel.media.internal.persistence.MediaAssetJpaRepository;
 import com.hotel.media.internal.persistence.MediaVariantEntity;
@@ -192,6 +193,7 @@ class MediaIT {
 
     @BeforeEach
     void cleanTables() {
+        jdbcTemplate.update("DELETE FROM media.media_public_cleanup_tasks");
         jdbcTemplate.update("DELETE FROM media.media_variants");
         jdbcTemplate.update("DELETE FROM media.media_assets");
         jdbcTemplate.update("DELETE FROM catalog.room_type_amenities");
@@ -333,16 +335,28 @@ class MediaIT {
 
         // Re-publish, then archive while published: public copies must be removed.
         adminService.publish(mediaId);
+        String republishedCardUrl =
+                storage.publicUrl(
+                        variantRepository.findByMediaAssetId(mediaId).stream()
+                                .filter(
+                                        variant ->
+                                                variant.getVariant() == MediaVariantType.CARD
+                                                        && variant.getFormat()
+                                                                == MediaVariantFormat.WEBP)
+                                .findFirst()
+                                .orElseThrow()
+                                .getPublicStorageKey());
+        assertThat(republishedCardUrl).isNotEqualTo(publicCardUrl);
         HttpResponse<String> republishedObject =
                 httpClient.send(
-                        HttpRequest.newBuilder(URI.create(publicCardUrl)).GET().build(),
+                        HttpRequest.newBuilder(URI.create(republishedCardUrl)).GET().build(),
                         HttpResponse.BodyHandlers.ofString());
         assertThat(republishedObject.statusCode()).isEqualTo(200);
 
         adminService.archive(mediaId);
         HttpResponse<String> archivedObject =
                 httpClient.send(
-                        HttpRequest.newBuilder(URI.create(publicCardUrl)).GET().build(),
+                        HttpRequest.newBuilder(URI.create(republishedCardUrl)).GET().build(),
                         HttpResponse.BodyHandlers.ofString());
         assertThat(archivedObject.statusCode()).isIn(403, 404);
         MediaAssetEntity archived = assetRepository.findById(mediaId).orElseThrow();

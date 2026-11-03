@@ -18,11 +18,12 @@ afterAll(() => server.close());
 
 function renderWithQuery(locale: "tr" | "en") {
   const queryClient = createAppQueryClient();
-  return render(
+  const result = render(
     <QueryClientProvider client={queryClient}>
       <RoomShowcase locale={locale} />
     </QueryClientProvider>,
   );
+  return { ...result, queryClient };
 }
 
 const SAMPLE_ROOMS_RESPONSE = {
@@ -401,6 +402,65 @@ describe("RoomShowcase (AC-3, QA-10, QA-11, QA-15)", () => {
     const image = screen.getByTestId("room-card-image") as HTMLImageElement;
     expect(image.src).toBe("http://localhost:9000/hotel-media/public/first.webp");
     expect(image.alt).toBe("Arched Cave Suite");
+  });
+
+  it("shouldDropCachedMediaAndShowPlaceholder_whenRefreshFails", async () => {
+    server.use(
+      http.get("http://localhost:8081/api/room-types", () =>
+        HttpResponse.json(SAMPLE_ROOMS_RESPONSE),
+      ),
+      http.get("http://localhost:8081/api/media", () =>
+        HttpResponse.json({
+          items: [
+            {
+              id: "0199f2c0-0000-7000-8000-000000000405",
+              roomTypeId: "0199f2c0-0000-7000-8000-000000000301",
+              cover: true,
+              displayOrder: 0,
+              altTextTr: "Kapak",
+              altTextEn: "Cover",
+              variants: {
+                thumb: null,
+                card: {
+                  url: "http://localhost:9000/hotel-media/public/card.webp",
+                  width: 1200,
+                  height: 800,
+                  format: "webp",
+                },
+                cover: null,
+              },
+            },
+          ],
+        }),
+      ),
+    );
+
+    const { queryClient } = renderWithQuery("tr");
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId("room-card-image")).toHaveLength(1);
+    });
+
+    server.use(
+      http.get("http://localhost:8081/api/media", () =>
+        HttpResponse.json(
+          {
+            type: "about:blank",
+            title: "Service Unavailable",
+            status: 503,
+            code: "media.storage_unavailable",
+            instance: "/api/media",
+          },
+          { status: 503, headers: { "Content-Type": "application/problem+json" } },
+        ),
+      ),
+    );
+    await queryClient.refetchQueries({ queryKey: ["catalog", "media"] });
+
+    await waitFor(() => {
+      expect(screen.queryAllByTestId("room-card-image")).toHaveLength(0);
+    });
+    expect(screen.getAllByTestId("room-card-placeholder")).toHaveLength(2);
   });
 
   it("shouldKeepPlaceholder_whenMediaServiceFails", async () => {

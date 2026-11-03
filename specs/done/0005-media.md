@@ -10,7 +10,7 @@
 
 - **Spec No:** `0005`
 - **Başlık:** Medya ve Fotoğraf Yönetimi (`media`)
-- **Durum:** Onaylandı *(rev.2 — CLARIFY Q1–Q10 A kararları ve uygulama kararları D1–D14 işlendi)*
+- **Durum:** Uygulandı — bağımsız review düzeltmeleri `fix/0005-code-review` PR'ında; merge için Takım Yöneticisi onayı bekleniyor *(rev.2 - Q1-Q10 + D1-D16)*
 - **Branch:** `feature/0005-media`
 - **İlgili doküman/kararlar:** `docs/architecture.md` (§3 `media`, §5 R3, §7 Medya, §8, §10 D10, §11), `docs/domain.md` (§1 `MediaAsset`/`Scene`/`Hotspot`/`Tour`, §3.12, §3 rol tablosu), `docs/conventions.md` (§1, §2.1, §2.3, §2.4, §3, §4), `docs/frontend.md`, `docs/testing.md`, `docs/git.md`, `specs/done/0002-room-catalog.md` (oda tipi/detay notu), `specs/done/0004-admin-identity.md` (auth, gateway, roller, CSRF); Onaylı CLARIFY kararları: Q1–Q10 A seçenekleri (2026-11-03)
 - **Tarih:** 2026-11-03
@@ -197,7 +197,7 @@ Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media mod
 
 - [x] Tüm AC'ler doğrulandı (test ve/veya görsel kanıt)
 - [x] Pipeline yeşil (lint + build + test + kritik akış smoke)
-- [x] Kod incelemesi onaylandı (Code Reviewer: APPROVE — `evidence/0005/AC-6-code-review.md`)
+- [ ] Kod incelemesi onaylandı (bağımsız review: `evidence/0005/code-review-2026-11-04.md`; fix PR açık)
 - [x] Davranış değiştiyse dokümanlar güncellendi
 - [x] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi
 - [x] SCORECARD dolduruldu
@@ -206,9 +206,9 @@ Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media mod
 
 - **Spec revizyon sayısı:** 2
 - **Düzeltme turu sayısı:** 1 (bağımsız kod incelemesi; B1–B13 bulguları)
-- **Bulgu gerçek/gürültü oranı:** 13 gerçek / 1 harici yanlış pozitif (GitGuardian, base commit `c9e7da4`)
+- **Bulgu gerçek/gürültü oranı:** 13 gerçek / 1 harici yanlış pozitif (GitGuardian, base commit `c9e7da4`); bağımsız review CR-1–CR-10
 - **Regresyon sayısı:** 0
-- **Kaçan hata (escaped bug):** 0 (inceleme merge öncesi yakaladı)
+- **Kaçan hata (escaped bug):** 3 (bağımsız review merge sonrası CR-1/CR-2/CR-3 buldu; fix PR açık)
 
 ## 8. Ek A — Onaylanan CLARIFY Kararları (Q1–Q10)
 
@@ -243,3 +243,5 @@ Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media mod
 | D12 | MinIO CORS'u `minio-init` yerine MinIO server `MINIO_CORS_ALLOW_ORIGIN` env'i ile verilir | Kullanılan `mc` sürümünde `mc cors` yok; server env'i tekrarlanabilir ve local/CI'da `*` |
 | D13 | Varyant çıktısı kaynak kırpımından büyük olamaz | "Orijinalden büyütme yok" kuralını 800×600 gibi küçük geçerli görsellerde de uygular; REQ-3, AC-3 |
 | D14 | Worker claim'i `processing_lease_id` ile fencing yapar; ready/failed geçişleri lease koşulludur | Arşiv/paralel worker yarışında eski worker'ın yazmasını engeller; REQ-3, AC-3/AC-4 |
+| D15 | Public S3 nesneleri için DB cleanup-intent tablosu + afterCommit/rollback telafisi ve retry scheduler kullanılır | S3/DB atomik olmadığından public kopya invariant'ını kalıcı orphan bırakmadan korur; REQ-5, AC-5 |
+| D16 | Processing varyantları silinip yeniden yaratılmaz; `(variant, format)` anahtarında yerinde güncellenir | Yarım kalan işlemde DB varyant boşluğu/duplicate oluşmasını engeller; REQ-3, AC-3 |
