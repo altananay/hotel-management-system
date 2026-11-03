@@ -39,7 +39,7 @@ Notes:
   publish -> cover -> public `room-card-image` WebP -> FRONT_DESK 403 -> unpublish
   (`{items: []}`) -> archive confirmation.
 - 0002/0003 E2E suites were not modified; all passed.
-- GitHub Actions CI: **success** — https://github.com/altananay/hotel-management-system/actions/runs/41717715249
+- GitHub Actions CI (final fix set, commit `3900eea`): **success** — https://github.com/altananay/hotel-management-system/actions/runs/41727352620
   (`Backend`, `Frontend`, `E2E Smoke` and `CI Quality Gate` all green).
 - GitGuardian reports one pre-existing local test password at base commit `c9e7da4`
   (`AdminIdentityServiceTest`), not introduced by 0005; CI quality gates are green.
