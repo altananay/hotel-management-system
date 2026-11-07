@@ -1,0 +1,16 @@
+# TARİHSEL — 2026-11-03 sayıları (MediaIT 7/7). Güncel: AC-6-integration-179d3d0.md ve AC-6-qa-fixes-verification.md.
+
+# AC-2 — Presigned upload
+
+Covered by `MediaIT#shouldUploadProcessPublishExposeAndThenHideMedia` (real PostgreSQL + MinIO):
+
+- `POST /admin-api/media/uploads` creates `UPLOADED` media and returns a presigned PUT for `private/<uuid>/original`.
+- Presigned request signs bucket/key/content-type/content-length; a body with a different length is rejected by MinIO.
+- Browser/HttpClient uploads directly to MinIO; file bytes do not pass through admin-api/hotel-api.
+- `complete` performs HEAD + magic-byte + size/dimension validation.
+- `expiresAt` is approximately now + 10 minutes.
+- Original object is private; anonymous GET -> 403; signed GET (admin preview) -> 200.
+- Published variants are copied to `public/*`; anonymous GET -> 200 `image/webp`; anonymous PUT/list -> 403.
+- `MediaUploadServiceTest` covers start validation before presigning.
+
+Result: PASS (MediaIT 7/7, MediaUploadServiceTest).

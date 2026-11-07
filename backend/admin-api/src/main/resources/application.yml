@@ -34,6 +34,7 @@ admin:
   gateway:
     upstream-hotel-api-url: ${ADMIN_API_UPSTREAM_HOTEL_API_URL:http://localhost:8081}
     timeout: ${ADMIN_GATEWAY_TIMEOUT_MS:3000}ms
+    media-timeout: ${ADMIN_GATEWAY_MEDIA_TIMEOUT_MS:15000}ms
   jwt:
     issuer: ${ADMIN_JWT_ISSUER:admin-api}
     audience: ${ADMIN_JWT_AUDIENCE:hotel-admin-api}

@@ -56,6 +56,13 @@ export async function adminApiPost(
   await send(path, { method: "POST", body, csrfToken });
 }
 
+export async function adminApiSend(
+  path: string,
+  options: AdminApiRequestOptions,
+): Promise<void> {
+  await send(path, options);
+}
+
 async function send(path: string, options: AdminApiRequestOptions): Promise<Response> {
   const headers: Record<string, string> = {
     Accept: "application/json, application/problem+json",

@@ -1,0 +1,13 @@
+# AC-3 — Variants
+
+Covered by `JavaMediaImageProcessorTest` + `MediaIT`:
+
+- WebP and JPEG generated for THUMB/CARD/COVER (6 rows/objects per asset)
+- targets: 480×320, 1200×800, 1920×1280 at 3:2 center crop
+- small valid images are not upscaled: 800×600 -> card/cover 800×533
+- WebP magic bytes (`RIFF`/`WEBP`) and JPEG SOI verified
+- EXIF/GPS stripped from generated variants
+- private keys `private/<id>/<variant>.<ext>`; public copies `public/<id>/<variant>.<ext>`
+- public API prefers WebP per variant and exposes width/height/format
+
+Result: PASS.

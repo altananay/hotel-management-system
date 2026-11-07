@@ -1,0 +1,8 @@
+# AC-3 — EXIF/GPS stripping
+
+Covered by:
+- `JavaMediaImageProcessorTest#shouldStripExifAndGpsFromGeneratedVariants`: inserts orientation + GPS EXIF into a JPEG, verifies source has GpsDirectory, all generated JPEG variants have no GPS/EXIF directories.
+- `MediaIT#shouldUploadProcessPublishExposeAndThenHideMedia`: same EXIF/GPS JPEG flows through real MinIO processing; every generated JPEG variant is read back and verified to have no GpsDirectory.
+- orientation 6 is applied; no upscaling: 800×600 source -> card/cover 800×533, thumb 480×320.
+
+Result: PASS.

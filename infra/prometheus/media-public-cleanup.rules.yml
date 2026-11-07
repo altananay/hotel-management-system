@@ -1,0 +1,19 @@
+groups:
+  - name: media-public-cleanup
+    rules:
+      - alert: MediaPublicCleanupDeadLettered
+        expr: increase(media_public_cleanup_dead_lettered_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: page
+        annotations:
+          summary: "Media public cleanup dead-lettered"
+          description: "A public object may still be reachable. Follow docs/runbooks/media-public-cleanup.md."
+      - alert: MediaPublicCleanupFailures
+        expr: increase(media_public_cleanup_failures_total[15m]) > 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Media public cleanup retries are failing"
+          description: "Check S3 permissions and media.media_public_cleanup_tasks; follow docs/runbooks/media-public-cleanup.md."

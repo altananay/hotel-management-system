@@ -1,0 +1,8 @@
+# AC-2 — FRONT_DESK 403
+
+Covered by:
+- `AdminMediaControllerTest#shouldReturnForbiddenProblemDetail_whenRoleIsFrontDesk`: GET list and POST publish with FRONT_DESK JWT -> `403 security.forbidden`.
+- `e2e/tests/media/media.spec.ts`: FRONT_DESK login -> `/media` shows generic error; direct GET `/admin-api/media` returns HTTP 403.
+- Server-side `@PreAuthorize("hasAnyRole('SUPER_ADMIN','MANAGER')")` on all admin media endpoints; UI hiding is not the security boundary.
+
+Result: PASS.

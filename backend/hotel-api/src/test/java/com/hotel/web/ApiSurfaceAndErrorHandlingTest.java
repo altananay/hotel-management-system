@@ -353,4 +353,29 @@ class ApiSurfaceAndErrorHandlingTest {
         mockMvc.perform(get("/api/test/probe").header("Origin", "http://localhost:3001"))
                 .andExpect(header().doesNotExist("Access-Control-Allow-Origin"));
     }
+
+    @Test
+    void shouldAllowPrometheusScrapeOnlyFromConfiguredCidr() throws Exception {
+        // 127.0.0.1 is inside the default CIDR; the slice has no actuator endpoint,
+        // so security permits the path and routing returns 404 (not 401/403).
+        mockMvc.perform(get("/actuator/prometheus")).andExpect(status().isNotFound());
+        mockMvc.perform(
+                        get("/actuator/prometheus")
+                                .with(
+                                        request -> {
+                                            request.setRemoteAddr("::1");
+                                            return request;
+                                        }))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(
+                        get("/actuator/prometheus")
+                                .with(
+                                        request -> {
+                                            request.setRemoteAddr("203.0.113.9");
+                                            return request;
+                                        }))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("security.unauthorized"));
+    }
 }

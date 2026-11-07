@@ -1,0 +1,1 @@
+FRONT_DESK GET /admin-api/media -> 403 security.forbidden (UI shows generic error)
