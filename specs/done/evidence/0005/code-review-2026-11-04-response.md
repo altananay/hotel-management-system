@@ -16,10 +16,16 @@ Fix branch: `fix/0005-code-review` → `integration` (merge yok)
 | CR-8 | Düzeltildi | Süresi geçen `UPLOADED` kaydı `FAILED/media.upload_expired` olur ve private nesne best-effort silinir. |
 | CR-9 | Düzeltildi | Varyantlar artık silinip yeniden yaratılmıyor; `(variant, format)` anahtarıyla yerinde güncelleniyor. Deterministik private anahtarlar sayesinde yarım kalan işlem sonraki denemede üzerine yazar; DB'de boşluk/duplicate oluşmaz. |
 | CR-10 | Düzeltildi | `AC-6-code-review.md` resmî onay olmadığı için “superseded” olarak işaretlendi; bu response ve bağımsız review dosyası eklendi. Spec DoD'deki kod incelemesi onayı yeniden açık bırakıldı. |
+| CR-11 | Düzeltildi | `hotel.media.cleanup.grace`, `application.yml` üzerinden `MEDIA_CLEANUP_GRACE` ile eşlendi. |
+| CR-12 | Düzeltildi | `MediaIT#shouldCleanupPublicCopiesWhenPublishFailsMidCopy` gerçek PostgreSQL + MinIO üzerinde ikinci kopyada hata enjekte ediyor; rollback sonrası intent/nesne temizliğini ve başarılı publish'te cleanup tablosunun boş kaldığını doğruluyor. |
+| CR-13 | Düzeltildi | Catch'teki yeniden enqueue/process kaldırıldı; `afterRollback` yalnızca `processNow(copied)` çağırıyor. `processNow` `REQUIRES_NEW` olduğu için in-doubt commit'te `removeAll` ile silinmiş intent bulunmaz ve yayındaki nesne silinmez. |
+| CR-14 | Düzeltildi | `attempts` V11 ile INTEGER; `dead_lettered_at` eklendi. `max-attempts` sonrası görev dead-letter olur, scheduler dışlar, ERROR loglanır. |
+| CR-15 | Kısmen düzeltildi | Üretim setinden çıkan eski varyantların private S3 nesneleri siliniyor; aynı ID ile yerinde güncelleme testi eklendi. DB varyant yazımlarının tek transaction'a alınması private-only düşük risk olarak takip ediliyor. |
+| CR-16 | Düzeltildi | Spec bağımsız onay gelene kadar `specs/0005-media.md`'ye geri alındı; mimari dokümana cleanup-intent/retry ve yerinde varyant güncellemesi eklendi. |
 
 ## Doğrulama (fix branch)
 
-- Backend: 178 unit + 56 IT (MediaIT 9/9; gerçek PostgreSQL + MinIO; V10 cleanup tablosu dahil)
+- Backend: 179 unit + 57 IT (MediaIT 10/10; gerçek PostgreSQL + MinIO; V10/V11 cleanup tablosu dahil)
 - Web: 43 Vitest
 - Admin-web: 35 Vitest
 - Spotless/lint/build: yeşil

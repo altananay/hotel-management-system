@@ -39,7 +39,8 @@ class MediaPublicCleanupServiceTest {
                         repository,
                         storage,
                         Clock.fixed(NOW, ZoneOffset.UTC),
-                        java.time.Duration.ofMinutes(5));
+                        java.time.Duration.ofMinutes(5),
+                        10);
     }
 
     @Test
@@ -76,8 +77,34 @@ class MediaPublicCleanupServiceTest {
 
         service.processNow(List.of("public/a.webp"));
 
-        assertThat(task.getAttempts()).isEqualTo((short) 1);
+        assertThat(task.getAttempts()).isEqualTo(1);
         assertThat(task.getLastAttemptAt()).isEqualTo(NOW);
+        verify(repository).save(task);
+        verify(repository, never()).delete(task);
+    }
+
+    @Test
+    void shouldDeadLetterAfterMaxAttempts() {
+        MediaPublicCleanupTaskEntity task = task();
+        when(repository
+                        .findTop50ByDeadLetteredAtIsNullAndCreatedAtBeforeOrderByCreatedAtAsc(
+                                NOW.minus(java.time.Duration.ofMinutes(5))))
+                .thenReturn(List.of(task));
+        org.mockito.Mockito.doThrow(
+                        new MediaStorageException("down", new RuntimeException()))
+                .when(storage)
+                .delete("public/a.webp");
+        service =
+                new MediaPublicCleanupService(
+                        repository,
+                        storage,
+                        Clock.fixed(NOW, ZoneOffset.UTC),
+                        java.time.Duration.ofMinutes(5),
+                        1);
+
+        service.processPending();
+
+        assertThat(task.getDeadLetteredAt()).isEqualTo(NOW);
         verify(repository).save(task);
         verify(repository, never()).delete(task);
     }
@@ -85,8 +112,9 @@ class MediaPublicCleanupServiceTest {
     @Test
     void shouldProcessPendingTasks() {
         MediaPublicCleanupTaskEntity task = task();
-        when(repository.findTop50ByCreatedAtBeforeOrderByCreatedAtAsc(
-                        NOW.minus(java.time.Duration.ofMinutes(5))))
+        when(repository
+                        .findTop50ByDeadLetteredAtIsNullAndCreatedAtBeforeOrderByCreatedAtAsc(
+                                NOW.minus(java.time.Duration.ofMinutes(5))))
                 .thenReturn(List.of(task));
 
         service.processPending();

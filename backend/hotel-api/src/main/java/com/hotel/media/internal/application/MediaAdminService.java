@@ -224,11 +224,7 @@ public class MediaAdminService {
         // Commit cleanup intents before touching S3. They are disarmed in the publish
         // transaction only if every copy and the DB commit succeed.
         publicCleanup.enqueueAllInNewTransaction(plannedKeys);
-        afterRollback(
-                () -> {
-                    publicCleanup.enqueueAllInNewTransaction(copied);
-                    publicCleanup.processNow(copied);
-                });
+        afterRollback(() -> publicCleanup.processNow(copied));
         try {
             for (MediaVariantEntity variant : variants) {
                 String publicKey = publicKey(id, publicationToken, variant);
@@ -242,8 +238,7 @@ public class MediaAdminService {
             publicCleanup.removeAll(plannedKeys);
             return view(asset);
         } catch (RuntimeException ex) {
-            publicCleanup.enqueueAllInNewTransaction(copied);
-            publicCleanup.processNow(copied);
+            // plannedKeys intents are already committed; afterCompletion performs cleanup.
             throw ex;
         }
     }

@@ -17,13 +17,16 @@ public class MediaPublicCleanupTaskEntity {
     private String publicStorageKey;
 
     @Column(nullable = false)
-    private short attempts;
+    private int attempts;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
     @Column(name = "last_attempt_at")
     private Instant lastAttemptAt;
+
+    @Column(name = "dead_lettered_at")
+    private Instant deadLetteredAt;
 
     protected MediaPublicCleanupTaskEntity() {}
 
@@ -39,6 +42,10 @@ public class MediaPublicCleanupTaskEntity {
         this.lastAttemptAt = now;
     }
 
+    public void markDeadLettered(Instant now) {
+        this.deadLetteredAt = now;
+    }
+
     public UUID getId() {
         return id;
     }
@@ -47,7 +54,7 @@ public class MediaPublicCleanupTaskEntity {
         return publicStorageKey;
     }
 
-    public short getAttempts() {
+    public int getAttempts() {
         return attempts;
     }
 
@@ -57,5 +64,9 @@ public class MediaPublicCleanupTaskEntity {
 
     public Instant getLastAttemptAt() {
         return lastAttemptAt;
+    }
+
+    public Instant getDeadLetteredAt() {
+        return deadLetteredAt;
     }
 }

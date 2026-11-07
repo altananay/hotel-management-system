@@ -2,11 +2,15 @@ package com.hotel.media;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.metadata.exif.GpsDirectory;
+import com.hotel.media.api.MediaStorageException;
 import com.hotel.media.internal.application.MediaAdminService;
 import com.hotel.media.internal.application.MediaAdminService.UpdateCommand;
+import com.hotel.media.internal.application.MediaPublicCleanupService;
 import com.hotel.media.internal.application.MediaStoragePort;
 import com.hotel.media.internal.application.MediaUploadService;
 import com.hotel.media.internal.application.MediaUploadService.StartCommand;
@@ -34,6 +38,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.imageio.ImageIO;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.AfterAll;
@@ -49,6 +54,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -108,7 +114,8 @@ class MediaIT {
 
     @Autowired private MediaUploadService uploadService;
     @Autowired private MediaAdminService adminService;
-    @Autowired private MediaStoragePort storage;
+    @Autowired private MediaPublicCleanupService publicCleanupService;
+    @MockitoSpyBean private MediaStoragePort storage;
     @Autowired private MediaAssetJpaRepository assetRepository;
     @Autowired private MediaVariantJpaRepository variantRepository;
     @Autowired private JdbcTemplate jdbcTemplate;
@@ -241,6 +248,11 @@ class MediaIT {
         MediaAssetEntity published = assetRepository.findById(mediaId).orElseThrow();
         assertThat(published.getPublishedAt()).isNotNull();
         assertThat(published.isCover()).isTrue();
+        assertThat(
+                        jdbcTemplate.queryForObject(
+                                "SELECT count(*) FROM media.media_public_cleanup_tasks",
+                                Integer.class))
+                .isZero();
         assertThat(variantRepository.findByMediaAssetId(mediaId))
                 .allSatisfy(variant -> assertThat(variant.getPublicStorageKey()).isNotNull());
 
@@ -443,6 +455,46 @@ class MediaIT {
                         error ->
                                 assertThat(((DomainError) error).code())
                                         .isEqualTo(MediaErrorCodes.ROOM_TYPE_NOT_FOUND));
+    }
+
+    @Test
+    void shouldCleanupPublicCopiesWhenPublishFailsMidCopy() throws Exception {
+        UUID roomTypeId = insertRoomType(true);
+        UUID mediaId = uploadAndWaitReady(jpeg(1200, 800));
+        adminService.update(
+                mediaId,
+                new UpdateCommand(true, roomTypeId, false, null, false, null));
+
+        AtomicInteger copies = new AtomicInteger();
+        doAnswer(
+                        invocation -> {
+                            if (copies.incrementAndGet() == 2) {
+                                throw new MediaStorageException(
+                                        "simulated copy failure", new RuntimeException());
+                            }
+                            return invocation.callRealMethod();
+                        })
+                .when(storage)
+                .copy(anyString(), anyString());
+
+        assertThatThrownBy(() -> adminService.publish(mediaId))
+                .isInstanceOf(MediaStorageException.class);
+
+        List<String> plannedKeys =
+                jdbcTemplate.queryForList(
+                        "SELECT public_storage_key FROM media.media_public_cleanup_tasks",
+                        String.class);
+        assertThat(plannedKeys).isNotEmpty();
+        publicCleanupService.processNow(plannedKeys);
+
+        assertThat(
+                        jdbcTemplate.queryForObject(
+                                "SELECT count(*) FROM media.media_public_cleanup_tasks",
+                                Integer.class))
+                .isZero();
+        assertThat(plannedKeys)
+                .allSatisfy(key -> assertThat(storage.head(key)).isNull());
+        assertThat(assetRepository.findById(mediaId).orElseThrow().getPublishedAt()).isNull();
     }
 
     @Test

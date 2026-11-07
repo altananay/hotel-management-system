@@ -29,16 +29,19 @@ public class MediaPublicCleanupService {
     private final MediaStoragePort storage;
     private final Clock clock;
     private final Duration grace;
+    private final int maxAttempts;
 
     public MediaPublicCleanupService(
             MediaPublicCleanupTaskJpaRepository repository,
             MediaStoragePort storage,
             Clock clock,
-            @Value("${hotel.media.cleanup.grace:5m}") Duration grace) {
+            @Value("${hotel.media.cleanup.grace:5m}") Duration grace,
+            @Value("${hotel.media.cleanup.max-attempts:10}") int maxAttempts) {
         this.repository = repository;
         this.storage = storage;
         this.clock = clock;
         this.grace = grace;
+        this.maxAttempts = maxAttempts;
     }
 
     /** Disarms cleanup intents after a successful publish, in the publish transaction. */
@@ -70,6 +73,7 @@ public class MediaPublicCleanupService {
     }
 
     /** Tries to delete the given keys immediately; failures remain queued for the scheduler. */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void processNow(Collection<String> publicKeys) {
         for (String key : publicKeys) {
             repository
@@ -86,7 +90,9 @@ public class MediaPublicCleanupService {
         // objects but has not committed its DB transaction yet.
         Instant cutoff = clock.instant().minus(grace);
         for (MediaPublicCleanupTaskEntity task :
-                repository.findTop50ByCreatedAtBeforeOrderByCreatedAtAsc(cutoff)) {
+                repository
+                        .findTop50ByDeadLetteredAtIsNullAndCreatedAtBeforeOrderByCreatedAtAsc(
+                                cutoff)) {
             processTask(task);
         }
     }
@@ -96,12 +102,22 @@ public class MediaPublicCleanupService {
             storage.delete(task.getPublicStorageKey());
             repository.delete(task);
         } catch (RuntimeException ex) {
-            task.recordAttempt(clock.instant());
+            Instant now = clock.instant();
+            task.recordAttempt(now);
+            if (task.getAttempts() >= maxAttempts) {
+                task.markDeadLettered(now);
+                log.error(
+                        "Public media cleanup dead-lettered after {} attempts: {}",
+                        task.getAttempts(),
+                        task.getPublicStorageKey(),
+                        ex);
+            } else {
+                log.warn(
+                        "Could not delete public media object {}; cleanup will retry.",
+                        task.getPublicStorageKey(),
+                        ex);
+            }
             repository.save(task);
-            log.warn(
-                    "Could not delete public media object {}; cleanup will retry.",
-                    task.getPublicStorageKey(),
-                    ex);
         }
     }
 

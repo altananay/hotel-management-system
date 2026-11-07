@@ -199,7 +199,7 @@ Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media mod
 - [x] Pipeline yeşil (lint + build + test + kritik akış smoke)
 - [ ] Kod incelemesi onaylandı (bağımsız review: `evidence/0005/code-review-2026-11-04.md`; fix PR açık)
 - [x] Davranış değiştiyse dokümanlar güncellendi
-- [x] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi
+- [ ] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi (bağımsız onay sonrası)
 - [x] SCORECARD dolduruldu
 
 ## 7. SCORECARD
@@ -243,5 +243,5 @@ Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media mod
 | D12 | MinIO CORS'u `minio-init` yerine MinIO server `MINIO_CORS_ALLOW_ORIGIN` env'i ile verilir | Kullanılan `mc` sürümünde `mc cors` yok; server env'i tekrarlanabilir ve local/CI'da `*` |
 | D13 | Varyant çıktısı kaynak kırpımından büyük olamaz | "Orijinalden büyütme yok" kuralını 800×600 gibi küçük geçerli görsellerde de uygular; REQ-3, AC-3 |
 | D14 | Worker claim'i `processing_lease_id` ile fencing yapar; ready/failed geçişleri lease koşulludur | Arşiv/paralel worker yarışında eski worker'ın yazmasını engeller; REQ-3, AC-3/AC-4 |
-| D15 | Public S3 nesneleri için DB cleanup-intent tablosu + afterCommit/rollback telafisi ve retry scheduler kullanılır | S3/DB atomik olmadığından public kopya invariant'ını kalıcı orphan bırakmadan korur; REQ-5, AC-5 |
+| D15 | Public S3 nesneleri için DB cleanup-intent tablosu + afterCommit/rollback telafisi, grace süreli retry ve dead-letter kullanılır | S3/DB atomik olmadığından public kopya invariant'ını kalıcı orphan bırakmadan korur; in-doubt commit'te yayındaki nesneyi silmez; REQ-5, AC-5 |
 | D16 | Processing varyantları silinip yeniden yaratılmaz; `(variant, format)` anahtarında yerinde güncellenir | Yarım kalan işlemde DB varyant boşluğu/duplicate oluşmasını engeller; REQ-3, AC-3 |

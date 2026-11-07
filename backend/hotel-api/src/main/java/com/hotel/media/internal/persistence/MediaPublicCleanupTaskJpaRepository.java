@@ -16,8 +16,9 @@ public interface MediaPublicCleanupTaskJpaRepository
 
     List<MediaPublicCleanupTaskEntity> findTop50ByOrderByCreatedAtAsc();
 
-    List<MediaPublicCleanupTaskEntity> findTop50ByCreatedAtBeforeOrderByCreatedAtAsc(
-            Instant cutoff);
+    List<MediaPublicCleanupTaskEntity>
+            findTop50ByDeadLetteredAtIsNullAndCreatedAtBeforeOrderByCreatedAtAsc(
+                    Instant cutoff);
 
     void deleteByPublicStorageKeyIn(Collection<String> publicStorageKeys);
 }

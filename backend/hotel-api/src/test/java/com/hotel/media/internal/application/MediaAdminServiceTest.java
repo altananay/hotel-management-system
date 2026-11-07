@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -234,42 +233,6 @@ class MediaAdminServiceTest {
         assertThat(jpeg.getPublicStorageKey())
                 .startsWith("public/" + MEDIA_ID + "/")
                 .endsWith("/card.jpg");
-    }
-
-    @Test
-    void shouldCompensatePublicCopiesWhenPublishTransactionFails() {
-        MediaAssetEntity asset = readyAsset(ROOM_TYPE_ID, 0);
-        MediaVariantEntity webp = variant(MediaVariantType.CARD, MediaVariantFormat.WEBP);
-        when(assetRepository.findLockedById(MEDIA_ID)).thenReturn(Optional.of(asset));
-        when(roomTypeLookup.findActive(RoomTypeId.of(ROOM_TYPE_ID)))
-                .thenReturn(Optional.of(activeRoom()));
-        when(variantRepository.findByMediaAssetId(MEDIA_ID)).thenReturn(List.of(webp));
-        when(variantRepository.saveAll(any()))
-                .thenThrow(new org.springframework.dao.DataIntegrityViolationException("commit"));
-
-        assertThatThrownBy(() -> service.publish(MEDIA_ID))
-                .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
-
-        verify(publicCleanup, times(2))
-                .enqueueAllInNewTransaction(
-                        argThat(
-                                keys ->
-                                        keys.size() == 1
-                                                && keys.stream()
-                                                        .anyMatch(
-                                                                key ->
-                                                                        key.endsWith(
-                                                                                "/card.webp"))));
-        verify(publicCleanup)
-                .processNow(
-                        argThat(
-                                keys ->
-                                        keys.size() == 1
-                                                && keys.stream()
-                                                        .anyMatch(
-                                                                key ->
-                                                                        key.endsWith(
-                                                                                "/card.webp"))));
     }
 
     @Test

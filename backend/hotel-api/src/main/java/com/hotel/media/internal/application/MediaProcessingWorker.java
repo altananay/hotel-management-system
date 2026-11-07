@@ -20,12 +20,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 @Service
 public class MediaProcessingWorker {
+
+    private static final Logger log = LoggerFactory.getLogger(MediaProcessingWorker.class);
 
     private final MediaAssetJpaRepository assetRepository;
     private final MediaVariantJpaRepository variantRepository;
@@ -156,7 +160,18 @@ public class MediaProcessingWorker {
             }
             variantRepository.save(variant);
         }
-        byTypeAndFormat.values().forEach(variantRepository::delete);
+        for (MediaVariantEntity obsolete : byTypeAndFormat.values()) {
+            String privateKey = obsolete.getPrivateStorageKey();
+            variantRepository.delete(obsolete);
+            try {
+                storage.delete(privateKey);
+            } catch (RuntimeException ex) {
+                log.warn(
+                        "Could not delete obsolete private variant {}; operator cleanup required.",
+                        privateKey,
+                        ex);
+            }
+        }
         int updated = assetRepository.markReadyIfClaimed(mediaId, leaseId, now);
         if (updated == 0) {
             return false;
