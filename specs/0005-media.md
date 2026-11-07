@@ -11,7 +11,7 @@
 - **Spec No:** `0005`
 - **Başlık:** Medya ve Fotoğraf Yönetimi (`media`)
 - **Durum:** Uygulandı - QA düzeltmeleri `fix/0005-qa-findings`, rezidüel düzeltmeler `fix/0005-residual-findings` üzerinde tamamlandı (2026-11-07); QA yeniden testi bekleniyor *(rev.4 - Q1-Q10 + D1-D17 + QA-01-QA-07 + RES-01-RES-03)*
-- **Branch:** `feature/0005-media` → `fix/0005-code-review` → `fix/0005-qa-findings`
+- **Branch:** `feature/0005-media` → `fix/0005-code-review` → `fix/0005-qa-findings` → `fix/0005-residual-findings`
 - **İlgili doküman/kararlar:** `docs/architecture.md` (§3 `media`, §5 R3, §7 Medya, §8, §10 D10, §11), `docs/domain.md` (§1 `MediaAsset`/`Scene`/`Hotspot`/`Tour`, §3.12, §3 rol tablosu), `docs/conventions.md` (§1, §2.1, §2.3, §2.4, §3, §4), `docs/frontend.md`, `docs/testing.md`, `docs/git.md`, `specs/done/0002-room-catalog.md` (oda tipi/detay notu), `specs/done/0004-admin-identity.md` (auth, gateway, roller, CSRF); Onaylı CLARIFY kararları: Q1–Q10 A seçenekleri (2026-11-03)
 - **Tarih:** 2026-11-03
 - **Sahip:** Analist (`analyst`)
@@ -213,7 +213,7 @@ Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media mod
 
 - **Spec revizyon sayısı:** 4 (QA-01–QA-07 + RES-01–RES-03 sonrası)
 - **Düzeltme turu sayısı:** 4 (CR-1–CR-10; CR-11–CR-16 doğrulama turu; QA-01–QA-07 düzeltme turu; RES-01–RES-03 rezidüel turu)
-- **Bulgu gerçek/gürültü oranı:** 23 gerçek / 1 harici yanlış pozitif (GitGuardian, base commit `c9e7da4`); bağımsız review CR-1–CR-16 + QA-01–QA-07 + RES-01–RES-03
+- **Bulgu gerçek/gürültü oranı:** 26 gerçek / 1 harici yanlış pozitif (GitGuardian, base commit `c9e7da4`); bağımsız review CR-1–CR-16 + QA-01–QA-07 + RES-01–RES-03
 - **Regresyon sayısı:** 0
 - **Kaçan hata (escaped bug):** 6 (merge sonrası CR-1/CR-2/CR-3; QA denetiminde QA-01/QA-02/QA-03); düzeltmeler PR #27 (`179d3d0`), PR #28 (`06d8182`) ve `fix/0005-residual-findings` PR'ında
 

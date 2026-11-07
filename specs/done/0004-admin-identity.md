@@ -247,7 +247,7 @@ Otel personeli (`SUPER_ADMIN`, `MANAGER`, `FRONT_DESK`) ve otel yönetimi, bugü
 
 ## 7. SCORECARD
 
-- **Spec revizyon sayısı:** 9
+- **Spec revizyon sayısı:** 10
 - **Düzeltme turu sayısı:** 2 (code review + QA)
 - **Bulgu gerçek/gürültü oranı:** 18/18 gerçek (CR-1…CR-13 + QA F-01…F-05; CR-9 ertelendi, CR-12 dashboard aksiyonu)
 - **Regresyon sayısı:** 0
