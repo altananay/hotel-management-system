@@ -21,6 +21,12 @@ jobs:
           java-version: "25"
           cache: maven
 
+      - name: Validate Prometheus alert rules
+        run: |
+          docker run --rm --entrypoint /bin/promtool \
+            -v "$PWD/infra/prometheus:/rules" \
+            prom/prometheus:v3.8.1 check rules /rules/media-public-cleanup.rules.yml
+
       - name: Verify hotel-api (Spotless + Unit + Modulith/ArchUnit + Testcontainers IT)
         working-directory: backend/hotel-api
         run: ./mvnw -B verify

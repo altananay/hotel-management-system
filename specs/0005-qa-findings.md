@@ -2,6 +2,7 @@
 
 > **Denetim hedefi:** `integration` @ `179d3d0` — `fix(media): address independent code review findings [plan 0005]`
 > **Yeniden doğrulama:** `integration` @ `7f51fe4` — QA fix merge `06d8182` + evidence `7f51fe4` (§8)
+> **Rezidüel doğrulama:** `integration` @ `9397915` — residual fix merge `9397915` (`fix/0005-residual-findings`) (§9)
 > **Tarih:** 2026-11-07
 > **Kapsam:** `hotel-api` media modülü, admin-api gateway, admin-web `/media`, web RoomCard, migration'lar, E2E ve `specs/done/evidence/0005/` kanıtları.
 > **Yöntem:** Statik kod incelemesi + birim/IT/lint/build + yerel E2E + GitHub Actions kontrolü + SHA-256 arşiv doğrulaması.
@@ -555,7 +556,7 @@ npx playwright test tests/design --grep '@seeded'
 
 > **Yeniden denetim hedefi:** `integration` @ `7f51fe4` — QA fix merge `06d8182` + final evidence commit `7f51fe4`
 > **Kaynak:** QA fix PR [#28](https://github.com/altananay/hotel-management-system/pull/28), docs PR [#29](https://github.com/altananay/hotel-management-system/pull/29)
-> **Not:** Bu bölüm, §1–§7'deki ilk denetim bulgularının düzeltme sonrası durumunu kaydeder. İlk bulgular tarihsel kayıt olarak korunmuştur.
+> **Not:** Bu bölüm, §1–§7'deki ilk denetim bulgularının düzeltme sonrası durumunu kaydeder. İlk bulgular tarihsel kayıt olarak korunmuştur. **§8 tarihsel ara durumdur;** RES-01/RES-02 daha sonra `9397915` üzerinde kapatıldı, güncel durum §9'dadır.
 
 ### 8.1 Test sonuçları
 
@@ -682,3 +683,69 @@ Kod ve runbook iyileştirmesi anlamlı; ancak “kanıtlı kapanış” için ü
 - **R-02:** runbook seviyesinde kapandı; canlı alarm/tatbikat kanıtı açık.
 
 **Güncel öneri:** İşlevsel merge blocker yok. Takım Yöneticisi `RES-01`/`RES-02` için küçük düzeltme veya açık kabul kararı verirse, R-01/R-02 için operasyonel ölçüm/tatbikat planıyla spec `done` aşamasına alınabilir. Aksi halde “koşullu geçer” durumu devam eder.
+
+---
+
+## 9. Rezidüel Düzeltmeler Sonrası Bağımsız Retest (2026-11-07)
+
+> **Retest hedefi:** `integration` @ `9397915` — `fix(media): close residual Spec 0005 QA findings (#30) [plan 0005]`
+> **Kaynak:** PR [#30](https://github.com/altananay/hotel-management-system/pull/30); PR head `f1fc3bc` / merge `9397915`
+> **Not:** §8’deki RES-01/RES-02/RES-03 durumlarının düzeltme sonrası bağımsız retestidir.
+
+### 9.1 Test sonuçları
+
+| Alan | Komut | Sonuç |
+|---|---|---|
+| `hotel-api` | `.\mvnw.cmd -B verify` | **189 birim**, **58 IT**; `MediaIT` **11/11**; Spotless temiz; BUILD SUCCESS |
+| `admin-api` | `.\mvnw.cmd -B verify` | **104 birim**, **5 IT**; `AdminGatewayClientTest` **6/6**; Spotless temiz; BUILD SUCCESS |
+| `web` | `npm test; npm run lint; npm run build` | **43/43**; lint/build başarılı |
+| `admin-web` | `npm test; npm run lint; npm run build` | **39/39**; MediaManager **13/13**; lint/build başarılı |
+| E2E `@media` | `npx playwright test tests/media --grep '@media'` | **1/1** |
+| E2E `@admin` | `npx playwright test tests/admin --grep '@admin'` | **3/3** |
+| E2E `@seeded` | `npx playwright test tests/smoke.spec.ts --grep '@seeded'` | **2/2** |
+| E2E design | `npx playwright test tests/design --grep '@seeded'` | **40/40** |
+| Manifest testleri | `npm run test:manifest` | **4/4** |
+| Prometheus kuralları | `promtool check rules infra/prometheus/media-public-cleanup.rules.yml` | **SUCCESS: 2 rules found** |
+| Prometheus scrape | `GET http://localhost:8081/actuator/prometheus` | **200**; iki cleanup metriği `0.0` |
+| Actuator koruması | `GET /actuator/env` | **401** |
+| Arşiv manifesti | `node e2e/scripts/sha256-manifest.mjs verify ...` | **129/129 UNCHANGED** |
+| Eklenen dosya testi | `0001` altına geçici dosya + verify | **CHANGED**; `added: 0001/...` |
+
+CI:
+- `integration` @ `9397915` → run **42389678373**: success.
+- Dört job da yeşil: Backend, Frontend, E2E Smoke, CI Quality Gate.
+- `@empty` yerelde yeniden koşulmadı (yerel DB seed'li); CI `9397915` üzerinde tam sırayı çalıştırdı.
+
+R-02 tatbikat kontrolü:
+- `R-02-dead-letter-drill-2026-11-07.md` içindeki iki geçici görev ID’si DB’de yok.
+- `media.media_public_cleanup_tasks` sayısı **0**.
+- `hotel-api :8091` dinlemiyor.
+
+R-01 gecikme proxy kontrolü:
+- `infra/scripts/tcp-latency-proxy.mjs` MinIO health üzerinden **HTTP 200** döndü.
+- Gerçek S3 p95/p99 ölçümü hâlâ yapılmadı; bu, R-01’in koşullu kapanışını koruyor.
+
+### 9.2 Rezidüel bulgu kapanışı
+
+| Bulgu | Durum | Bağımsız kanıt |
+|---|---|---|
+| **RES-01** — text-mode manifest added-file | **Kapatıldı** | `npm run test:manifest` 4/4; `0001` altına eklenen geçici dosya → **CHANGED**; normal manifest 129/129 **UNCHANGED** |
+| **RES-02** — 0004 timeout drift | **Kapatıldı** | `specs/done/0004-admin-identity.md` §2.2.7 amendment; `specs/0005-media.md` §2.1 + D17; `docs/architecture.md` §6; config ve `.env.example` uyumlu |
+| **RES-03** — R-01/R-02 operasyonel kapanış | **Koşullu kapandı** | R-01: media’ya özel **connect + read 15 sn**, 6/6 gateway testi, proxy health 200; gerçek S3 p95/p99 yok. R-02: `infra/prometheus` kuralı (promtool 2/2), `/actuator/prometheus` 200 + CIDR testi, yerel dead-letter/manuel retry tatbikatı ve tablo 0; canlı Prometheus/Alertmanager tetiklemesi yok |
+| **QA-01–QA-07** | **Regresyon yok** | §8’deki bağımsız testler ve bu turdaki tam suite yeşil |
+
+### 9.3 Kalan operasyonel notlar
+
+1. **R-01 üretim ölçümü:** 15 sn güvenli üst sınır olarak alınmış; gerçek S3 üzerinde `complete`, `retry`, `publish`, `unpublish`, `archive` p95/p99 ölçülmeli. Ölçüm `docs/runbooks/media-gateway-timeout.md` ile yapılabilir.
+2. **R-02 canlı alarm:** Kural dosyası ve yerel tatbikat var; canlı Prometheus/Alertmanager dağıtımı ve ilk gerçek alarm tetiklemesi operasyon ekibinin kapanış adımı.
+3. **Prometheus CIDR güvenlik notu:** Lokal Docker Desktop’ta container → host portu testi `remoteAddr`’ı `127.0.0.1` olarak gösterebildiği için dış-kaynak CIDR davranışı yerelde güvenilir doğrulanamadı. Üretimde scrape doğrudan pod/IP üzerinden yapılmalı; `/actuator/prometheus` reverse proxy’de public’e açılmamalı.
+4. **CI kanıt izi:** `residual-findings-response-2026-11-07.md` branch head’i (`f1fc3bc`), PR #30 merge bilgisini ve son `integration` CI run’ını (`42389678373`) içermiyor; bu retest kaydı §9.1’de tutuluyor. İstenirse kanıt dosyasına da eklenmeli.
+5. **Promtool CI:** `promtool` yerelde başarılı; CI’da ayrı bir `promtool check rules` adımı yok. Kural dosyası değişikliklerinde CI doğrulaması eklenmesi önerilir.
+6. **Spec durumu:** `specs/0005-media.md` hâlâ “QA yeniden testi bekleniyor” diyor; bu retest geçti. Durum/DoD güncellemesi Takım Yöneticisi onayına bağlıdır.
+
+### 9.4 Retest sonucu
+
+- **RES-01 ve RES-02 kapandı.**
+- **RES-03 koşullu kapandı:** kod, test, runbook, scrape ve yerel tatbikat tamam; gerçek S3 p95/p99 ve canlı alarm dağıtımı açık.
+- **İşlevsel/merge blocker yok.**
+- **Öneri:** Takım Yöneticisi R-01/R-02 için üretim ölçümü ve canlı alarm dağıtımını operasyonel kabul/plan olarak kaydederse spec `done` aşamasına alınabilir. Aksi halde sonuç **“koşullu geçer”** olarak kalır.
