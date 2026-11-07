@@ -24,12 +24,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class MediaPublicQueryService {
 
+    private static final Logger log = LoggerFactory.getLogger(MediaPublicQueryService.class);
     private static final int MAX_ROOM_TYPE_IDS = 50;
 
     private final MediaAssetJpaRepository assetRepository;
@@ -50,6 +54,20 @@ public class MediaPublicQueryService {
 
     @Transactional(readOnly = true)
     public List<PublicMediaView> findPublished(Collection<UUID> roomTypeIds) {
+        try {
+            return findPublishedInternal(roomTypeIds);
+        } catch (DataAccessException ex) {
+            // The public contract distinguishes "temporarily unavailable" (503) from an
+            // unexpected internal error (500); see docs/conventions.md §2.3 and QA-07.
+            log.warn("Public media query failed because a dependency is unavailable", ex);
+            throw new DomainError(
+                    MediaErrorCodes.SERVICE_UNAVAILABLE,
+                    "Media service is temporarily unavailable.",
+                    DomainErrorCategory.INTERNAL);
+        }
+    }
+
+    private List<PublicMediaView> findPublishedInternal(Collection<UUID> roomTypeIds) {
         if (roomTypeIds == null || roomTypeIds.isEmpty()) {
             return List.of();
         }

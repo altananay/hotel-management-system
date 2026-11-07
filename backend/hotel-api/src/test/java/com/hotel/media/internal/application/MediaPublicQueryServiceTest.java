@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataAccessResourceFailureException;
 
 /** Unit tests for public media filtering, cover fallback and format preference (AC-5, Q3, Q5). */
 @ExtendWith(MockitoExtension.class)
@@ -194,6 +195,42 @@ class MediaPublicQueryServiceTest {
 
         assertThat(service.findPublished(List.of(ROOM_TYPE_ID))).isEmpty();
         verify(variantRepository, never()).findByMediaAssetIdIn(anyList());
+    }
+
+    @Test
+    void shouldMapCatalogLookupFailureToServiceUnavailable() {
+        when(roomTypeLookup.findActiveByIds(anyList()))
+                .thenThrow(new DataAccessResourceFailureException("database down"));
+
+        assertThatThrownBy(() -> service.findPublished(List.of(ROOM_TYPE_ID)))
+                .isInstanceOf(DomainError.class)
+                .satisfies(
+                        error ->
+                                assertThat(((DomainError) error).code())
+                                        .isEqualTo(
+                                                com.hotel.media.internal.domain.MediaErrorCodes
+                                                        .SERVICE_UNAVAILABLE));
+    }
+
+    @Test
+    void shouldMapAssetQueryFailureToServiceUnavailable() {
+        when(roomTypeLookup.findActiveByIds(anyList()))
+                .thenReturn(
+                        List.of(
+                                new ActiveRoomType(
+                                        RoomTypeId.of(ROOM_TYPE_ID), "Süit", "Suite")));
+        when(assetRepository.findPublishedByRoomTypeIds(
+                        MediaStatus.READY, java.util.Set.of(ROOM_TYPE_ID)))
+                .thenThrow(new DataAccessResourceFailureException("database down"));
+
+        assertThatThrownBy(() -> service.findPublished(List.of(ROOM_TYPE_ID)))
+                .isInstanceOf(DomainError.class)
+                .satisfies(
+                        error ->
+                                assertThat(((DomainError) error).code())
+                                        .isEqualTo(
+                                                com.hotel.media.internal.domain.MediaErrorCodes
+                                                        .SERVICE_UNAVAILABLE));
     }
 
     @Test

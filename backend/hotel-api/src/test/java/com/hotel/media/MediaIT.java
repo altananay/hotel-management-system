@@ -441,6 +441,25 @@ class MediaIT {
     }
 
     @Test
+    void shouldDistinguishMissingMediaFromExistingUnassignedMediaWhenSelectingCover() throws Exception {
+        UUID mediaId = uploadAndWaitReady(jpeg(1200, 800));
+
+        assertThatThrownBy(() -> adminService.cover(mediaId))
+                .isInstanceOf(DomainError.class)
+                .satisfies(
+                        error ->
+                                assertThat(((DomainError) error).code())
+                                        .isEqualTo(MediaErrorCodes.NOT_PUBLISHED));
+
+        assertThatThrownBy(() -> adminService.cover(UUID.randomUUID()))
+                .isInstanceOf(DomainError.class)
+                .satisfies(
+                        error ->
+                                assertThat(((DomainError) error).code())
+                                        .isEqualTo(MediaErrorCodes.NOT_FOUND));
+    }
+
+    @Test
     void shouldRejectInactiveRoomTypeAssignment() throws Exception {
         UUID mediaId = uploadAndWaitReady(jpeg(1200, 800));
         UUID inactiveRoomTypeId = insertRoomType(false);

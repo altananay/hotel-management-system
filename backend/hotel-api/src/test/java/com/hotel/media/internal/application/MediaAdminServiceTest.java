@@ -26,6 +26,7 @@ import com.hotel.sharedkernel.api.DomainError;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -108,8 +109,6 @@ class MediaAdminServiceTest {
         MediaAssetEntity asset = readyAsset(ROOM_TYPE_ID, 1);
         asset.updateAltText("Mevcut TR", "Existing EN", NOW);
         when(assetRepository.findLockedById(MEDIA_ID)).thenReturn(Optional.of(asset));
-        when(roomTypeLookup.findActive(RoomTypeId.of(ROOM_TYPE_ID)))
-                .thenReturn(Optional.of(activeRoom()));
         when(variantRepository.findByMediaAssetId(MEDIA_ID)).thenReturn(List.of());
 
         service.update(
@@ -118,6 +117,45 @@ class MediaAdminServiceTest {
 
         assertThat(asset.getAltTextTr()).isEqualTo("Mevcut TR");
         assertThat(asset.getAltTextEn()).isEqualTo("Existing EN");
+    }
+
+    @Test
+    void shouldAllowAltTextUpdateWhenAssignedRoomTypeIsNoLongerActive() {
+        MediaAssetEntity asset = readyAsset(ROOM_TYPE_ID, 1);
+        when(assetRepository.findLockedById(MEDIA_ID)).thenReturn(Optional.of(asset));
+        when(variantRepository.findByMediaAssetId(MEDIA_ID)).thenReturn(List.of());
+
+        service.update(
+                MEDIA_ID,
+                new MediaAdminService.UpdateCommand(
+                        true, ROOM_TYPE_ID, true, "Yeni TR", true, "New EN"));
+
+        assertThat(asset.getAltTextTr()).isEqualTo("Yeni TR");
+        assertThat(asset.getAltTextEn()).isEqualTo("New EN");
+        verify(roomTypeLookup, never()).findActive(any());
+    }
+
+    @Test
+    void shouldRejectAssignmentToDifferentInactiveRoomType() {
+        MediaAssetEntity asset = readyAsset(ROOM_TYPE_ID, 1);
+        UUID inactiveRoom =
+                UUID.fromString("0199f2c0-0000-7000-8000-000000000304");
+        when(assetRepository.findLockedById(MEDIA_ID)).thenReturn(Optional.of(asset));
+        when(roomTypeLookup.findActive(RoomTypeId.of(inactiveRoom)))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(
+                        () ->
+                                service.update(
+                                        MEDIA_ID,
+                                        new MediaAdminService.UpdateCommand(
+                                                true, inactiveRoom, false, null, false, null)))
+                .isInstanceOf(DomainError.class)
+                .satisfies(
+                        error ->
+                                assertThat(((DomainError) error).code())
+                                        .isEqualTo(MediaErrorCodes.ROOM_TYPE_NOT_FOUND));
+        assertThat(asset.getRoomTypeId()).isEqualTo(ROOM_TYPE_ID);
     }
 
     @Test
@@ -270,8 +308,8 @@ class MediaAdminServiceTest {
     void shouldOnlyAllowPublishedReadyNonArchivedMediaAsCover() {
         MediaAssetEntity available = readyAsset(ROOM_TYPE_ID, 0);
         available.publish(NOW);
-        when(assetRepository.findRoomTypeIdById(MEDIA_ID))
-                .thenReturn(Optional.of(ROOM_TYPE_ID));
+        when(assetRepository.findRoomTypeIdsById(MEDIA_ID))
+                .thenReturn(List.of(ROOM_TYPE_ID));
         when(assetRepository.findLockedById(MEDIA_ID)).thenReturn(Optional.of(available));
         when(assetRepository.lockRoomMedia(ROOM_TYPE_ID)).thenReturn(List.of(available));
         when(variantRepository.findByMediaAssetId(MEDIA_ID)).thenReturn(List.of());
@@ -282,8 +320,8 @@ class MediaAdminServiceTest {
         assertThat(available.isCover()).isTrue();
 
         MediaAssetEntity draft = readyAsset(ROOM_TYPE_ID, 0);
-        when(assetRepository.findRoomTypeIdById(MEDIA_ID))
-                .thenReturn(Optional.of(ROOM_TYPE_ID));
+        when(assetRepository.findRoomTypeIdsById(MEDIA_ID))
+                .thenReturn(List.of(ROOM_TYPE_ID));
         when(assetRepository.findLockedById(MEDIA_ID)).thenReturn(Optional.of(draft));
 
         assertThatThrownBy(() -> service.cover(MEDIA_ID))
@@ -295,12 +333,42 @@ class MediaAdminServiceTest {
     }
 
     @Test
+    void shouldRejectCoverAsNotPublishedWhenExistingMediaHasNoRoomType() {
+        MediaAssetEntity draft = readyAsset(null, 0);
+        when(assetRepository.findRoomTypeIdsById(MEDIA_ID))
+                .thenReturn(Collections.singletonList(null));
+        when(assetRepository.findLockedById(MEDIA_ID)).thenReturn(Optional.of(draft));
+
+        assertThatThrownBy(() -> service.cover(MEDIA_ID))
+                .isInstanceOf(DomainError.class)
+                .satisfies(
+                        error ->
+                                assertThat(((DomainError) error).code())
+                                        .isEqualTo(MediaErrorCodes.NOT_PUBLISHED));
+        verify(assetRepository, never()).lockRoomMedia(any());
+        verify(assetRepository, never()).clearCoverForRoom(any(), any());
+    }
+
+    @Test
+    void shouldReportNotFoundOnlyWhenCoverAssetDoesNotExist() {
+        when(assetRepository.findRoomTypeIdsById(MEDIA_ID)).thenReturn(List.of());
+
+        assertThatThrownBy(() -> service.cover(MEDIA_ID))
+                .isInstanceOf(DomainError.class)
+                .satisfies(
+                        error ->
+                                assertThat(((DomainError) error).code())
+                                        .isEqualTo(MediaErrorCodes.NOT_FOUND));
+        verify(assetRepository, never()).findLockedById(any());
+    }
+
+    @Test
     void shouldNotResurrectArchivedMediaWhenCoverLosesTheRace() {
         MediaAssetEntity archived = readyAsset(ROOM_TYPE_ID, 0);
         archived.publish(NOW);
         archived.archive(NOW);
-        when(assetRepository.findRoomTypeIdById(MEDIA_ID))
-                .thenReturn(Optional.of(ROOM_TYPE_ID));
+        when(assetRepository.findRoomTypeIdsById(MEDIA_ID))
+                .thenReturn(List.of(ROOM_TYPE_ID));
         when(assetRepository.findLockedById(MEDIA_ID)).thenReturn(Optional.of(archived));
 
         assertThatThrownBy(() -> service.cover(MEDIA_ID))

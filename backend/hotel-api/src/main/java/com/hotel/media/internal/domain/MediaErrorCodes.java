@@ -17,6 +17,7 @@ public final class MediaErrorCodes {
     public static final String PROCESSING_FAILED = "media.processing_failed";
     public static final String ALT_TEXT_INVALID = "media.alt_text_invalid";
     public static final String STORAGE_UNAVAILABLE = "media.storage_unavailable";
+    public static final String SERVICE_UNAVAILABLE = "media.service_unavailable";
 
     private MediaErrorCodes() {}
 }
