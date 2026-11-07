@@ -57,11 +57,17 @@ export function MediaManager() {
     try {
       await uploadMedia(file);
       setFile(null);
-      await refresh();
     } catch {
       setUploadError(true);
     } finally {
       setUploading(false);
+      // Start may already have created an UPLOADED/FAILED record before a later step failed.
+      // Refresh on every path so the retry/archive actions become reachable (QA-03).
+      try {
+        await refresh();
+      } catch {
+        // The query state itself surfaces refresh failures; keep the upload error visible.
+      }
     }
   };
 
@@ -304,6 +310,12 @@ function MediaRow({
               <option value="" disabled>
                 Atanmadı
               </option>
+              {item.roomTypeId &&
+                !roomTypes.some((room) => room.id === item.roomTypeId) && (
+                  <option value={item.roomTypeId} disabled>
+                    Atanmış oda tipi (pasif)
+                  </option>
+                )}
               {roomTypes.map((room) => (
                 <option key={room.id} value={room.id}>
                   {room.nameTr}
@@ -359,7 +371,6 @@ function MediaRow({
               void run(() =>
                 mutations.update.mutateAsync({
                   id: item.id,
-                  roomTypeId: item.roomTypeId ?? undefined,
                   altTextTr: altTr,
                   altTextEn: altEn,
                 }),

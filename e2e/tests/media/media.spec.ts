@@ -96,6 +96,20 @@ test.describe("Media management (AC-4, AC-5, AC-6)", () => {
         timeout: 90_000,
       });
 
+      const altTr = "E2E Kapadokya mağara süiti";
+      const altEn = "E2E Cappadocia cave suite";
+      await page.getByTestId("admin-media-alt-tr").fill(altTr);
+      await page.getByTestId("admin-media-alt-en").fill(altEn);
+      const altSave = page.waitForResponse(
+        (response) =>
+          response.url().includes("/admin-api/media/") &&
+          response.request().method() === "PATCH",
+      );
+      await page.getByText("Alt metni kaydet").click();
+      expect((await altSave).status()).toBe(200);
+      await expect(page.getByTestId("admin-media-alt-tr")).toHaveValue(altTr);
+      await expect(page.getByTestId("admin-media-alt-en")).toHaveValue(altEn);
+
       const roomTypeSelect = page.getByTestId("admin-media-room-type");
       const roomTypeId = await roomTypeSelect
         .locator("option:not([disabled])")
@@ -127,14 +141,37 @@ test.describe("Media management (AC-4, AC-5, AC-6)", () => {
       const publicUrl = await roomImage.getAttribute("src");
       expect(publicUrl).toContain("/hotel-media/public/");
       expect(publicUrl).toMatch(/\.webp$/);
+      await expect(roomImage).toHaveAttribute("alt", altTr);
       const publicObject = await page.request.get(publicUrl!);
       expect(publicObject.status()).toBe(200);
       expect(publicObject.headers()["content-type"]).toBe("image/webp");
+
+      const publicMediaApi = await page.request.get(
+        `${API_BASE_URL}/api/media?roomTypeIds=${roomTypeId}`,
+      );
+      expect(publicMediaApi.status()).toBe(200);
+      const publicMediaBody = await publicMediaApi.json();
+      const publishedItem = publicMediaBody.items.find(
+        (item: { altTextTr?: string }) => item.altTextTr === altTr,
+      );
+      expect(publishedItem).toBeTruthy();
+      expect(publishedItem.altTextEn).toBe(altEn);
+
+      await page.goto(`${WEB_BASE_URL}/en/rooms`, { waitUntil: "networkidle" });
+      const roomImageEn = page.getByTestId("room-card-image").first();
+      await expect(roomImageEn).toBeVisible({ timeout: 30_000 });
+      await expect(roomImageEn).toHaveAttribute("alt", altEn);
+
       await capture(page, "0005", "AC-5-room-card-image.png");
       writeEvidence(
         "0005",
         "AC-5-public-media.log",
-        `public room card image: ${publicUrl}`,
+        [
+          `public room card image: ${publicUrl}`,
+          `public API altTextTr: ${publishedItem.altTextTr}`,
+          `public API altTextEn: ${publishedItem.altTextEn}`,
+          "TR room-card-image alt and EN room-card-image alt verified",
+        ].join("\n"),
       );
       writeEvidence(
         "0005",
@@ -196,17 +233,33 @@ test.describe("Media management (AC-4, AC-5, AC-6)", () => {
 
       writeEvidence(
         "0005",
+        "AC-4-admin-media-states.md",
+        [
+          "# 0005 Admin Media States",
+          "",
+          "- empty state: captured in `AC-4-admin-media-states.png`",
+          "- loading -> empty transition: covered by `admin-web/src/features/media/__tests__/media-manager.test.tsx` (`shouldRenderLoadingThenEmptyState_whenNoMediaExists`)",
+          "- list error + retry: covered by the same suite (`shouldRetryLoad_genericErrorWithoutLeakingDetails_whenBackendFails`)",
+          "- room-type options error + disabled assignment: covered by the same suite (`shouldShowRoomTypeOptionsErrorAndDisableAssignment_whenOptionsFail`)",
+        ].join("\n"),
+      );
+      writeEvidence(
+        "0005",
         "AC-6-media-e2e-summary.md",
         [
           "# 0005 Media E2E Summary",
           "",
           "- authorized SUPER_ADMIN login: passed",
-          "- real PNG upload -> PROCESSING -> READY: passed",
+          "- invalid SVG (415) and oversized upload (400) rejection: passed",
+          "- real WebP upload (`home-hero-poster-1280.webp`) -> PROCESSING -> READY: passed",
+          "- TR/EN alt text saved through the admin UI: passed",
           "- room type assignment, publish, cover: passed",
-          "- public `room-card-image` WebP: passed",
+          "- public `room-card-image` WebP, TR alt and EN alt: passed",
+          "- public API `altTextTr`/`altTextEn` fields: passed",
           "- FRONT_DESK admin media 403: passed",
           "- unpublish -> placeholder: passed",
           "- archive + confirmation: passed",
+          "- loading/error admin states: covered by Vitest/RTL (see `AC-4-admin-media-states.md`)",
         ].join("\n"),
       );
     },

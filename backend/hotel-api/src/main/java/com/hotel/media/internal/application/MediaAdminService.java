@@ -120,15 +120,18 @@ public class MediaAdminService {
                         : asset.getAltTextEn();
         Instant now = clock.instant();
         if (command.roomTypeIdProvided() && command.roomTypeId() != null) {
-            ensureActiveRoomType(command.roomTypeId());
-            if (asset.getPublishedAt() != null
-                    && !command.roomTypeId().equals(asset.getRoomTypeId())) {
-                throw conflict(
-                        MediaErrorCodes.ORDER_CONFLICT,
-                        "Published media cannot change its room type.");
-            }
-            if (asset.getRoomTypeId() == null
-                    || !command.roomTypeId().equals(asset.getRoomTypeId())) {
+            boolean assignmentChanged =
+                    asset.getRoomTypeId() == null
+                            || !command.roomTypeId().equals(asset.getRoomTypeId());
+            if (assignmentChanged) {
+                // Only a new assignment requires an active room type. Alt-text edits on media
+                // assigned to a since-deactivated room type must stay possible (QA-02).
+                ensureActiveRoomType(command.roomTypeId());
+                if (asset.getPublishedAt() != null) {
+                    throw conflict(
+                            MediaErrorCodes.ORDER_CONFLICT,
+                            "Published media cannot change its room type.");
+                }
                 int order = assetRepository.maxDisplayOrder(command.roomTypeId()) + 1;
                 asset.assignRoomType(command.roomTypeId(), order, now);
             }
@@ -175,7 +178,11 @@ public class MediaAdminService {
 
     @Transactional
     public AdminMediaView cover(UUID id) {
-        UUID roomTypeId = assetRepository.findRoomTypeIdById(id).orElseThrow(this::notFound);
+        List<UUID> roomTypeIds = assetRepository.findRoomTypeIdsById(id);
+        if (roomTypeIds.isEmpty()) {
+            throw notFound();
+        }
+        UUID roomTypeId = roomTypeIds.getFirst();
         if (roomTypeId != null) {
             assetRepository.lockRoomMedia(roomTypeId);
         }

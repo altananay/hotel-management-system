@@ -33,8 +33,13 @@ public interface MediaAssetJpaRepository extends JpaRepository<MediaAssetEntity,
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<MediaAssetEntity> findLockedById(UUID id);
 
+    /**
+     * Returns an empty list when the asset does not exist and a list containing {@code null} when
+     * the asset exists without a room type. This keeps "missing asset" distinguishable from
+     * "asset without room type" (QA-01).
+     */
     @Query("SELECT a.roomTypeId FROM MediaAssetEntity a WHERE a.id = :id")
-    Optional<UUID> findRoomTypeIdById(@Param("id") UUID id);
+    List<UUID> findRoomTypeIdsById(@Param("id") UUID id);
 
     @Query(
             "SELECT a FROM MediaAssetEntity a "

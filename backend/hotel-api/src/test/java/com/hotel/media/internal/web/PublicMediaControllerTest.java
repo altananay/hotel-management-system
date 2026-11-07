@@ -13,7 +13,10 @@ import com.hotel.config.SecurityConfig;
 import com.hotel.media.internal.application.MediaPublicQueryService;
 import com.hotel.media.internal.application.MediaPublicQueryService.PublicMediaView;
 import com.hotel.media.internal.application.MediaPublicQueryService.PublicVariant;
+import com.hotel.media.internal.domain.MediaErrorCodes;
 import com.hotel.media.internal.domain.MediaVariantType;
+import com.hotel.sharedkernel.api.DomainError;
+import com.hotel.sharedkernel.api.DomainErrorCategory;
 import com.hotel.web.GlobalExceptionHandler;
 import com.hotel.web.ProblemErrorController;
 import com.hotel.web.RequestIdFilter;
@@ -85,6 +88,23 @@ class PublicMediaControllerTest {
                 .andExpect(jsonPath("$.items[0].storageKey").doesNotExist())
                 .andExpect(jsonPath("$.items[0].failureCode").doesNotExist())
                 .andExpect(jsonPath("$.items[0].original").doesNotExist());
+    }
+
+    @Test
+    void shouldReturn503WithMediaServiceCode_whenDependencyIsUnavailable() throws Exception {
+        UUID roomTypeId = UUID.fromString("0199f2c0-0000-7000-8000-000000000301");
+        when(publicQueryService.findPublished(List.of(roomTypeId)))
+                .thenThrow(
+                        new DomainError(
+                                MediaErrorCodes.SERVICE_UNAVAILABLE,
+                                "Media service is temporarily unavailable.",
+                                DomainErrorCategory.INTERNAL));
+
+        mockMvc.perform(get("/api/media").param("roomTypeIds", roomTypeId.toString()))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(
+                        content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code").value("media.service_unavailable"));
     }
 
     @Test

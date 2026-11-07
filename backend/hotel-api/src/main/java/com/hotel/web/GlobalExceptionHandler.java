@@ -35,6 +35,7 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     private static final String MEDIA_STORAGE_UNAVAILABLE = "media.storage_unavailable";
+    private static final String MEDIA_SERVICE_UNAVAILABLE = "media.service_unavailable";
     private static final String MEDIA_INVALID_CONTENT_TYPE = "media.invalid_content_type";
     private static final String MEDIA_INVALID_IMAGE = "media.invalid_image";
     private static final String MEDIA_IMAGE_TOO_LARGE = "media.image_too_large";
@@ -145,6 +146,7 @@ public class GlobalExceptionHandler {
             case MEDIA_INVALID_CONTENT_TYPE -> HttpStatus.UNSUPPORTED_MEDIA_TYPE;
             case MEDIA_INVALID_IMAGE, MEDIA_IMAGE_TOO_LARGE -> HttpStatus.UNPROCESSABLE_ENTITY;
             case MEDIA_UPLOAD_EXPIRED -> HttpStatus.CONFLICT;
+            case MEDIA_SERVICE_UNAVAILABLE -> HttpStatus.SERVICE_UNAVAILABLE;
             default ->
                     switch (error.category()) {
                         case VALIDATION -> HttpStatus.BAD_REQUEST;

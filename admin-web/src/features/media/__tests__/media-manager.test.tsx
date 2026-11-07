@@ -223,6 +223,28 @@ describe("MediaManager (AC-4)", () => {
     expect(screen.getByTestId("admin-media-room-types-retry")).toBeVisible();
   });
 
+  it("shouldExposeInactiveAssignedRoomTypeAsDisabledOption_whenOptionsOnlyContainActive", async () => {
+    const inactiveRoomTypeId = "0199f2c0-0000-7000-8000-000000000304";
+    server.use(
+      http.get("*/admin-api/media", () =>
+        HttpResponse.json(
+          page([mediaItem({ roomTypeId: inactiveRoomTypeId, published: false })]),
+        ),
+      ),
+    );
+
+    renderManager();
+
+    await waitFor(() =>
+      expect(screen.getByTestId("admin-media-item")).toBeInTheDocument(),
+    );
+    const select = screen.getByTestId("admin-media-room-type");
+    expect(select).toHaveValue(inactiveRoomTypeId);
+    expect(
+      within(select).getByRole("option", { name: "Atanmış oda tipi (pasif)" }),
+    ).toBeDisabled();
+  });
+
   it("shouldRetryLoad_genericErrorWithoutLeakingDetails_whenBackendFails", async () => {
     let attempts = 0;
     server.use(
@@ -355,17 +377,29 @@ describe("MediaManager (AC-4)", () => {
     );
   });
 
-  it("shouldSaveAltTextAndSendCsrf_whenFormSubmitted", async () => {
+  it("shouldSaveAltTextWithoutRoomTypeAndSendCsrf_whenFormSubmitted", async () => {
+    let saved = false;
     server.use(
-      http.get("*/admin-api/media", () => HttpResponse.json(page([mediaItem()]))),
+      http.get("*/admin-api/media", () =>
+        HttpResponse.json(
+          page([
+            mediaItem(
+              saved
+                ? { altTextTr: "Yeni TR", altTextEn: "New EN" }
+                : {},
+            ),
+          ]),
+        ),
+      ),
       http.patch("*/admin-api/media/0199f2c0-0000-7000-8000-000000000401", async ({ request }) => {
         const body = (await request.json()) as Record<string, unknown>;
         expect(body).toEqual({
-          roomTypeId: ROOM_TYPE_ID,
           altTextTr: "Yeni TR",
           altTextEn: "New EN",
         });
+        expect(body).not.toHaveProperty("roomTypeId");
         expect(request.headers.get("X-XSRF-TOKEN")).toBe("test-csrf");
+        saved = true;
         return HttpResponse.json(
           mediaItem({ altTextTr: "Yeni TR", altTextEn: "New EN" }),
         );
@@ -388,6 +422,189 @@ describe("MediaManager (AC-4)", () => {
     await waitFor(() =>
       expect(screen.getByTestId("admin-media-alt-tr")).toHaveValue("Yeni TR"),
     );
+  });
+
+  it("shouldSendRoomTypeIdOnly_whenAssignmentChanges", async () => {
+    const otherRoomTypeId = "0199f2c0-0000-7000-8000-000000000302";
+    let assignedRoomTypeId = ROOM_TYPE_ID;
+    server.use(
+      http.get("*/admin-api/media", () =>
+        HttpResponse.json(
+          page([
+            mediaItem({
+              roomTypeId: assignedRoomTypeId,
+              published: false,
+            }),
+          ]),
+        ),
+      ),
+      http.get("*/admin-api/media/room-types", () =>
+        HttpResponse.json([
+          ...roomTypes,
+          {
+            id: otherRoomTypeId,
+            nameTr: "Taş Oda",
+            nameEn: "Stone Room",
+          },
+        ]),
+      ),
+      http.patch("*/admin-api/media/0199f2c0-0000-7000-8000-000000000401", async ({ request }) => {
+        const body = (await request.json()) as Record<string, unknown>;
+        expect(body).toEqual({
+          roomTypeId: otherRoomTypeId,
+          altTextTr: "Mağara süit",
+          altTextEn: "Cave suite",
+        });
+        assignedRoomTypeId = otherRoomTypeId;
+        return HttpResponse.json(mediaItem({ roomTypeId: otherRoomTypeId }));
+      }),
+    );
+
+    renderManager();
+    await waitFor(() =>
+      expect(screen.getByTestId("admin-media-item")).toBeInTheDocument(),
+    );
+    const select = screen.getByTestId("admin-media-room-type");
+    await waitFor(() =>
+      expect(
+        within(select).getByRole("option", { name: "Taş Oda" }),
+      ).toBeInTheDocument(),
+    );
+
+    fireEvent.change(select, {
+      target: { value: otherRoomTypeId },
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId("admin-media-room-type")).toHaveValue(
+        otherRoomTypeId,
+      ),
+    );
+  });
+
+  it("shouldRefreshListAndExposeRetry_whenCompleteRejectsTheImage", async () => {
+    let completeAttempted = false;
+    server.use(
+      http.get("*/admin-api/media", () =>
+        HttpResponse.json(
+          page(
+            completeAttempted
+              ? [
+                  mediaItem({
+                    status: "FAILED",
+                    failureCode: "media.invalid_image",
+                    variants: [],
+                  }),
+                ]
+              : [],
+          ),
+        ),
+      ),
+      http.post("*/admin-api/media/uploads", () =>
+        HttpResponse.json(
+          {
+            mediaId: "0199f2c0-0000-7000-8000-000000000401",
+            uploadUrl: "http://localhost:9000/hotel-media/private/upload-target",
+            expiresAt: "2026-11-03T10:10:00Z",
+          },
+          { status: 201 },
+        ),
+      ),
+      http.put("http://localhost:9000/hotel-media/private/upload-target", () =>
+        new HttpResponse(null, { status: 200 }),
+      ),
+      http.post("*/admin-api/media/0199f2c0-0000-7000-8000-000000000401/complete", () => {
+        completeAttempted = true;
+        return HttpResponse.json(
+          {
+            type: "about:blank",
+            title: "Unprocessable Entity",
+            status: 422,
+            detail: "The image is invalid.",
+            code: "media.invalid_image",
+            instance: "/admin-api/media/0199f2c0-0000-7000-8000-000000000401/complete",
+          },
+          {
+            status: 422,
+            headers: { "Content-Type": "application/problem+json" },
+          },
+        );
+      }),
+    );
+
+    renderManager();
+    await waitFor(() =>
+      expect(screen.getByTestId("admin-media-empty")).toBeInTheDocument(),
+    );
+
+    const file = new File(["broken-image"], "broken.jpg", {
+      type: "image/jpeg",
+    });
+    fireEvent.change(screen.getByTestId("admin-media-file-input"), {
+      target: { files: [file] },
+    });
+    fireEvent.click(screen.getByTestId("admin-media-upload-submit"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("admin-media-status")).toHaveTextContent(
+        "Başarısız",
+      ),
+    );
+    expect(
+      screen.getByTestId("admin-media-retry-processing"),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId("admin-media-upload")).getByRole("alert"),
+    ).toBeVisible();
+  });
+
+  it("shouldRefreshListAndExposeArchive_whenDirectUploadFails", async () => {
+    let uploadAttempted = false;
+    server.use(
+      http.get("*/admin-api/media", () =>
+        HttpResponse.json(
+          page(
+            uploadAttempted
+              ? [mediaItem({ status: "UPLOADED", variants: [] })]
+              : [],
+          ),
+        ),
+      ),
+      http.post("*/admin-api/media/uploads", () =>
+        HttpResponse.json(
+          {
+            mediaId: "0199f2c0-0000-7000-8000-000000000401",
+            uploadUrl: "http://localhost:9000/hotel-media/private/upload-target",
+            expiresAt: "2026-11-03T10:10:00Z",
+          },
+          { status: 201 },
+        ),
+      ),
+      http.put("http://localhost:9000/hotel-media/private/upload-target", () => {
+        uploadAttempted = true;
+        return HttpResponse.text("storage down", { status: 503 });
+      }),
+    );
+
+    renderManager();
+    await waitFor(() =>
+      expect(screen.getByTestId("admin-media-empty")).toBeInTheDocument(),
+    );
+
+    const file = new File(["image-bytes"], "room.jpg", {
+      type: "image/jpeg",
+    });
+    fireEvent.change(screen.getByTestId("admin-media-file-input"), {
+      target: { files: [file] },
+    });
+    fireEvent.click(screen.getByTestId("admin-media-upload-submit"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("admin-media-status")).toHaveTextContent(
+        "Yüklendi",
+      ),
+    );
+    expect(screen.getByTestId("admin-media-archive")).toBeInTheDocument();
   });
 
   it("shouldSendCompleteOrderedList_whenMovingMedia", async () => {

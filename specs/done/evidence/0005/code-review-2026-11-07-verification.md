@@ -7,6 +7,7 @@
 - **CI:** Backend, Frontend, E2E ve CI Quality Gate **success** (run `42323375997`); GitGuardian **success**.
 - **Yöntem:** Statik kaynak/migration/test/CI incelemesi. Test veya derleme çalıştırılmadı.
 - **Önceki doğrulama:** `code-review-2026-11-04-verification.md` (`7d228b0` head'i için tarihsel kayıt)
+- **Delta notu:** İncelenen `7f8a75b` sonrası PR head'i `8538124` oldu; `git diff --stat 7f8a75b 8538124` yalnız `MediaPublicCleanupService` metrikleri (+9), `MediaIT` rollback assert güçlendirmesi (+18/-?), `MediaPublicCleanupServiceTest` (+3), runbook (+79), spec/response/verification dosyalarını kapsar. `8538124` ile merge commit `179d3d0` **ağaçları birebir aynıdır** (`c6a6e0b9a22dabd1c25bb4a9b70488bf9fd6cbb0`). Davranış değişikliği yoktur; APPROVE bu delta ağacı için de geçerlidir. QA-01–QA-07 düzeltmeleri ayrıca `fix/0005-qa-findings` üzerinde yeniden incelenmiştir.
 
 ---
 
