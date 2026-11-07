@@ -28,7 +28,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionException;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 public class MediaPublicQueryService {
@@ -40,23 +42,29 @@ public class MediaPublicQueryService {
     private final MediaVariantJpaRepository variantRepository;
     private final RoomTypeLookup roomTypeLookup;
     private final MediaStoragePort storage;
+    private final TransactionTemplate readOnlyTransaction;
 
     public MediaPublicQueryService(
             MediaAssetJpaRepository assetRepository,
             MediaVariantJpaRepository variantRepository,
             RoomTypeLookup roomTypeLookup,
-            MediaStoragePort storage) {
+            MediaStoragePort storage,
+            PlatformTransactionManager transactionManager) {
         this.assetRepository = assetRepository;
         this.variantRepository = variantRepository;
         this.roomTypeLookup = roomTypeLookup;
         this.storage = storage;
+        this.readOnlyTransaction = new TransactionTemplate(transactionManager);
+        this.readOnlyTransaction.setReadOnly(true);
     }
 
-    @Transactional(readOnly = true)
     public List<PublicMediaView> findPublished(Collection<UUID> roomTypeIds) {
         try {
-            return findPublishedInternal(roomTypeIds);
-        } catch (DataAccessException ex) {
+            // Keep the transaction boundary inside the try block: transaction start
+            // (CannotCreateTransactionException) and commit (TransactionSystemException)
+            // failures must map to 503 too, not only DataAccessException from the callback.
+            return readOnlyTransaction.execute(status -> findPublishedInternal(roomTypeIds));
+        } catch (DataAccessException | TransactionException ex) {
             // The public contract distinguishes "temporarily unavailable" (503) from an
             // unexpected internal error (500); see docs/conventions.md §2.3 and QA-07.
             log.warn("Public media query failed because a dependency is unavailable", ex);
