@@ -12,6 +12,12 @@ Bu dizin, geliştirme ortamı için gerekli altyapı servislerini (`PostgreSQL`,
 
 > **Bucket init ayrı adımdır:** `docker compose up -d --wait` yalnız üç servisi healthy duruma getirir. `hotel-media` bucket'ı tek seferlik init job'uyla oluşturulur: `docker compose --env-file .env -f infra/docker-compose.yml --profile init run --rm minio-init`. Gerekçe: `up --wait`, exit eden tek seferlik job'u hata sayar (docker/compose#10596). Bu nedenle init, `--profile init` altında tutulur ve kendi exit koduyla doğrulanır.
 
+## Alert kuralları
+
+- `infra/prometheus/media-public-cleanup.rules.yml`: media public cleanup dead-letter ve retry alarmları. Prometheus rule path'ine kopyalanır/mount edilir; `promtool check rules infra/prometheus/media-public-cleanup.rules.yml` ile doğrulanır.
+- `infra/scripts/tcp-latency-proxy.mjs`: local S3 gecikme enjeksiyonu; media gateway timeout ölçümü için `docs/runbooks/media-gateway-timeout.md`.
+- Runbook ve tatbikat adımları: `docs/runbooks/media-public-cleanup.md`.
+
 ## Ortam Değişkenleri: Her Katman Nereden Okur?
 
 | Katman | Okuduğu yer | Not |

@@ -1,11 +1,9 @@
-package com.hotel.gateway;
+package com.hotel.gateway.internal.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.hotel.gateway.api.GatewayTimeoutException;
-import com.hotel.gateway.internal.application.AdminGatewayClient;
-import com.hotel.gateway.internal.application.GatewayResponse;
 import com.sun.net.httpserver.HttpServer;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -158,5 +156,21 @@ class AdminGatewayClientTest {
 
         assertThat(response.status()).isEqualTo(200);
         assertThat(new String(response.body(), StandardCharsets.UTF_8)).isEqualTo("media-ok");
+    }
+
+    @Test
+    void shouldUseMediaSpecificConnectTimeoutForMediaRequests() {
+        assertThat(client.clientFor("/admin-api/media/1").connectTimeout())
+                .contains(Duration.ofSeconds(5));
+        assertThat(client.clientFor("/admin-api/rooms").connectTimeout())
+                .contains(Duration.ofMillis(500));
+    }
+
+    @Test
+    void shouldTreatOnlyMediaPathsAsMediaRequests() {
+        assertThat(AdminGatewayClient.isMediaRequest("/admin-api/media")).isTrue();
+        assertThat(AdminGatewayClient.isMediaRequest("/admin-api/media/1/complete")).isTrue();
+        assertThat(AdminGatewayClient.isMediaRequest("/admin-api/mediafoo")).isFalse();
+        assertThat(AdminGatewayClient.isMediaRequest("/admin-api/rooms")).isFalse();
     }
 }

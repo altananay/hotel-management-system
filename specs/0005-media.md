@@ -10,8 +10,8 @@
 
 - **Spec No:** `0005`
 - **Başlık:** Medya ve Fotoğraf Yönetimi (`media`)
-- **Durum:** Uygulandı — QA düzeltmeleri `fix/0005-qa-findings` üzerinde tamamlandı (2026-11-07); QA yeniden testi bekleniyor *(rev.3 — Q1-Q10 + D1-D16 + QA-01–QA-07)*
-- **Branch:** `feature/0005-media` → `fix/0005-code-review` → `fix/0005-qa-findings`
+- **Durum:** Uygulandı - QA düzeltmeleri `fix/0005-qa-findings`, rezidüel düzeltmeler `fix/0005-residual-findings` üzerinde tamamlandı (2026-11-07); QA yeniden testi bekleniyor *(rev.4 - Q1-Q10 + D1-D17 + QA-01-QA-07 + RES-01-RES-03)*
+- **Branch:** `feature/0005-media` → `fix/0005-code-review` → `fix/0005-qa-findings` → `fix/0005-residual-findings`
 - **İlgili doküman/kararlar:** `docs/architecture.md` (§3 `media`, §5 R3, §7 Medya, §8, §10 D10, §11), `docs/domain.md` (§1 `MediaAsset`/`Scene`/`Hotspot`/`Tour`, §3.12, §3 rol tablosu), `docs/conventions.md` (§1, §2.1, §2.3, §2.4, §3, §4), `docs/frontend.md`, `docs/testing.md`, `docs/git.md`, `specs/done/0002-room-catalog.md` (oda tipi/detay notu), `specs/done/0004-admin-identity.md` (auth, gateway, roller, CSRF); Onaylı CLARIFY kararları: Q1–Q10 A seçenekleri (2026-11-03)
 - **Tarih:** 2026-11-03
 - **Sahip:** Analist (`analyst`)
@@ -32,7 +32,7 @@ Otel yönetimi, oda tiplerinin fotoğraflarını admin panelinden yetkili biçim
 
 ### 2.1 Admin API Sözleşmesi
 
-Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media modülüne gider. Gateway yalnız taşır; iş kuralı içermez. State-changing isteklerde 0004'teki CSRF/Origin ve rol kuralları geçerlidir; `X-Request-Id` admin-api kenarında üretilir/doğrulanır ve aynen taşınır.
+Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media modülüne gider. Gateway yalnız taşır; iş kuralı içermez. State-changing isteklerde 0004'teki CSRF/Origin ve rol kuralları geçerlidir; `X-Request-Id` admin-api kenarında üretilir/doğrulanır ve aynen taşınır. Gateway genel timeout'u **3 sn**'dir; `/admin-api/media/**` için bağlantı + okuma bütçesi `ADMIN_GATEWAY_MEDIA_TIMEOUT_MS` (**varsayılan 15 sn**) ile ayrılır (D17, R-01; 0004 §2.2.7 amendment).
 
 | Uç | Yetki | Davranış | Başarı | Hata |
 |---|---|---|---|---|
@@ -198,7 +198,7 @@ Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media mod
   - E2E sırası: 0002 `@empty` 1/1 → catalog seed → 0002 `@seeded` 2/2 → 0003 design 40/40 → `@admin` 3/3 → `@media`; 0002/0003 testleri değişmez, standart seed'e medya eklenmez, `@media` gerçek yükleme fixture'ı kullanır.
   - `@media`: yetkili login → upload → READY → assign/cover/publish → public `room-card-image`; FRONT_DESK 403; geçersiz tür/boyut/SVG; yayında olmayan medya public'te yok; unpublish/archive → placeholder. Presigned TTL ve EXIF/GPS backend IT'sinde doğrulanır.
   - Kanıtlar `specs/done/evidence/0005/` altında; 0001–0004 arşivleri SHA-256/git diff ile değişmemiş; `.env.example`, `infra`, `docs`, CI ve `CREDITS.md` güncellenmiştir; pipeline yeşildir.
-  - **Kanıt:** `AC-6-media-e2e-summary.md`, `AC-6-minio-it.log`, `AC-6-ci-run.md` (tarihsel), `AC-6-integration-179d3d0.md`, `AC-6-qa-fixes-verification.md`, `AC-6-archive-sha256.txt`.
+  - **Kanıt:** `AC-6-media-e2e-summary.md`, `AC-6-minio-it.log`, `AC-6-ci-run.md` (tarihsel), `AC-6-integration-179d3d0.md`, `AC-6-qa-fixes-verification.md`, `AC-6-archive-sha256.txt`, `residual-findings-response-2026-11-07.md`, `R-02-dead-letter-drill-2026-11-07.md`.
 
 ## 6. Definition of Done
 
@@ -211,11 +211,11 @@ Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media mod
 
 ## 7. SCORECARD
 
-- **Spec revizyon sayısı:** 3 (QA-01–QA-07 sonrası)
-- **Düzeltme turu sayısı:** 3 (CR-1–CR-10; CR-11–CR-16 doğrulama turu; QA-01–QA-07 düzeltme turu)
-- **Bulgu gerçek/gürültü oranı:** 23 gerçek / 1 harici yanlış pozitif (GitGuardian, base commit `c9e7da4`); bağımsız review CR-1–CR-16 + QA-01–QA-07
+- **Spec revizyon sayısı:** 4 (QA-01–QA-07 + RES-01–RES-03 sonrası)
+- **Düzeltme turu sayısı:** 4 (CR-1–CR-10; CR-11–CR-16 doğrulama turu; QA-01–QA-07 düzeltme turu; RES-01–RES-03 rezidüel turu)
+- **Bulgu gerçek/gürültü oranı:** 26 gerçek / 1 harici yanlış pozitif (GitGuardian, base commit `c9e7da4`); bağımsız review CR-1–CR-16 + QA-01–QA-07 + RES-01–RES-03
 - **Regresyon sayısı:** 0
-- **Kaçan hata (escaped bug):** 6 (merge sonrası CR-1/CR-2/CR-3; QA denetiminde QA-01/QA-02/QA-03); düzeltmeler PR #27 (`179d3d0`) ve `fix/0005-qa-findings` PR'ında
+- **Kaçan hata (escaped bug):** 6 (merge sonrası CR-1/CR-2/CR-3; QA denetiminde QA-01/QA-02/QA-03); düzeltmeler PR #27 (`179d3d0`), PR #28 (`06d8182`) ve `fix/0005-residual-findings` PR'ında
 
 ## 8. Ek A — Onaylanan CLARIFY Kararları (Q1–Q10)
 
@@ -252,3 +252,4 @@ Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media mod
 | D14 | Worker claim'i `processing_lease_id` ile fencing yapar; ready/failed geçişleri lease koşulludur | Arşiv/paralel worker yarışında eski worker'ın yazmasını engeller; REQ-3, AC-3/AC-4 |
 | D15 | Public S3 nesneleri için DB cleanup-intent tablosu + afterCommit/rollback telafisi, grace süreli retry ve dead-letter kullanılır; migration karşılığı `V10` (tablo) + `V11` (dead-letter) | S3/DB atomik olmadığından public kopya invariant'ını kalıcı orphan bırakmadan korur; in-doubt commit'te yayındaki nesneyi silmez; operasyonel kapanış `docs/runbooks/media-public-cleanup.md`; REQ-5, AC-5 |
 | D16 | Processing varyantları silinip yeniden yaratılmaz; `(variant, format)` anahtarında yerinde güncellenir | Yarım kalan işlemde DB varyant boşluğu/duplicate oluşmasını engeller; REQ-3, AC-3 |
+| D17 | `/admin-api/media/**` için media'ya özel gateway timeout'u kullanılır: bağlantı + okuma `ADMIN_GATEWAY_MEDIA_TIMEOUT_MS` (varsayılan 15 sn); diğer yollar 3 sn'de kalır | Senkron S3 kopyalama/silme ve tam nesne doğrulaması genel 3 sn bütçesini aşabilir; 0004 §2.2.7'ye tarihli amendment eklendi; gerçek S3 p95/p99 ölçümü R-01 olarak açık; REQ-2, AC-4 |

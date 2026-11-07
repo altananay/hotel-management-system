@@ -1,6 +1,7 @@
 # 0005 — Medya ve Fotoğraf Yönetimi — QA Denetim Bulguları
 
 > **Denetim hedefi:** `integration` @ `179d3d0` — `fix(media): address independent code review findings [plan 0005]`
+> **Yeniden doğrulama:** `integration` @ `7f51fe4` — QA fix merge `06d8182` + evidence `7f51fe4` (§8)
 > **Tarih:** 2026-11-07
 > **Kapsam:** `hotel-api` media modülü, admin-api gateway, admin-web `/media`, web RoomCard, migration'lar, E2E ve `specs/done/evidence/0005/` kanıtları.
 > **Yöntem:** Statik kod incelemesi + birim/IT/lint/build + yerel E2E + GitHub Actions kontrolü + SHA-256 arşiv doğrulaması.
@@ -547,3 +548,137 @@ npx playwright test tests/design --grep '@seeded'
 # Arşiv bütünlüğü (manifest metin formatında olduğu için elle doğrulandı)
 # 129/129 dosya hash'i eşleşti; 0 eksik, 0 değişmiş.
 ```
+
+---
+
+## 8. QA Düzeltmeleri Sonrası Bağımsız Yeniden Doğrulama (2026-11-07)
+
+> **Yeniden denetim hedefi:** `integration` @ `7f51fe4` — QA fix merge `06d8182` + final evidence commit `7f51fe4`
+> **Kaynak:** QA fix PR [#28](https://github.com/altananay/hotel-management-system/pull/28), docs PR [#29](https://github.com/altananay/hotel-management-system/pull/29)
+> **Not:** Bu bölüm, §1–§7'deki ilk denetim bulgularının düzeltme sonrası durumunu kaydeder. İlk bulgular tarihsel kayıt olarak korunmuştur.
+
+### 8.1 Test sonuçları
+
+| Alan | Komut | Sonuç |
+|---|---|---|
+| `hotel-api` | `.\mvnw.cmd -B verify` | **188 birim**, **58 IT**; `MediaIT` **11/11**; Spotless temiz; BUILD SUCCESS |
+| `admin-api` | `.\mvnw.cmd -B verify` | **102 birim**, **5 IT**; Spotless temiz; BUILD SUCCESS |
+| `web` | `npm test; npm run lint; npm run build` | **43/43**; lint/build başarılı |
+| `admin-web` | `npm test; npm run lint; npm run build` | **39/39**; MediaManager **13/13**; lint/build başarılı |
+| E2E `@media` | `npx playwright test tests/media --grep '@media'` | **1/1** (alt metin TR/EN dahil) |
+| E2E `@admin` | `npx playwright test tests/admin --grep '@admin'` | **3/3** |
+| E2E `@seeded` | `npx playwright test tests/smoke.spec.ts --grep '@seeded'` | **2/2** |
+| E2E design | `npx playwright test tests/design --grep '@seeded'` | **40/40** |
+
+`hotel-api` IT dağılımı: `CatalogSeedIT` 2/2, `RoomCatalogIT` 40/40, `DatabaseSchemaAndRoleSeparationIT` 5/5, `MediaIT` 11/11.
+
+CI:
+- PR #28 final head `5fb88a6` → run **42376555577**: success.
+- Integration merge `06d8182` → run **42377168433**: success.
+- Final integration `7f51fe4` → run **42379789000**: success.
+- Dört job da yeşil: Backend, Frontend, E2E Smoke, CI Quality Gate.
+
+E2E sırası: `@empty` yerelde yeniden koşulmadı (yerel DB seed'li); CI `7f51fe4` üzerinde tanımlı sırayı çalıştırdı. Diğer yerel E2E adımları yukarıdaki gibi geçti.
+
+### 8.2 Bulgu bazında kapanış
+
+| Bulgu | Durum | Bağımsız kanıt |
+|---|---|---|
+| **QA-01** — cover 404 | **Kapatıldı** | `MediaAdminServiceTest` + `MediaIT` 11/11; canlı API’de atanmamış mevcut medya → **409 `media.not_published`** |
+| **QA-02** — pasif oda tipinde alt metin | **Kapatıldı** | Unit + UI testleri; canlı API’de aynı pasif `roomTypeId` ile alt metin PATCH → **200**, alt metin güncellendi |
+| **QA-03** — yükleme hatasında liste yenileme | **Kapatıldı** | `media-manager.test.tsx`: complete 422 → FAILED + retry; PUT 503 → UPLOADED + archive |
+| **QA-04** — E2E alt metni / fixture türü | **Kapatıldı** | `@media` 1/1; TR/EN `alt`, public API `altTextTr/altTextEn`, WebP fixture doğrulandı; `AC-4-admin-media-states.md` eklendi |
+| **QA-05** — kanıt seti / sürüm uyumu | **Kapatıldı (küçük rezidüel)** | Güncel kanıtlar ve tarihsel etiketler eklendi; tüm sayılar bağımsız koşuyla eşleşiyor. Rezidüel: `RES-01` |
+| **QA-06** — spec/migration drift | **Kapatıldı (0005)** | V8–V11, `media.alt_text_invalid`, `media.storage_unavailable`, `media.service_unavailable` ve tarihsel Context güncellendi. Rezidüel: `RES-02` |
+| **QA-07** — public 503 | **Kapatıldı** | `TransactionTemplate` sınırı + `DataAccessException`/`TransactionException` → 503; gerçek DB durdurma testinde **503 `media.service_unavailable`**, restart sonrası **200** |
+| **R-01** — gateway timeout | **Koşullu kapandı** | `/admin-api/media/**` için 15 sn media timeout + test; gerçek S3 p95 ölçümü ve 3 sn connect timeout rezidüeli sürüyor |
+| **R-02** — dead-letter operasyonu | **Kısmen kapandı** | Runbook alarm ifadeleri, manuel retry, orphan taraması ve tatbikat tablosu eklendi; canlı alarm kuralı/gerçek tatbikat kaydı yok |
+
+### 8.3 Rezidüel bulgular
+
+#### RES-01 — Text-mode SHA-256 doğrulayıcı eklenen dosyaları tespit etmiyor
+
+**Önem:** Düşük
+**Durum:** Doğrulandı
+**İlgili dosyalar:**
+- `e2e/scripts/sha256-manifest.mjs:23-46`, `:61-85`
+- `specs/done/evidence/0005/AC-6-archive-sha256.txt:3-5`
+
+**Kanıt:**
+`0001` klasörüne geçici bir dosya eklendiğinde:
+
+```text
+Listed files: 129
+Result: UNCHANGED
+```
+
+döndü. Script text mode’da yalnızca manifestte listelenen dosyaların hash’lerini kontrol ediyor; `0001`–`0004` altına eklenen yeni dosyaları “added” olarak raporlamıyor. JSON modunda bu kontrol vardı; text mode’da kaldırılmış.
+
+**Gerekçe:**
+AC-6 “0001–0004 arşivleri değişmemiş” diyor. Bir dosya eklenmesi de arşiv değişikliğidir; mevcut doğrulayıcı bunu kaçırabilir. Manifest başlığı bu sınırı açıkça yazsa da, komutun “UNCHANGED” sonucu tam bir arşiv değişmezliği kanıtı değildir.
+
+**Öneri:**
+1. Text mode’da manifestteki section’ları (`0001`–`0004`) kullanarak ilgili dizinlerdeki gerçek dosya kümesini çıkarın; manifestte olmayan dosyaları `added` olarak raporlayın.
+2. Alternatif olarak arşiv doğrulaması için JSON manifest kullanın (CI’daki 0002 yaklaşımı gibi); text manifest yalnızca insan-okur özet kalsın.
+3. Regresyon testi: ilgili klasöre geçici dosya eklenince komut `CHANGED` dönmeli.
+
+**Kabul testi:**
+- `0001`–`0004` altına eklenen yeni dosya → `CHANGED`/`added`.
+- Mevcut 129 dosyanın hash’i değişmediğinde → `UNCHANGED`.
+
+#### RES-02 — 0004 done spec’i gateway timeout’unu hâlâ 3 sn olarak tanımlıyor
+
+**Önem:** Düşük (doküman)
+**Durum:** Doğrulandı
+**İlgili dosyalar:**
+- `specs/done/0004-admin-identity.md:99`
+- `docs/architecture.md:125`
+- `backend/admin-api/src/main/resources/application.yml:36-37`
+
+**Kanıt:**
+0004 spec’i “Bağlantı + okuma toplamı **3 sn**; `ADMIN_GATEWAY_TIMEOUT_MS=3000`” diyor. Yeni davranışta `/admin-api/media/**` için **15 sn** media timeout kullanılıyor; `docs/architecture.md` güncellendi ancak 0004 done spec’i güncellenmedi. 0005 spec’i de media timeout’unu ayrıca listelemiyor.
+
+**Gerekçe:**
+0004 tarihsel/done bir spec olsa da gateway sözleşmesinin tek kaynağı olarak okunabilir. Media için 15 sn istisnası yalnızca architecture dosyasında kalırsa, 0004’ü okuyan geliştirici/denetçi çelişkili sözleşme görür.
+
+**Öneri:**
+1. 0004 done spec’ine tarihli bir amendment notu ekleyin: “0005 ile `/admin-api/media/**` için 15 sn media timeout eklendi; genel 3 sn korunuyor.”
+2. Veya 0005 spec’inde R-01/D17 olarak media timeout’unu açıkça kararlaştırın ve 0004’e referans verin.
+3. `specs/done/README.md` / doküman indeksinde güncel gateway sözleşmesinin `docs/architecture.md` olduğunu belirtin.
+
+**Kabul testi:**
+- 0004, 0005 ve architecture dosyaları aynı timeout sözleşmesini anlatır.
+- `.env.example` ve `application.yml` anahtarları dokümante edilir.
+
+#### RES-03 — R-01/R-02 operasyonel kapanışı hâlâ kanıt/ölçüm bekliyor
+
+**Önem:** Düşük (risk)
+**Durum:** Açık
+**İlgili dosyalar:**
+- `specs/done/evidence/0005/AC-6-qa-fixes-verification.md:112-124`
+- `docs/runbooks/media-public-cleanup.md:12-52`, `:150-180`
+
+**Kanıt:**
+- R-01 için 15 sn media timeout kodu/testi var; ancak gerçek S3 üzerinde p95/p99 ölçümü yok. `HttpClient` connect timeout’u hâlâ 3 sn; yavaş bağlantıda media isteği yine erken 504 alabilir.
+- R-02 için runbook’ta Prometheus/Alertmanager örnek kuralları ve tatbikat tablosu var; ancak repoda çalıştırılabilir alert kuralı/config’i ve gerçek tatbikat kaydı yok.
+
+**Gerekçe:**
+Kod ve runbook iyileştirmesi anlamlı; ancak “kanıtlı kapanış” için üretim benzeri ölçüm ve operasyon tatbikatı gerekir. Bunlar bu QA turunda üretilemedi.
+
+**Öneri:**
+1. Gerçek S3 veya gecikme enjekte edilmiş ortamda `complete`, `retry`, `publish`, `unpublish`, `archive` p95/p99 ölçün; 15 sn ve connect timeout kararını buna göre doğrulayın.
+2. Alert kurallarını dağıtım reposuna/ortama ekleyin; en az bir dead-letter tatbikatını tarih/operatör/görev ID ile kaydedin.
+3. Ölçüm ve tatbikat sonucunu `specs/done/evidence/0005/` altına yeni bir kanıt dosyası olarak ekleyin.
+
+**Kabul testi:**
+- Gerçekçi gecikme altında p95 < 15 sn; veya timeout/retry semantiği dokümante edilmiş.
+- Dead-letter alarmı canlı ortamda test edilmiş; tatbikat kaydı mevcut.
+
+### 8.4 Yeniden denetim sonucu
+
+- **QA-01, QA-02, QA-03, QA-04, QA-07:** bağımsız testlerle **kapandı**.
+- **QA-05, QA-06:** ana bulgular kapandı; `RES-01`/`RES-02` düşük doküman/araç rezidüelleri kaldı.
+- **R-01:** koşullu; gerçek S3 p95 ölçümü ve connect timeout değerlendirmesi açık.
+- **R-02:** runbook seviyesinde kapandı; canlı alarm/tatbikat kanıtı açık.
+
+**Güncel öneri:** İşlevsel merge blocker yok. Takım Yöneticisi `RES-01`/`RES-02` için küçük düzeltme veya açık kabul kararı verirse, R-01/R-02 için operasyonel ölçüm/tatbikat planıyla spec `done` aşamasına alınabilir. Aksi halde “koşullu geçer” durumu devam eder.

@@ -11,47 +11,23 @@
 
 ## 0. Alarm / uyarı
 
-Micrometer metrikleri Prometheus'a şu adlarla düşer:
+Micrometer metrik adları: `media.public_cleanup.failures`, `media.public_cleanup.dead_lettered`
+(Prometheus: `media_public_cleanup_failures_total`, `media_public_cleanup_dead_lettered_total`).
 
-```promql
-# Son 15 dakikada cleanup hatası
-increase(media_public_cleanup_failures_total[15m]) > 0
+Alarm tanımlarının **tek kaynağı** `infra/prometheus/media-public-cleanup.rules.yml` dosyasıdır;
+ifadeler ve eşikler orada yaşar. Dağıtımda bu dosya Prometheus rule path'ine kopyalanır veya
+mount edilir. Doğrulama: `promtool check rules infra/prometheus/media-public-cleanup.rules.yml`.
 
-# Yeni dead-letter olayı (son 5 dakikada artış)
-increase(media_public_cleanup_dead_lettered_total[5m]) > 0
-```
+| Alert | Amaç | Severity |
+|---|---|---|
+| `MediaPublicCleanupDeadLettered` | Yeni dead-letter olayı; public nesne hâlâ erişilebilir olabilir | page |
+| `MediaPublicCleanupFailures` | 15 dk içinde tekrarlayan cleanup hatası | warning |
 
-Alert koşulu: `increase(media_public_cleanup_dead_lettered_total[5m]) > 0`
-ifadesi sayfa (page) açar. `media_public_cleanup_dead_lettered_total` bir
-Micrometer **Counter**'dır ve process ömrü boyunca artmaya devam eder; bu
-nedenle çıplak `> 0` ifadesi bir kez dead-letter olduktan sonra alarmı kalıcı
-açık bırakır. `increase(...[5m])` yalnız **yeni** dead-letter olayını yakalar.
-`failures_total` artışı tek başına geçici S3 hatası olabilir; dead-letter eşiği
-ayrıca izlenir.
-
-Örnek Alertmanager/Prometheus kuralı (dağıtımda ilgili alert grubuna eklenir):
-
-```yaml
-groups:
-  - name: media-public-cleanup
-    rules:
-      - alert: MediaPublicCleanupDeadLettered
-        expr: increase(media_public_cleanup_dead_lettered_total[5m]) > 0
-        for: 0m
-        labels:
-          severity: page
-        annotations:
-          summary: "Media public cleanup dead-lettered"
-          description: "A public object may still be reachable; see docs/runbooks/media-public-cleanup.md."
-      - alert: MediaPublicCleanupFailures
-        expr: increase(media_public_cleanup_failures_total[15m]) > 0
-        for: 15m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Media public cleanup retries are failing"
-          description: "Check S3 permissions and the cleanup task table; see docs/runbooks/media-public-cleanup.md."
-```
+`media_public_cleanup_dead_lettered_total` bir Micrometer **Counter**'dır; process ömrü boyunca
+artmaya devam eder. Bu nedenle alarm, çıplak `> 0` yerine **yeni olayı** ölçen `increase(...[5m])`
+ifadesini kullanır. `failures_total` artışı tek başına geçici S3 hatası olabilir; dead-letter eşiği
+ayrıca izlenir. Metrikler hotel-api `/actuator/prometheus` ucundan yayınlanır; scrape yalnız
+`management.prometheus.allowed-cidr` (varsayılan `127.0.0.1/32,::1/128`) kaynağına açıktır.
 
 > Alarm kuralının canlı ortamda yüklü olduğu, ilk kurulumda ve her runbook
 > değişikliğinde doğrulanır; kural dosyasının yolu operasyon envanterine işlenir.
@@ -175,6 +151,7 @@ aşağıdaki tabloya eklenir. Kayıt, alarm kuralının ve operasyon adımların
 
 | Tarih | Operatör | Görev ID | public_storage_key | Uygulanan adım | Sonuç | Alarm gözlemi |
 |---|---|---|---|---|---|---|
-| _(örnek)_ 2026-11-07 | _ad soyad_ | `0199…` | `public/…/card.webp` | `dead_lettered_at = NULL`, scheduler | nesne silindi, satır kaldırıldı | `increase(...[5m])` yalnız tatbikat anında `> 0` |
+| 2026-11-07 | AI agent (yerel) | `68cc126a-c062-4325-b6ad-1a7b46174f84` | `public/drill/68cc…/card.webp` | S3 erişilemez + `max-attempts=1` | `attempts=1`, `dead_lettered_at` doldu, ERROR log üretildi | Canlı alarm yok; kural dosyası `promtool` ile doğrulanacak |
+| 2026-11-07 | AI agent (yerel) | `c7a23e6e-d446-4b8b-a364-65fcadf84048` | `public/drill-retry/c7a2…/card.webp` | Dead-letter sonrası `dead_lettered_at=NULL, attempts=0`; scheduler | Satır silindi (`count=0`) | Canlı alarm yok; manuel retry yolu doğrulandı |
 
 Tatbikat sonunda bölüm 5'teki iki sayaç da 0 olmalıdır.
