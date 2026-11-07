@@ -1,0 +1,9 @@
+# AC-2 — Upload TTL
+
+Covered by:
+- `MediaUploadServiceTest#shouldRejectExpiredPresignedUpload` -> `media.upload_expired`, no storage access, no scheduler enqueue
+- `MediaIT#shouldRejectExpiredUploadCompletion` -> a media row created 11 minutes ago is rejected by the real service/DB path
+- `AdminMediaControllerTest#shouldReturn409WhenUploadPresignExpired` -> HTTP `409` with `media.upload_expired`
+- successful start returns `expiresAt` around `now + 10m`
+
+Result: PASS.

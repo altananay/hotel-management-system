@@ -26,6 +26,11 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
+import org.springframework.security.web.util.matcher.IpAddressMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -38,16 +43,37 @@ public class SecurityConfig {
 
     private final ObjectMapper objectMapper;
     private final List<String> allowedOrigins;
+    private final RequestMatcher prometheusScrapeMatcher;
 
     public SecurityConfig(
             ObjectMapper objectMapper,
-            @Value("${hotel.cors.allowed-origins:http://localhost:3000}") String allowedOriginsCsv) {
+            @Value("${hotel.cors.allowed-origins:http://localhost:3000}") String allowedOriginsCsv,
+            @Value("${management.prometheus.allowed-cidr:127.0.0.1/32,::1/128}")
+                    String prometheusAllowedCidrCsv) {
         this.objectMapper = objectMapper;
         this.allowedOrigins =
                 Arrays.stream(allowedOriginsCsv.split(","))
                         .map(String::trim)
                         .filter(s -> !s.isEmpty())
                         .toList();
+        List<RequestMatcher> cidrMatchers =
+                Arrays.stream(prometheusAllowedCidrCsv.split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .map(IpAddressMatcher::new)
+                        .map(matcher -> (RequestMatcher) matcher)
+                        .toList();
+        if (cidrMatchers.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "management.prometheus.allowed-cidr must contain at least one CIDR");
+        }
+        RequestMatcher cidrMatcher =
+                cidrMatchers.size() == 1
+                        ? cidrMatchers.getFirst()
+                        : new OrRequestMatcher(cidrMatchers);
+        this.prometheusScrapeMatcher =
+                new AndRequestMatcher(
+                        PathPatternRequestMatcher.pathPattern("/actuator/prometheus"), cidrMatcher);
     }
 
     @Bean
@@ -89,6 +115,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(
                         auth ->
                                 auth.requestMatchers("/actuator/health")
+                                        .permitAll()
+                                        .requestMatchers(prometheusScrapeMatcher)
                                         .permitAll()
                                         .requestMatchers("/actuator/**")
                                         .denyAll()

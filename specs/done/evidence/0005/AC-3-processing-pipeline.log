@@ -1,0 +1,13 @@
+# TARİHSEL — 2026-11-03 sayıları (MediaIT 7/7). Güncel: AC-6-integration-179d3d0.md ve AC-6-qa-fixes-verification.md.
+
+# AC-3 — Processing pipeline
+
+Covered by `MediaIT#shouldUploadProcessPublishExposeAndThenHideMedia`:
+- complete -> `PROCESSING` -> async worker -> `READY`
+- worker claims with a UUID lease, checks stored original size, generates 6 variants (WebP + JPEG for thumb/card/cover)
+- private variants persisted; original private
+- public API only sees READY + published + non-archived + active room media
+- `MediaProcessingWorkerTest` covers claim loss, transient retry, archive/lease fencing, exhausted attempts and oversized stored object
+- `MediaProcessingRecoveryTest` covers stale PROCESSING re-enqueue; archived rows are excluded by query
+
+Result: PASS (MediaIT 7/7, worker/recovery unit tests).

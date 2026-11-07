@@ -1,0 +1,14 @@
+# AC-2 — Upload validation
+
+Covered by `MediaRulesTest`, `JavaMediaImageProcessorTest`, `AdminMediaControllerTest`, `MediaIT`:
+
+- accepted: JPEG, PNG, WebP; normalized content types
+- rejected: SVG, GIF, video/other types -> `415`
+- rejected: >15 MB -> `400`; >36 MP / >6000 side / <800x600 -> `422`/`400`
+- corrupt image with allowed magic bytes -> `422` and original removed
+- complete after upload expiry -> `409 media.upload_expired`
+- invalid stored object -> `FAILED` + original deleted; no public copy
+- FRONT_DESK upload/complete -> `403`
+- `MediaStorageException` -> `503 media.storage_unavailable`
+
+Result: PASS.

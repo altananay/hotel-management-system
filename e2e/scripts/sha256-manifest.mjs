@@ -1,15 +1,16 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
-function walk(directory) {
+export function walk(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const full = path.join(directory, entry.name);
     return entry.isDirectory() ? walk(full) : [full];
   });
 }
 
-function manifest(directory) {
+export function manifest(directory) {
   const files = walk(directory)
     .map((file) => ({
       path: path.relative(directory, file).replaceAll("\\", "/"),
@@ -20,11 +21,94 @@ function manifest(directory) {
   return { directory: path.resolve(directory), files };
 }
 
+export function readTextManifest(manifestPath) {
+  const lines = fs.readFileSync(manifestPath, "utf8").split(/\r?\n/);
+  const files = [];
+  const sections = new Set();
+  let section = null;
+  for (const line of lines) {
+    const heading = line.match(/^##\s+(\d{4})\b/);
+    if (heading) {
+      section = heading[1];
+      sections.add(section);
+      continue;
+    }
+    if (!section) {
+      continue;
+    }
+    const entry = line.match(/^([a-f0-9]{64})\s{2}(.+)$/);
+    if (entry) {
+      files.push({ path: `${section}/${entry[2].trim()}`, sha256: entry[1] });
+    }
+  }
+  return { files, sections };
+}
+
+export function captureManifest(directory, manifestPath) {
+  const captured = manifest(directory);
+  fs.writeFileSync(manifestPath, JSON.stringify(captured, null, 2), "utf8");
+  return captured;
+}
+
+export function verifyManifest(directory, manifestPath, outputPath) {
+  const rawManifest = fs.readFileSync(manifestPath, "utf8").trimStart();
+  const isTextManifest = !rawManifest.startsWith("{");
+  const expected = isTextManifest
+    ? readTextManifest(manifestPath)
+    : JSON.parse(rawManifest);
+  const actual = manifest(directory);
+  const expectedMap = new Map(expected.files.map((file) => [file.path, file]));
+  const actualMap = new Map(actual.files.map((file) => [file.path, file]));
+  const changes = [];
+  for (const [file, entry] of expectedMap) {
+    const current = actualMap.get(file);
+    if (!current) {
+      changes.push(`missing: ${file}`);
+    } else if (current.sha256 !== entry.sha256) {
+      changes.push(`changed: ${file}`);
+    }
+  }
+  if (isTextManifest) {
+    // Text manifests only cover the archived spec folders they list. Report files
+    // added inside those folders as changes, but ignore unrelated spec folders
+    // (e.g. the active 0005 evidence directory).
+    for (const file of actualMap.keys()) {
+      const section = file.split("/")[0];
+      if (expected.sections.has(section) && !expectedMap.has(file)) {
+        changes.push(`added: ${file}`);
+      }
+    }
+  } else {
+    for (const file of actualMap.keys()) {
+      if (!expectedMap.has(file)) {
+        changes.push(`added: ${file}`);
+      }
+    }
+  }
+
+  const report = [
+    "# Evidence SHA-256 manifest",
+    "",
+    `Directory: ${path.resolve(directory)}`,
+    `Manifest: ${path.resolve(manifestPath)}${isTextManifest ? " (text mode)" : ""}`,
+    `Listed files: ${expectedMap.size}`,
+    `Result: ${changes.length === 0 ? "UNCHANGED" : "CHANGED"}`,
+    "",
+    ...(changes.length === 0
+      ? ["All listed evidence files are byte-identical."]
+      : changes),
+  ].join("\n");
+  if (outputPath) {
+    fs.writeFileSync(outputPath, report, "utf8");
+  }
+  return { isTextManifest, listedFiles: expectedMap.size, changes, report };
+}
+
 function main() {
   const [command, directory, manifestPath, outputPath] = process.argv.slice(2);
   if (!command || !directory || !manifestPath) {
     console.error(
-      "Usage: node scripts/sha256-manifest.mjs capture <dir> <manifest> | verify <dir> <manifest> <output>",
+      "Usage: node scripts/sha256-manifest.mjs capture <dir> <manifest> | verify <dir> <manifest> [output]",
     );
     process.exit(1);
   }
@@ -34,48 +118,20 @@ function main() {
   }
 
   if (command === "capture") {
-    fs.writeFileSync(manifestPath, JSON.stringify(manifest(directory), null, 2), "utf8");
-    console.log(`Captured ${manifest(directory).files.length} files to ${manifestPath}`);
+    const captured = captureManifest(directory, manifestPath);
+    console.log(`Captured ${captured.files.length} files to ${manifestPath}`);
     return;
   }
 
   if (command === "verify") {
-    const expected = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-    const actual = manifest(directory);
-    const expectedMap = new Map(expected.files.map((file) => [file.path, file]));
-    const actualMap = new Map(actual.files.map((file) => [file.path, file]));
-    const changes = [];
-    for (const [file, entry] of expectedMap) {
-      const current = actualMap.get(file);
-      if (!current) {
-        changes.push(`missing: ${file}`);
-      } else if (current.sha256 !== entry.sha256) {
-        changes.push(`changed: ${file}`);
-      }
-    }
-    for (const file of actualMap.keys()) {
-      if (!expectedMap.has(file)) {
-        changes.push(`added: ${file}`);
-      }
-    }
-
-    const report = [
-      "# 0002 evidence SHA-256 manifest",
-      "",
-      `Directory: ${path.resolve(directory)}`,
-      `Files: ${actual.files.length}`,
-      `Result: ${changes.length === 0 ? "UNCHANGED" : "CHANGED"}`,
-      "",
-      ...(changes.length === 0 ? ["All 0002 evidence files are byte-identical."] : changes),
-    ].join("\n");
-    if (outputPath) {
-      fs.writeFileSync(outputPath, report, "utf8");
-    }
-    console.log(report);
-    if (changes.length > 0) {
+    const result = verifyManifest(directory, manifestPath, outputPath);
+    console.log(result.report);
+    if (result.changes.length > 0) {
       process.exit(1);
     }
   }
 }
 
-main();
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
+}
