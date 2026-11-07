@@ -12,6 +12,9 @@ generated from the sections below at build time.
 - Open Graph image — a still frame from the hero video; 1200×630 JPEG, no text.
 - Pexels License — [https://www.pexels.com/license/](https://www.pexels.com/license/).
 
+The `@media` E2E upload fixture reuses `web/public/media/hero/home-hero-poster-1280.webp`
+(the Pexels-sourced hero poster above); no additional test asset is committed.
+
 Transcode notes: the source is downloaded from the Pexels download endpoint,
 trimmed to an 8–12 second loop, scaled/cropped to 1920×1080, encoded as VP9
 (WebM, CRF 32) and H.264 (MP4, CRF 23, yuv420p, faststart), 30 fps, with the

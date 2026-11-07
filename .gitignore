@@ -3,6 +3,7 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 *.class
 *.log
+!specs/done/evidence/**/*.log
 *.jar
 *.war
 *.nar

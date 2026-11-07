@@ -1,11 +1,9 @@
-package com.hotel.gateway;
+package com.hotel.gateway.internal.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.hotel.gateway.api.GatewayTimeoutException;
-import com.hotel.gateway.internal.application.AdminGatewayClient;
-import com.hotel.gateway.internal.application.GatewayResponse;
 import com.sun.net.httpserver.HttpServer;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -29,7 +27,8 @@ class AdminGatewayClientTest {
         client =
                 new AdminGatewayClient(
                         "http://localhost:" + server.getAddress().getPort(),
-                        Duration.ofMillis(500));
+                        Duration.ofMillis(500),
+                        Duration.ofSeconds(5));
     }
 
     @AfterEach
@@ -86,7 +85,8 @@ class AdminGatewayClientTest {
     @Test
     void shouldMapConnectionRefusedToGatewayUnavailable() {
         AdminGatewayClient unavailableClient =
-                new AdminGatewayClient("http://127.0.0.1:1", Duration.ofMillis(200));
+                new AdminGatewayClient(
+                        "http://127.0.0.1:1", Duration.ofMillis(200), Duration.ofSeconds(5));
 
         assertThatThrownBy(
                         () ->
@@ -114,7 +114,8 @@ class AdminGatewayClientTest {
         AdminGatewayClient shortTimeoutClient =
                 new AdminGatewayClient(
                         "http://localhost:" + server.getAddress().getPort(),
-                        Duration.ofMillis(50));
+                        Duration.ofMillis(50),
+                        Duration.ofSeconds(5));
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/admin-api/slow");
 
         assertThatThrownBy(
@@ -122,5 +123,54 @@ class AdminGatewayClientTest {
                                 shortTimeoutClient.exchange(
                                         request, null, "jwt", "edge-request-id"))
                 .isInstanceOf(GatewayTimeoutException.class);
+    }
+
+    @Test
+    void shouldUseMediaSpecificTimeoutForMediaRequests() throws Exception {
+        server.createContext(
+                "/admin-api/media/slow",
+                exchange -> {
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                    }
+                    byte[] body = "media-ok".getBytes(StandardCharsets.UTF_8);
+                    exchange.getResponseHeaders().add("Content-Type", "application/json");
+                    exchange.sendResponseHeaders(200, body.length);
+                    exchange.getResponseBody().write(body);
+                    exchange.close();
+                });
+        AdminGatewayClient mediaTimeoutClient =
+                new AdminGatewayClient(
+                        "http://localhost:" + server.getAddress().getPort(),
+                        Duration.ofMillis(50),
+                        Duration.ofMillis(1000));
+
+        GatewayResponse response =
+                mediaTimeoutClient.exchange(
+                        new MockHttpServletRequest("GET", "/admin-api/media/slow"),
+                        null,
+                        "jwt",
+                        "edge-request-id");
+
+        assertThat(response.status()).isEqualTo(200);
+        assertThat(new String(response.body(), StandardCharsets.UTF_8)).isEqualTo("media-ok");
+    }
+
+    @Test
+    void shouldUseMediaSpecificConnectTimeoutForMediaRequests() {
+        assertThat(client.clientFor("/admin-api/media/1").connectTimeout())
+                .contains(Duration.ofSeconds(5));
+        assertThat(client.clientFor("/admin-api/rooms").connectTimeout())
+                .contains(Duration.ofMillis(500));
+    }
+
+    @Test
+    void shouldTreatOnlyMediaPathsAsMediaRequests() {
+        assertThat(AdminGatewayClient.isMediaRequest("/admin-api/media")).isTrue();
+        assertThat(AdminGatewayClient.isMediaRequest("/admin-api/media/1/complete")).isTrue();
+        assertThat(AdminGatewayClient.isMediaRequest("/admin-api/mediafoo")).isFalse();
+        assertThat(AdminGatewayClient.isMediaRequest("/admin-api/rooms")).isFalse();
     }
 }
