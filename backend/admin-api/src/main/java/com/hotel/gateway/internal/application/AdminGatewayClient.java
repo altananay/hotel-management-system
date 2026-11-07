@@ -20,13 +20,16 @@ public class AdminGatewayClient {
     private final HttpClient httpClient;
     private final String upstreamBaseUrl;
     private final Duration timeout;
+    private final Duration mediaTimeout;
 
     public AdminGatewayClient(
             @Value("${admin.gateway.upstream-hotel-api-url:http://localhost:8081}")
                     String upstreamBaseUrl,
-            @Value("${admin.gateway.timeout:3s}") Duration timeout) {
+            @Value("${admin.gateway.timeout:3s}") Duration timeout,
+            @Value("${admin.gateway.media-timeout:15s}") Duration mediaTimeout) {
         this.upstreamBaseUrl = upstreamBaseUrl.replaceAll("/$", "");
         this.timeout = timeout;
+        this.mediaTimeout = mediaTimeout;
         this.httpClient = HttpClient.newBuilder().connectTimeout(timeout).build();
     }
 
@@ -36,7 +39,7 @@ public class AdminGatewayClient {
                 + (request.getQueryString() == null ? "" : "?" + request.getQueryString()));
         HttpRequest.Builder builder =
                 HttpRequest.newBuilder(uri)
-                        .timeout(timeout)
+                        .timeout(requestTimeout(request.getRequestURI()))
                         .header("Authorization", "Bearer " + jwt)
                         .header("X-Request-Id", requestId);
         if (request.getHeader("Accept") != null) {
@@ -68,5 +71,16 @@ public class AdminGatewayClient {
             Thread.currentThread().interrupt();
             throw new GatewayUnavailableException(ex);
         }
+    }
+
+    /**
+     * Media management performs synchronous S3 copy/delete and full-object validation; those
+     * operations need a longer budget than the general admin gateway timeout (R-01).
+     */
+    private Duration requestTimeout(String requestUri) {
+        if (requestUri.equals("/admin-api/media") || requestUri.startsWith("/admin-api/media/")) {
+            return mediaTimeout;
+        }
+        return timeout;
     }
 }

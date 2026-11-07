@@ -29,7 +29,8 @@ class AdminGatewayClientTest {
         client =
                 new AdminGatewayClient(
                         "http://localhost:" + server.getAddress().getPort(),
-                        Duration.ofMillis(500));
+                        Duration.ofMillis(500),
+                        Duration.ofSeconds(5));
     }
 
     @AfterEach
@@ -86,7 +87,8 @@ class AdminGatewayClientTest {
     @Test
     void shouldMapConnectionRefusedToGatewayUnavailable() {
         AdminGatewayClient unavailableClient =
-                new AdminGatewayClient("http://127.0.0.1:1", Duration.ofMillis(200));
+                new AdminGatewayClient(
+                        "http://127.0.0.1:1", Duration.ofMillis(200), Duration.ofSeconds(5));
 
         assertThatThrownBy(
                         () ->
@@ -114,7 +116,8 @@ class AdminGatewayClientTest {
         AdminGatewayClient shortTimeoutClient =
                 new AdminGatewayClient(
                         "http://localhost:" + server.getAddress().getPort(),
-                        Duration.ofMillis(50));
+                        Duration.ofMillis(50),
+                        Duration.ofSeconds(5));
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/admin-api/slow");
 
         assertThatThrownBy(
@@ -122,5 +125,38 @@ class AdminGatewayClientTest {
                                 shortTimeoutClient.exchange(
                                         request, null, "jwt", "edge-request-id"))
                 .isInstanceOf(GatewayTimeoutException.class);
+    }
+
+    @Test
+    void shouldUseMediaSpecificTimeoutForMediaRequests() throws Exception {
+        server.createContext(
+                "/admin-api/media/slow",
+                exchange -> {
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                    }
+                    byte[] body = "media-ok".getBytes(StandardCharsets.UTF_8);
+                    exchange.getResponseHeaders().add("Content-Type", "application/json");
+                    exchange.sendResponseHeaders(200, body.length);
+                    exchange.getResponseBody().write(body);
+                    exchange.close();
+                });
+        AdminGatewayClient mediaTimeoutClient =
+                new AdminGatewayClient(
+                        "http://localhost:" + server.getAddress().getPort(),
+                        Duration.ofMillis(50),
+                        Duration.ofMillis(1000));
+
+        GatewayResponse response =
+                mediaTimeoutClient.exchange(
+                        new MockHttpServletRequest("GET", "/admin-api/media/slow"),
+                        null,
+                        "jwt",
+                        "edge-request-id");
+
+        assertThat(response.status()).isEqualTo(200);
+        assertThat(new String(response.body(), StandardCharsets.UTF_8)).isEqualTo("media-ok");
     }
 }
