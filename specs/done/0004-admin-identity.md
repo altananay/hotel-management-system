@@ -10,10 +10,10 @@
 
 - **Spec No:** `0004`
 - **Başlık:** Admin Kimlik ve Oturum (`admin-identity`)
-- **Durum:** Tamamlandı *(rev.9 — QA F-01…F-05 fixleri ve kapanış kontrolleri işlendi)*
+- **Durum:** Tamamlandı *(rev.10 — 0005 media timeout amendment (2026-11-07); rev.9 QA F-01…F-05 fixleri)*
 - **Branch:** `feature/0004-admin-identity`
 - **İlgili doküman/kararlar:** `docs/architecture.md` (§2, §4, §5 R3/R6, §6, §8, §10 D2/D19, §11), `docs/domain.md` (§1 `AdminSession`/`AdminRole`/`AuditEntry`, §3 rol tablosu), `docs/conventions.md` (§2.3, §2.4, §4), `docs/frontend.md`, `docs/testing.md`, `docs/git.md`, `specs/done/0001-project-architecture.md` (`CLARIFY-3A`, `F5`, `F7`), `specs/done/0002-room-catalog.md` (seed konvansiyonu), `specs/done/0003-ui-design-system.md` (E2E kanıt helper'ı); Onaylı kararlar: `CLARIFY-1A`…`CLARIFY-9A`, `CLARIFY-11A`, `Q10=A` (CSRF double-submit + Origin, 2026-10-28); rev.4: identifier+IP kilidi, CSRF/Origin önceliği, gateway request-id, login rotasyonu audit'i ve 0003 40/40 CI koruması işlendi; rev.5: B-14 bootstrap aktif SUPER_ADMIN/audit rollback düzeltmesi işlendi; rev.6: bootstrap CLI/eşzamanlılık, `BOOTSTRAP_SKIPPED` skip audit'i, CSRF fetch hatası ve `@admin` test adları işlendi; rev.7: eşzamanlılık kapsamı aynı `ADMIN_BOOTSTRAP_USERNAME` ile netleştirildi, global tek-SUPER_ADMIN invariantı kapsam dışına alındı; rev.8: CR-10 — e-posta local-part kontrolünün 1–2 karakterlik local-part istisnası açıkça yazıldı; davranış değişmedi; rev.9: QA F-01…F-05 fixleri işlendi — bootstrap CLI web/JWT bean'lerinden ayrıldı, parola NFC login'de uygulandı, logout 401 retry yönlendirmesi, kanonik kullanıcı adı kilit anahtarı ve edge `X-Request-Id` tekilliği netleştirildi; DoD/SCORECARD dolduruldu.
-- **Tarih:** 2026-10-28 *(Son revizyon: 2026-11-01, rev.9 — Kapanış: 2026-11-02)*
+- **Tarih:** 2026-10-28 *(Son revizyon: 2026-11-07, rev.10 — Kapanış: 2026-11-02)*
 - **Sahip:** Analist (`analyst`)
 - **Onaylayan (Takım Yöneticisi):** Takım Yöneticisi (Onaylandı - 2026-10-29)
 
@@ -97,6 +97,7 @@ Otel personeli (`SUPER_ADMIN`, `MANAGER`, `FRONT_DESK`) ve otel yönetimi, bugü
 
 **2.2.7 Gateway durum/header sözleşmesi (B-11)**
 - **Timeout:** Bağlantı + okuma toplamı **3 sn**; `ADMIN_GATEWAY_TIMEOUT_MS=3000` ile yapılandırılır.
+  - **Amendment (2026-11-07, Spec 0005):** `/admin-api/media/**` çağrıları senkron S3 kopyalama/silme ve tam nesne doğrulaması yaptığından `ADMIN_GATEWAY_MEDIA_TIMEOUT_MS` (**varsayılan 15 sn**) kullanılır; connect ve okuma bütçesi birlikte 15 sn'dir. Diğer tüm admin yollarında genel **3 sn** korunur. Kaynak: `docs/architecture.md` §6 ve `specs/0005-media.md` D17/R-01. Gerçek S3 p95/p99 ölçümü yapılana kadar 15 sn güvenli üst sınırdır.
 - **Eşleme:** Timeout → **504 `system.gateway_timeout`**; connection refused/DNS → **502 `system.gateway_unavailable`**; upstream 4xx/5xx durum ve gövdesi sanitize edilerek korunur (`Set-Cookie`, `Server` strip); upstream 401/403 aynen iletilir. Path/query/body aynen iletilir.
 - **İstek allowlist:** `Accept`, `Content-Type`, `Content-Length` (gateway yeniden hesaplar) ve admin-api kenarında üretilen/doğrulanan `X-Request-Id` iletilir; `Cookie`, `Authorization`, `Origin`, `Referer`, `Host`, `X-Forwarded-*` ve diğer `X-*` başlıkları upstream'e taşınmaz. İstemcinin `X-Request-Id` değeri yok sayılır; gateway ikinci bir ID üretmez.
 - **Yanıt allowlist:** `Content-Type` ve admin-api kenarındaki aynı `X-Request-Id` değeri istemciye taşınır; upstream `Set-Cookie` ve `Server` strip edilir; diğer upstream başlıkları filtrelenir.

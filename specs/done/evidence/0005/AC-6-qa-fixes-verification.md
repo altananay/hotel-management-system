@@ -1,14 +1,15 @@
-# 0005 — QA Düzeltmeleri Doğrulaması (`fix/0005-qa-findings`)
+# 0005 — QA Düzeltmeleri ve Rezidüel Doğrulama
 
 - **Tarih:** 2026-11-07
-- **Branch:** `fix/0005-qa-findings`
-- **Base:** `integration` @ `179d3d04150f32d209c8a6f0214bace4e9e542c4`
-- **Head:** `5fb88a6709d88fab936d956b4ac1c950c32c7f00` (PR #28)
-- **PR:** [#28](https://github.com/altananay/hotel-management-system/pull/28) — `fix/0005-qa-findings` → `integration`
-- **Merge commit:** `06d8182cb2999911b18a0d54dbb9d09de25c0af6`
-- **Kapsam:** `specs/0005-qa-findings.md` — QA-01…QA-07, R-01, R-02
+- **QA-fix branch:** `fix/0005-qa-findings`
+- **QA-fix base:** `integration` @ `179d3d04150f32d209c8a6f0214bace4e9e542c4`
+- **QA-fix head:** `5fb88a6709d88fab936d956b4ac1c950c32c7f00` (PR #28)
+- **QA-fix PR:** [#28](https://github.com/altananay/hotel-management-system/pull/28) — `fix/0005-qa-findings` → `integration`
+- **QA-fix merge commit:** `06d8182cb2999911b18a0d54dbb9d09de25c0af6`
+- **Rezidüel branch:** `fix/0005-residual-findings` (RES-01…RES-03; bu dosyadaki RES bölümleri 2026-11-07 amendment)
+- **Kapsam:** `specs/0005-qa-findings.md` — QA-01…QA-07, R-01, R-02 + §8.3 RES-01…RES-03
 - **Ortam:** Windows 11, Java 25.0.2 (Temurin), Node 24.11.1, npm 11.19.1, Docker Desktop; PostgreSQL 17.4-alpine, MinIO `RELEASE.2025-10-15T17-29-55Z`, Mailpit
-- **Yöntem:** Tam backend `verify` (unit + gerçek PostgreSQL IT), frontend unit/lint/build, yerel `@media` E2E, SHA-256 arşiv doğrulaması
+- **Yöntem:** Tam backend `verify` (unit + gerçek PostgreSQL IT), frontend unit/lint/build, yerel `@media` E2E, SHA-256 arşiv doğrulaması, dead-letter tatbikatı
 
 ---
 
@@ -17,7 +18,7 @@
 ```
 backend/hotel-api  ./mvnw.cmd -B verify
 Spotless: clean (155 dosya)
-Unit tests: 188 passed, 0 failed
+Unit tests: 189 passed, 0 failed
 Integration tests: 58 passed, 0 failed
   - CatalogSeedIT 2/2
   - RoomCatalogIT 40/40
@@ -27,7 +28,7 @@ BUILD SUCCESS
 
 backend/admin-api  ./mvnw.cmd -B verify
 Spotless: clean (109 dosya)
-Unit tests: 102 passed, 0 failed
+Unit tests: 104 passed, 0 failed
 Integration tests: 5 passed, 0 failed (AdminDatabaseIsolationIT)
 BUILD SUCCESS
 ```
@@ -41,7 +42,11 @@ Yeni/güçlendirilmiş testler:
 | QA-03 | `media-manager.test.tsx` complete-422 → `FAILED` + retry; PUT-503 → `UPLOADED` + archive |
 | QA-07 | `MediaPublicQueryServiceTest` (2 `DataAccessException` senaryosu + transaction başlangıç/commit hataları); `PublicMediaControllerTest.shouldReturn503WithMediaServiceCode_whenDependencyIsUnavailable` |
 | F-01 | `MediaPublicQueryServiceTest.shouldMapTransactionStartFailureToServiceUnavailable`, `shouldMapTransactionCommitFailureToServiceUnavailable` (transaction sınırı `TransactionTemplate` ile servis içinde) |
-| R-01 | `AdminGatewayClientTest.shouldUseMediaSpecificTimeoutForMediaRequests` |
+| R-01 | `AdminGatewayClientTest.shouldUseMediaSpecificTimeoutForMediaRequests`, `shouldUseMediaSpecificConnectTimeoutForMediaRequests`, `shouldTreatOnlyMediaPathsAsMediaRequests` (6/6) |
+| RES-01 | `e2e/scripts/sha256-manifest.test.mjs` 4/4; canlı arşivde geçici dosya → `CHANGED`/`added`, silinince `UNCHANGED` |
+| RES-02 | 0004 §2.2.7 amendment + 0005 D17/§2.1 + `docs/architecture.md` §6 aynı timeout sözleşmesi |
+| O-1 | `ApiSurfaceAndErrorHandlingTest.shouldAllowPrometheusScrapeOnlyFromConfiguredCidr`; `/actuator/prometheus` scrape smoke (CI + yerel 200) |
+| R-02 | Dead-letter + manuel retry tatbikatı (`R-02-dead-letter-drill-2026-11-07.md`); `/actuator/prometheus` scrape smoke (CI) |
 
 ## 2. Frontend
 
@@ -109,22 +114,43 @@ Result: UNCHANGED
 
 0001–0004 kanıtları byte-identical; 0 missing, 0 changed.
 
+Text manifest doğrulayıcı artık manifestte listelenen 0001–0004 klasörlerine eklenen yeni dosyaları
+`added` olarak raporlar. Canlı regresyon (2026-11-07):
+
+```text
+# 0001/RES-01-temp-added.txt eklendi
+Listed files: 129
+Result: CHANGED
+added: 0001/RES-01-temp-added.txt
+
+# geçici dosya silindikten sonra
+Listed files: 129
+Result: UNCHANGED
+```
+
+Regresyon testi: `e2e/scripts/sha256-manifest.test.mjs` — **4/4**. Bu davranış RES-01'i kapatır;
+0005 gibi manifestte yer almayan klasörlerdeki aktif kanıtlar arşiv kontrolünü etkilemez.
+
 ## 6. R-01 — media gateway timeout
 
 - `/admin-api/media/**` için `ADMIN_GATEWAY_MEDIA_TIMEOUT_MS` (varsayılan 15 sn) kullanılır; diğer admin çağrıları 3 sn'de kalır.
-- `AdminGatewayClientTest` media yolunda uzun timeout'un, diğer yollarda kısa timeout'un uygulandığını doğrular.
-- **Sınırlama:** Gerçek S3 üzerinde p95 ölçümü bu ortamda mevcut değildir. 15 sn değeri, senkron S3 kopyalama/silme için güvenli üst sınır olarak seçilmiştir; üretim ölçümü yapıldığında yeniden değerlendirilmelidir.
+- Connect ve okuma bütçesi birlikte media timeout'udur: `AdminGatewayClient` media yolları için ayrı `HttpClient` (connect timeout 15 sn) kullanır. `AdminGatewayClientTest` media yolunda uzun request/connect timeout'un, diğer yollarda kısa timeout'un uygulandığını doğrular.
+- **Sınırlama:** Gerçek S3 üzerinde p95/p99 ölçümü bu ortamda mevcut değildir. 15 sn değeri, senkron S3 kopyalama/silme için güvenli üst sınır olarak seçilmiştir; ölçüm yöntemi `docs/runbooks/media-gateway-timeout.md`, gecikme enjeksiyonu `infra/scripts/tcp-latency-proxy.mjs`. Üretim ölçümü sonrası yeniden değerlendirilmelidir (RES-03).
 
 ## 7. R-02 — operasyonel kapanış
 
 `docs/runbooks/media-public-cleanup.md` güncellendi:
 
 - Prometheus alarm ifadeleri (`media_public_cleanup_failures_total`; dead-letter için `increase(media_public_cleanup_dead_lettered_total[5m]) > 0`)
-- Örnek Alertmanager kuralı (page/warning) ve canlı kural doğrulama notu
+- Çalıştırılabilir Prometheus/Alertmanager kural dosyası: `infra/prometheus/media-public-cleanup.rules.yml` (`promtool check rules ...`)
 - Dead-letter inceleme ve manuel retry adımları
 - Haftalık orphan taraması (DB public anahtarları ↔ MinIO `public/` listesi)
 - “200/204, S3 silme kanıtı değildir” notu
 - Tatbikat kayıt tablosu (tarih, operatör, görev ID, anahtar, sonuç, alarm gözlemi)
+- Metrik export'u: hotel-api `micrometer-registry-prometheus` + `/actuator/prometheus`; scrape yalnız `management.prometheus.allowed-cidr` (varsayılan `127.0.0.1/32,::1/128`) kaynağına açık. CI'da scrape smoke adımı var.
+- `promtool check rules infra/prometheus/media-public-cleanup.rules.yml` → **SUCCESS: 2 rules found**
+- Canlı scrape smoke: `/actuator/prometheus` **200**; `media_public_cleanup_dead_lettered_total 0.0`, `media_public_cleanup_failures_total 0.0`
+- Yerel dead-letter + manuel retry tatbikatı: `R-02-dead-letter-drill-2026-11-07.md`
 - Kapanış kontrol listesi
 
 ## 8. CI
