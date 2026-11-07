@@ -2,6 +2,12 @@
 
 - **Tarih:** 2026-11-07
 - **Branch:** `fix/0005-residual-findings`
+- **PR:** [#30](https://github.com/altananay/hotel-management-system/pull/30)
+- **PR head:** `f1fc3bc52a593141303af3b5f22e88412cd6991d`
+- **Merge commit / integration:** `939791579fd26ae8aff4f7897336e175fb21c785`
+- **PR CI:** run [42384917204](https://github.com/altananay/hotel-management-system/actions/runs/42384917204) — success
+- **Integration CI:** run [42389678373](https://github.com/altananay/hotel-management-system/actions/runs/42389678373) — success
+- **QA retest:** `specs/0005-qa-findings.md` §9 (2026-11-07) — koşullu geçer
 - **Kaynak:** `specs/0005-qa-findings.md` §8.3
 - **Kapsam:** RES-01 (text-mode SHA doğrulayıcı), RES-02 (0004 gateway timeout sözleşmesi), RES-03 (R-01/R-02 operasyonel kapanış)
 
@@ -79,7 +85,9 @@
   media_public_cleanup_failures_total 0.0
   ```
 - R-02 tatbikatı: dead-letter + manuel retry gözlemlendi, temizlik doğrulandı
-- Lint/build ve tam CI sonuçları PR'da raporlanır.
+- PR #30 CI run `42384917204`: Backend, Frontend, E2E Smoke, CI Quality Gate **success**
+- Integration merge `9397915` CI run `42389678373`: Backend, Frontend, E2E Smoke, CI Quality Gate **success**
+- Bağımsız QA retesti (`specs/0005-qa-findings.md` §9): RES-01/RES-02 kapandı; RES-03 koşullu kapandı
 
 ## 5. Sonuç
 

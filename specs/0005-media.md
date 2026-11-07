@@ -10,7 +10,7 @@
 
 - **Spec No:** `0005`
 - **Başlık:** Medya ve Fotoğraf Yönetimi (`media`)
-- **Durum:** Uygulandı - QA düzeltmeleri `fix/0005-qa-findings`, rezidüel düzeltmeler `fix/0005-residual-findings` üzerinde tamamlandı (2026-11-07); QA yeniden testi bekleniyor *(rev.4 - Q1-Q10 + D1-D17 + QA-01-QA-07 + RES-01-RES-03)*
+- **Durum:** Koşullu geçer — QA retest geçti (2026-11-07, `integration` @ `9397915`); R-01/R-02 operasyonel kapanış ve Takım Yöneticisi Done onayı bekliyor *(rev.4 - Q1-Q10 + D1-D17 + QA-01-QA-07 + RES-01-RES-03)*
 - **Branch:** `feature/0005-media` → `fix/0005-code-review` → `fix/0005-qa-findings` → `fix/0005-residual-findings`
 - **İlgili doküman/kararlar:** `docs/architecture.md` (§3 `media`, §5 R3, §7 Medya, §8, §10 D10, §11), `docs/domain.md` (§1 `MediaAsset`/`Scene`/`Hotspot`/`Tour`, §3.12, §3 rol tablosu), `docs/conventions.md` (§1, §2.1, §2.3, §2.4, §3, §4), `docs/frontend.md`, `docs/testing.md`, `docs/git.md`, `specs/done/0002-room-catalog.md` (oda tipi/detay notu), `specs/done/0004-admin-identity.md` (auth, gateway, roller, CSRF); Onaylı CLARIFY kararları: Q1–Q10 A seçenekleri (2026-11-03)
 - **Tarih:** 2026-11-03
@@ -206,7 +206,7 @@ Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media mod
 - [x] Pipeline yeşil (lint + build + test + kritik akış smoke)
 - [x] Kod incelemesi onaylandı (bağımsız doğrulama: `evidence/0005/code-review-2026-11-07-verification.md` — APPROVE; QA düzeltmeleri için `evidence/0005/qa-fix-code-review-2026-11-07.md` — APPROVE WITH COMMENTS, F-01…F-05 kapatıldı)
 - [x] Davranış değiştiyse dokümanlar güncellendi
-- [ ] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi (QA yeniden testi ve Takım Yöneticisi onayı sonrası)
+- [ ] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi (QA retesti geçti; R-01/R-02 operasyonel kapanış ve Takım Yöneticisi onayı sonrası)
 - [x] SCORECARD dolduruldu
 
 ## 7. SCORECARD
