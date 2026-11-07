@@ -2,7 +2,7 @@
 
 **Kapsam:** `/admin-api/media/**` için `ADMIN_GATEWAY_MEDIA_TIMEOUT_MS` (varsayılan 15 sn) ve
 `AdminGatewayClient` connect/read bütçesi.
-**İlgili:** `docs/architecture.md` §6, `specs/0005-media.md` D17/R-01,
+**İlgili:** `docs/architecture.md` §6, `specs/done/0005-media.md` D17/R-01,
 `specs/done/0004-admin-identity.md` §2.2.7 amendment.
 
 ## 1. Amaç

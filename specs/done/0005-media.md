@@ -10,12 +10,12 @@
 
 - **Spec No:** `0005`
 - **Başlık:** Medya ve Fotoğraf Yönetimi (`media`)
-- **Durum:** Koşullu geçer — QA retest geçti (2026-11-07, `integration` @ `9397915`); R-01/R-02 operasyonel kapanış ve Takım Yöneticisi Done onayı bekliyor *(rev.4 - Q1-Q10 + D1-D17 + QA-01-QA-07 + RES-01-RES-03)*
+- **Durum:** Tamamlandı *(rev.4 - Q1-Q10 + D1-D17 + QA-01-QA-07 + RES-01-RES-03; kapanış 2026-11-07; R-01/R-02 üretim/operasyon adımları operasyonel takip olarak kabul edildi)*
 - **Branch:** `feature/0005-media` → `fix/0005-code-review` → `fix/0005-qa-findings` → `fix/0005-residual-findings`
 - **İlgili doküman/kararlar:** `docs/architecture.md` (§3 `media`, §5 R3, §7 Medya, §8, §10 D10, §11), `docs/domain.md` (§1 `MediaAsset`/`Scene`/`Hotspot`/`Tour`, §3.12, §3 rol tablosu), `docs/conventions.md` (§1, §2.1, §2.3, §2.4, §3, §4), `docs/frontend.md`, `docs/testing.md`, `docs/git.md`, `specs/done/0002-room-catalog.md` (oda tipi/detay notu), `specs/done/0004-admin-identity.md` (auth, gateway, roller, CSRF); Onaylı CLARIFY kararları: Q1–Q10 A seçenekleri (2026-11-03)
-- **Tarih:** 2026-11-03
+- **Tarih:** 2026-11-03 *(Son revizyon: 2026-11-07, rev.4 — Kapanış: 2026-11-07)*
 - **Sahip:** Analist (`analyst`)
-- **Onaylayan (Takım Yöneticisi):** Takım Yöneticisi (Onaylandı - 2026-11-03)
+- **Onaylayan (Takım Yöneticisi):** Takım Yöneticisi (Onaylandı - 2026-11-03; Done onayı - 2026-11-07)
 
 ## 1. Intent (Neden?)
 
@@ -130,6 +130,8 @@ Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media mod
   - Public bucket listeleme, public write, kullanıcı tarafından seçilen depo anahtarı.
   - Kalıcı silme; V1 arşivleme.
 - **Kabul edilen risk/ödünç:**
+  - **R-01 üretim ölçümü:** Gerçek S3 p95/p99 ölçümü bu ortamda yapılamadı; media yolları için 15 sn güvenli üst sınır kabul edildi. Üretim ölçümü sonrası değer/asenkron strateji yeniden değerlendirilecek; operasyonel takip.
+  - **R-02 canlı alarm:** Prometheus/Alertmanager canlı dağıtımı ve ilk alarm testi operasyon ekibinin kapanış adımıdır; çalıştırılabilir kural, scrape ucu ve yerel dead-letter tatbikatı repoda mevcuttur.
   - **CDN yok:** Public görseller MinIO'dan servis edilir; prod ölçek/gecikme ihtiyacı CDN ile ayrı spec'te ele alınır.
   - **Public-read cache:** Yayından kaldırılan görselin daha önce indirilmiş tarayıcı kopyası geri alınamaz; public API ve obje erişimi kesilir.
   - **Arşiv depolama büyümesi:** Orijinal/private varyantlar V1'de tutulur; otomatik temizlik yoktur, operasyonel runbook'a bağlıdır.
@@ -206,7 +208,7 @@ Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media mod
 - [x] Pipeline yeşil (lint + build + test + kritik akış smoke)
 - [x] Kod incelemesi onaylandı (bağımsız doğrulama: `evidence/0005/code-review-2026-11-07-verification.md` — APPROVE; QA düzeltmeleri için `evidence/0005/qa-fix-code-review-2026-11-07.md` — APPROVE WITH COMMENTS, F-01…F-05 kapatıldı)
 - [x] Davranış değiştiyse dokümanlar güncellendi
-- [ ] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi (QA retesti geçti; R-01/R-02 operasyonel kapanış ve Takım Yöneticisi onayı sonrası)
+- [x] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi *(2026-11-07; R-01/R-02 üretim/operasyon adımları Takım Yöneticisi tarafından operasyonel takip olarak kabul edildi)*
 - [x] SCORECARD dolduruldu
 
 ## 7. SCORECARD
