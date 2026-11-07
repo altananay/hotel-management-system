@@ -20,11 +20,32 @@ function manifest(directory) {
   return { directory: path.resolve(directory), files };
 }
 
+function readTextManifest(manifestPath) {
+  const lines = fs.readFileSync(manifestPath, "utf8").split(/\r?\n/);
+  const files = [];
+  let section = null;
+  for (const line of lines) {
+    const heading = line.match(/^##\s+(\d{4})\b/);
+    if (heading) {
+      section = heading[1];
+      continue;
+    }
+    if (!section) {
+      continue;
+    }
+    const entry = line.match(/^([a-f0-9]{64})\s{2}(.+)$/);
+    if (entry) {
+      files.push({ path: `${section}/${entry[2].trim()}`, sha256: entry[1] });
+    }
+  }
+  return { files };
+}
+
 function main() {
   const [command, directory, manifestPath, outputPath] = process.argv.slice(2);
   if (!command || !directory || !manifestPath) {
     console.error(
-      "Usage: node scripts/sha256-manifest.mjs capture <dir> <manifest> | verify <dir> <manifest> <output>",
+      "Usage: node scripts/sha256-manifest.mjs capture <dir> <manifest> | verify <dir> <manifest> [output]",
     );
     process.exit(1);
   }
@@ -40,7 +61,11 @@ function main() {
   }
 
   if (command === "verify") {
-    const expected = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+    const rawManifest = fs.readFileSync(manifestPath, "utf8").trimStart();
+    const isTextManifest = !rawManifest.startsWith("{");
+    const expected = isTextManifest
+      ? readTextManifest(manifestPath)
+      : JSON.parse(rawManifest);
     const actual = manifest(directory);
     const expectedMap = new Map(expected.files.map((file) => [file.path, file]));
     const actualMap = new Map(actual.files.map((file) => [file.path, file]));
@@ -53,20 +78,25 @@ function main() {
         changes.push(`changed: ${file}`);
       }
     }
-    for (const file of actualMap.keys()) {
-      if (!expectedMap.has(file)) {
-        changes.push(`added: ${file}`);
+    if (!isTextManifest) {
+      for (const file of actualMap.keys()) {
+        if (!expectedMap.has(file)) {
+          changes.push(`added: ${file}`);
+        }
       }
     }
 
     const report = [
-      "# 0002 evidence SHA-256 manifest",
+      "# Evidence SHA-256 manifest",
       "",
       `Directory: ${path.resolve(directory)}`,
-      `Files: ${actual.files.length}`,
+      `Manifest: ${path.resolve(manifestPath)}${isTextManifest ? " (text mode)" : ""}`,
+      `Listed files: ${expectedMap.size}`,
       `Result: ${changes.length === 0 ? "UNCHANGED" : "CHANGED"}`,
       "",
-      ...(changes.length === 0 ? ["All 0002 evidence files are byte-identical."] : changes),
+      ...(changes.length === 0
+        ? ["All listed evidence files are byte-identical."]
+        : changes),
     ].join("\n");
     if (outputPath) {
       fs.writeFileSync(outputPath, report, "utf8");
