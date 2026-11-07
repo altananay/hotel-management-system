@@ -38,6 +38,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.imageio.ImageIO;
 import org.flywaydb.core.Flyway;
@@ -466,19 +467,34 @@ class MediaIT {
                 new UpdateCommand(true, roomTypeId, false, null, false, null));
 
         AtomicInteger copies = new AtomicInteger();
+        List<String> copiedKeys = new CopyOnWriteArrayList<>();
         doAnswer(
                         invocation -> {
                             if (copies.incrementAndGet() == 2) {
                                 throw new MediaStorageException(
                                         "simulated copy failure", new RuntimeException());
                             }
-                            return invocation.callRealMethod();
+                            Object result = invocation.callRealMethod();
+                            copiedKeys.add(invocation.getArgument(1));
+                            return result;
                         })
                 .when(storage)
                 .copy(anyString(), anyString());
 
         assertThatThrownBy(() -> adminService.publish(mediaId))
                 .isInstanceOf(MediaStorageException.class);
+
+        // afterRollback must have removed the first copied object and its intent
+        // before any manual cleanup call.
+        String firstCopiedKey = copiedKeys.get(0);
+        assertThat(
+                        jdbcTemplate.queryForObject(
+                                "SELECT count(*) FROM media.media_public_cleanup_tasks "
+                                        + "WHERE public_storage_key = ?",
+                                Integer.class,
+                                firstCopiedKey))
+                .isZero();
+        assertThat(storage.head(firstCopiedKey)).isNull();
 
         List<String> plannedKeys =
                 jdbcTemplate.queryForList(

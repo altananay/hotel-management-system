@@ -3,6 +3,8 @@ package com.hotel.media.internal.application;
 import com.fasterxml.uuid.Generators;
 import com.hotel.media.internal.persistence.MediaPublicCleanupTaskEntity;
 import com.hotel.media.internal.persistence.MediaPublicCleanupTaskJpaRepository;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -30,11 +32,14 @@ public class MediaPublicCleanupService {
     private final Clock clock;
     private final Duration grace;
     private final int maxAttempts;
+    private final Counter failureCounter;
+    private final Counter deadLetterCounter;
 
     public MediaPublicCleanupService(
             MediaPublicCleanupTaskJpaRepository repository,
             MediaStoragePort storage,
             Clock clock,
+            MeterRegistry meterRegistry,
             @Value("${hotel.media.cleanup.grace:5m}") Duration grace,
             @Value("${hotel.media.cleanup.max-attempts:10}") int maxAttempts) {
         this.repository = repository;
@@ -42,6 +47,8 @@ public class MediaPublicCleanupService {
         this.clock = clock;
         this.grace = grace;
         this.maxAttempts = maxAttempts;
+        this.failureCounter = meterRegistry.counter("media.public_cleanup.failures");
+        this.deadLetterCounter = meterRegistry.counter("media.public_cleanup.dead_lettered");
     }
 
     /** Disarms cleanup intents after a successful publish, in the publish transaction. */
@@ -104,8 +111,10 @@ public class MediaPublicCleanupService {
         } catch (RuntimeException ex) {
             Instant now = clock.instant();
             task.recordAttempt(now);
+            failureCounter.increment();
             if (task.getAttempts() >= maxAttempts) {
                 task.markDeadLettered(now);
+                deadLetterCounter.increment();
                 log.error(
                         "Public media cleanup dead-lettered after {} attempts: {}",
                         task.getAttempts(),

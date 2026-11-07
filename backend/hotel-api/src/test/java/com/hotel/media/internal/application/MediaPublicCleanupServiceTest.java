@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import com.hotel.media.api.MediaStorageException;
 import com.hotel.media.internal.persistence.MediaPublicCleanupTaskEntity;
 import com.hotel.media.internal.persistence.MediaPublicCleanupTaskJpaRepository;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -39,6 +40,7 @@ class MediaPublicCleanupServiceTest {
                         repository,
                         storage,
                         Clock.fixed(NOW, ZoneOffset.UTC),
+                        new SimpleMeterRegistry(),
                         java.time.Duration.ofMinutes(5),
                         10);
     }
@@ -99,6 +101,7 @@ class MediaPublicCleanupServiceTest {
                         repository,
                         storage,
                         Clock.fixed(NOW, ZoneOffset.UTC),
+                        new SimpleMeterRegistry(),
                         java.time.Duration.ofMinutes(5),
                         1);
 

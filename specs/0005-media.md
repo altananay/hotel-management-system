@@ -10,7 +10,7 @@
 
 - **Spec No:** `0005`
 - **Başlık:** Medya ve Fotoğraf Yönetimi (`media`)
-- **Durum:** Uygulandı — bağımsız review düzeltmeleri `fix/0005-code-review` PR'ında; merge için Takım Yöneticisi onayı bekleniyor *(rev.2 - Q1-Q10 + D1-D16)*
+- **Durum:** Uygulandı — bağımsız doğrulama APPROVE (2026-11-07); merge için Takım Yöneticisi onayı bekleniyor *(rev.2 — Q1-Q10 + D1-D16)*
 - **Branch:** `feature/0005-media`
 - **İlgili doküman/kararlar:** `docs/architecture.md` (§3 `media`, §5 R3, §7 Medya, §8, §10 D10, §11), `docs/domain.md` (§1 `MediaAsset`/`Scene`/`Hotspot`/`Tour`, §3.12, §3 rol tablosu), `docs/conventions.md` (§1, §2.1, §2.3, §2.4, §3, §4), `docs/frontend.md`, `docs/testing.md`, `docs/git.md`, `specs/done/0002-room-catalog.md` (oda tipi/detay notu), `specs/done/0004-admin-identity.md` (auth, gateway, roller, CSRF); Onaylı CLARIFY kararları: Q1–Q10 A seçenekleri (2026-11-03)
 - **Tarih:** 2026-11-03
@@ -197,7 +197,7 @@ Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media mod
 
 - [x] Tüm AC'ler doğrulandı (test ve/veya görsel kanıt)
 - [x] Pipeline yeşil (lint + build + test + kritik akış smoke)
-- [ ] Kod incelemesi onaylandı (bağımsız review: `evidence/0005/code-review-2026-11-04.md`; fix PR açık)
+- [x] Kod incelemesi onaylandı (bağımsız doğrulama: `evidence/0005/code-review-2026-11-07-verification.md` — APPROVE)
 - [x] Davranış değiştiyse dokümanlar güncellendi
 - [ ] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi (bağımsız onay sonrası)
 - [x] SCORECARD dolduruldu
@@ -205,8 +205,8 @@ Tüm admin media uçları `admin-api` gateway'i üzerinden `hotel-api` media mod
 ## 7. SCORECARD
 
 - **Spec revizyon sayısı:** 2
-- **Düzeltme turu sayısı:** 1 (bağımsız kod incelemesi; B1–B13 bulguları)
-- **Bulgu gerçek/gürültü oranı:** 13 gerçek / 1 harici yanlış pozitif (GitGuardian, base commit `c9e7da4`); bağımsız review CR-1–CR-10
+- **Düzeltme turu sayısı:** 2 (CR-1–CR-10; ardından CR-11–CR-16 doğrulama turu)
+- **Bulgu gerçek/gürültü oranı:** 16 gerçek / 1 harici yanlış pozitif (GitGuardian, base commit `c9e7da4`); bağımsız review CR-1–CR-16
 - **Regresyon sayısı:** 0
 - **Kaçan hata (escaped bug):** 3 (bağımsız review merge sonrası CR-1/CR-2/CR-3 buldu; fix PR açık)
 
