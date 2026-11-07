@@ -1,4 +1,8 @@
-# 0005 CI / Verification Run
+# 0005 CI / Verification Run (TARİHSEL)
+
+> **Tarihsel kayıt (2026-11-03):** Aşağıdaki sayılar ve `3900eea` commit'i eski ağaca aittir.
+> Güncel `integration` doğrulaması: `AC-6-integration-179d3d0.md`; QA düzeltmeleri:
+> `AC-6-qa-fixes-verification.md`.
 
 Date: 2026-11-03 (local CI-equivalent run, Docker Desktop 28.5.1)
 

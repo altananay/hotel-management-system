@@ -1,6 +1,8 @@
 # 0001-0004 evidence SHA-256 manifest
 
-Generated for 0005; verify with `node e2e/scripts/sha256-manifest.mjs verify <dir> <manifest>`.
+Generated for 0005; verify from the repository root with:
+`node e2e/scripts/sha256-manifest.mjs verify specs/done/evidence specs/done/evidence/0005/AC-6-archive-sha256.txt`
+(Text mode compares only the listed 0001-0004 files; files added later under other spec folders are ignored.)
 
 ## 0001 (24 files)
 ac18b15e5acb389b61baa798029aff8b4444f20792ad60d67e4e9c699f465e94  AC-0-branch-protection.png

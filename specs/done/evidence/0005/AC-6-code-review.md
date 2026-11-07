@@ -7,5 +7,7 @@ not be used as a merge gate.
 The independent review is recorded in `code-review-2026-11-04.md`. Its findings and the
 fix/defer decisions are tracked in `code-review-2026-11-04-response.md`.
 
-Current status: **fix PR open, merge forbidden until Takım Yöneticisi approval and a fresh
-independent review**.
+Current status (2026-11-07): the code-review fix PR #27 is **merged** into `integration` as
+squash commit `179d3d0`; CI run `42326617436` is green. This file remains superseded as a merge
+gate; the independent approval is `code-review-2026-11-07-verification.md`, and the QA-fix
+verification is `AC-6-qa-fixes-verification.md`.
