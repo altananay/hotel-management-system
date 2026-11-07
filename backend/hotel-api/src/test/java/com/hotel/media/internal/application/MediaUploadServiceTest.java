@@ -131,6 +131,7 @@ class MediaUploadServiceTest {
     void shouldRejectExpiredPresignedUpload() {
         MediaAssetEntity asset = uploadedAsset(NOW.minus(TTL).minusSeconds(1));
         when(assetRepository.findLockedById(MEDIA_ID)).thenReturn(Optional.of(asset));
+        when(assetRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         assertThatThrownBy(() -> service.complete(MEDIA_ID))
                 .isInstanceOf(DomainError.class)
@@ -139,6 +140,9 @@ class MediaUploadServiceTest {
                                 assertThat(((DomainError) error).code())
                                         .isEqualTo(MediaErrorCodes.UPLOAD_EXPIRED));
 
+        assertThat(asset.getStatus()).isEqualTo(MediaStatus.FAILED);
+        assertThat(asset.getFailureCode()).isEqualTo(MediaErrorCodes.UPLOAD_EXPIRED);
+        verify(storage).delete("private/original");
         verify(storage, never()).head(anyString());
         verify(scheduler, never()).enqueue(any());
     }

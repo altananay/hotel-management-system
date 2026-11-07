@@ -166,6 +166,10 @@ describe("MediaManager (AC-4)", () => {
     ).not.toBeInTheDocument();
     expect(published.getByTestId("admin-media-unpublish")).toBeInTheDocument();
     expect(published.getByTestId("admin-media-archive")).toBeInTheDocument();
+    expect(published.getByTestId("admin-media-room-type")).toBeDisabled();
+    expect(
+      published.getByTestId("admin-media-room-type-locked"),
+    ).toHaveTextContent("önce yayından kaldırın");
     expect(published.getByTestId("admin-media-alt-warning")).toHaveTextContent(
       "eksik alt metin",
     );
@@ -190,6 +194,33 @@ describe("MediaManager (AC-4)", () => {
       processing.queryByTestId("admin-media-publish"),
     ).not.toBeInTheDocument();
     expect(processing.getByTestId("admin-media-archive")).toBeInTheDocument();
+  });
+
+  it("shouldShowRoomTypeOptionsErrorAndDisableAssignment_whenOptionsFail", async () => {
+    server.use(
+      http.get("*/admin-api/media", () => HttpResponse.json(page([mediaItem()]))),
+      http.get("*/admin-api/media/room-types", () =>
+        HttpResponse.json(
+          {
+            type: "about:blank",
+            title: "Internal Server Error",
+            status: 500,
+            code: "system.internal_error",
+            instance: "/admin-api/media/room-types",
+          },
+          { status: 500, headers: { "Content-Type": "application/problem+json" } },
+        ),
+      ),
+    );
+
+    renderManager();
+
+    await waitFor(() =>
+      expect(screen.getByTestId("admin-media-item")).toBeInTheDocument(),
+    );
+    expect(screen.getByTestId("admin-media-room-types-error")).toBeVisible();
+    expect(screen.getByTestId("admin-media-room-type")).toBeDisabled();
+    expect(screen.getByTestId("admin-media-room-types-retry")).toBeVisible();
   });
 
   it("shouldRetryLoad_genericErrorWithoutLeakingDetails_whenBackendFails", async () => {

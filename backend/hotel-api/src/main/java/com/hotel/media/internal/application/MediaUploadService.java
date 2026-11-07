@@ -80,6 +80,9 @@ public class MediaUploadService {
         }
         Instant now = clock.instant();
         if (!now.isBefore(asset.getCreatedAt().plus(presignTtl))) {
+            asset.markFailed(MediaErrorCodes.UPLOAD_EXPIRED, now);
+            assetRepository.save(asset);
+            safeDelete(asset.getStorageKey());
             throw new DomainError(
                     MediaErrorCodes.UPLOAD_EXPIRED,
                     "The upload URL has expired.",

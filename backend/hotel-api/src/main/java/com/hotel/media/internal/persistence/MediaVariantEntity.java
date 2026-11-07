@@ -78,6 +78,14 @@ public class MediaVariantEntity {
         this.publicStorageKey = null;
     }
 
+    public void regenerate(
+            String privateStorageKey, int width, int height, long sizeBytes) {
+        this.privateStorageKey = privateStorageKey;
+        this.width = width;
+        this.height = height;
+        this.sizeBytes = sizeBytes;
+    }
+
     public MediaVariant toDomain() {
         return new MediaVariant(
                 id,

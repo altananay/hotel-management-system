@@ -127,11 +127,75 @@ class MediaProcessingWorkerTest {
         assertThat(variantCaptor.getValue().getPrivateStorageKey())
                 .isEqualTo("private/" + MEDIA_ID + "/card.webp");
         verify(storage).put("private/" + MEDIA_ID + "/card.webp", bytes, "image/webp");
-        verify(variantRepository).deleteByMediaAssetId(MEDIA_ID);
+        verify(variantRepository, never()).deleteByMediaAssetId(any());
         ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
         verify(events).publishEvent(eventCaptor.capture());
         assertThat(eventCaptor.getValue()).isInstanceOf(MediaReady.class);
         verify(assetRepository, never()).releaseProcessingClaim(any(), any(), any());
+    }
+
+    @Test
+    void shouldUpdateExistingVariantInPlaceAndRemoveObsoletePrivateObject() {
+        MediaAssetEntity asset = processingAsset();
+        byte[] bytes = new byte[] {1, 2, 3};
+        UUID existingId = UUID.randomUUID();
+        MediaVariantEntity existing =
+                new MediaVariantEntity(
+                        existingId,
+                        MEDIA_ID,
+                        MediaVariantType.CARD,
+                        MediaVariantFormat.WEBP,
+                        "private/" + MEDIA_ID + "/card.webp",
+                        1200,
+                        800,
+                        1,
+                        NOW);
+        MediaVariantEntity obsolete =
+                new MediaVariantEntity(
+                        UUID.randomUUID(),
+                        MEDIA_ID,
+                        MediaVariantType.COVER,
+                        MediaVariantFormat.WEBP,
+                        "private/" + MEDIA_ID + "/cover.webp",
+                        1920,
+                        1280,
+                        1,
+                        NOW);
+        when(assetRepository.claimForProcessing(
+                        eq(MEDIA_ID),
+                        eq(MediaStatus.PROCESSING),
+                        eq(NOW),
+                        eq(NOW.minus(STALE)),
+                        any(UUID.class),
+                        eq(2)))
+                .thenReturn(1);
+        when(assetRepository.findById(MEDIA_ID)).thenReturn(Optional.of(asset));
+        when(storage.head("private/original"))
+                .thenReturn(new MediaStoragePort.StoredObject(3, "image/jpeg"));
+        when(storage.get("private/original")).thenReturn(bytes);
+        when(imageProcessor.process(bytes))
+                .thenReturn(
+                        new MediaImageProcessor.ProcessedImage(
+                                1200,
+                                800,
+                                List.of(
+                                        new MediaImageProcessor.GeneratedVariant(
+                                                MediaVariantType.CARD,
+                                                MediaVariantFormat.WEBP,
+                                                1200,
+                                                800,
+                                                bytes))));
+        when(variantRepository.findByMediaAssetId(MEDIA_ID))
+                .thenReturn(List.of(existing, obsolete));
+        when(assetRepository.markReadyIfClaimed(eq(MEDIA_ID), any(UUID.class), eq(NOW)))
+                .thenReturn(1);
+
+        worker.process(MEDIA_ID);
+
+        verify(variantRepository).save(existing);
+        verify(variantRepository).delete(obsolete);
+        verify(storage).delete("private/" + MEDIA_ID + "/cover.webp");
+        assertThat(existing.getId()).isEqualTo(existingId);
     }
 
     @Test

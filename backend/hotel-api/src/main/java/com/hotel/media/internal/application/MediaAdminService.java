@@ -39,6 +39,7 @@ public class MediaAdminService {
     private final RoomTypeLookup roomTypeLookup;
     private final MediaStoragePort storage;
     private final MediaImageProcessor imageProcessor;
+    private final MediaPublicCleanupService publicCleanup;
     private final MediaProcessingScheduler scheduler;
     private final Clock clock;
 
@@ -48,6 +49,7 @@ public class MediaAdminService {
             RoomTypeLookup roomTypeLookup,
             MediaStoragePort storage,
             MediaImageProcessor imageProcessor,
+            MediaPublicCleanupService publicCleanup,
             MediaProcessingScheduler scheduler,
             Clock clock) {
         this.assetRepository = assetRepository;
@@ -55,6 +57,7 @@ public class MediaAdminService {
         this.roomTypeLookup = roomTypeLookup;
         this.storage = storage;
         this.imageProcessor = imageProcessor;
+        this.publicCleanup = publicCleanup;
         this.scheduler = scheduler;
         this.clock = clock;
     }
@@ -213,15 +216,18 @@ public class MediaAdminService {
             throw conflict(MediaErrorCodes.NOT_READY, "Media has no generated variants.");
         }
         List<String> copied = new ArrayList<>();
+        String publicationToken = UUID.randomUUID().toString();
+        List<String> plannedKeys =
+                variants.stream()
+                        .map(variant -> publicKey(id, publicationToken, variant))
+                        .toList();
+        // Commit cleanup intents before touching S3. They are disarmed in the publish
+        // transaction only if every copy and the DB commit succeed.
+        publicCleanup.enqueueAllInNewTransaction(plannedKeys);
+        afterRollback(() -> publicCleanup.processNow(copied));
         try {
             for (MediaVariantEntity variant : variants) {
-                String publicKey =
-                        "public/"
-                                + id
-                                + "/"
-                                + variant.getVariant().name().toLowerCase()
-                                + "."
-                                + (variant.getFormat().name().equals("WEBP") ? "webp" : "jpg");
+                String publicKey = publicKey(id, publicationToken, variant);
                 storage.copy(variant.getPrivateStorageKey(), publicKey);
                 copied.add(publicKey);
                 variant.publish(publicKey);
@@ -229,18 +235,24 @@ public class MediaAdminService {
             asset.publish(clock.instant());
             assetRepository.save(asset);
             variantRepository.saveAll(variants);
+            publicCleanup.removeAll(plannedKeys);
             return view(asset);
         } catch (RuntimeException ex) {
-            copied.forEach(
-                    key -> {
-                        try {
-                            storage.delete(key);
-                        } catch (RuntimeException ignored) {
-                            // Public copies are cleaned up on a best-effort basis.
-                        }
-                    });
+            // plannedKeys intents are already committed; afterCompletion performs cleanup.
             throw ex;
         }
+    }
+
+    private static String publicKey(
+            UUID id, String publicationToken, MediaVariantEntity variant) {
+        return "public/"
+                + id
+                + "/"
+                + publicationToken
+                + "/"
+                + variant.getVariant().name().toLowerCase()
+                + "."
+                + (variant.getFormat().name().equals("WEBP") ? "webp" : "jpg");
     }
 
     @Transactional
@@ -249,9 +261,10 @@ public class MediaAdminService {
         if (asset.getPublishedAt() == null) {
             return view(asset);
         }
-        removePublicCopies(id);
+        List<String> publicKeys = detachPublicCopies(id);
         asset.unpublish(clock.instant());
         assetRepository.save(asset);
+        afterCommit(() -> publicCleanup.processNow(publicKeys));
         return view(asset);
     }
 
@@ -261,9 +274,10 @@ public class MediaAdminService {
         if (asset.getArchivedAt() != null) {
             throw conflict(MediaErrorCodes.ALREADY_ARCHIVED, "Media is already archived.");
         }
-        removePublicCopies(id);
+        List<String> publicKeys = detachPublicCopies(id);
         asset.archive(clock.instant());
         assetRepository.save(asset);
+        afterCommit(() -> publicCleanup.processNow(publicKeys));
         return view(asset);
     }
 
@@ -325,15 +339,18 @@ public class MediaAdminService {
         }
     }
 
-    private void removePublicCopies(UUID id) {
+    private List<String> detachPublicCopies(UUID id) {
         List<MediaVariantEntity> variants = variantRepository.findByMediaAssetId(id);
+        List<String> keys = new ArrayList<>();
         for (MediaVariantEntity variant : variants) {
             if (variant.getPublicStorageKey() != null) {
-                storage.delete(variant.getPublicStorageKey());
+                keys.add(variant.getPublicStorageKey());
                 variant.unpublish();
             }
         }
         variantRepository.saveAll(variants);
+        publicCleanup.enqueueAll(keys);
+        return keys;
     }
 
     private MediaAssetEntity locked(UUID id) {
@@ -378,6 +395,21 @@ public class MediaAdminService {
                     @Override
                     public void afterCommit() {
                         action.run();
+                    }
+                });
+    }
+
+    private void afterRollback(Runnable action) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCompletion(int status) {
+                        if (status != STATUS_COMMITTED) {
+                            action.run();
+                        }
                     }
                 });
     }
