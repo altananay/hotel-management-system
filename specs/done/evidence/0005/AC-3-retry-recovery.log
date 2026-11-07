@@ -1,0 +1,11 @@
+# AC-3 — Retry and restart recovery
+
+Covered by:
+- `MediaAdminServiceTest`: manual retry only for FAILED, validates original synchronously (`422 media.invalid_image` if invalid), resets attempt budget, enqueues after commit.
+- `MediaProcessingWorkerTest`: lease-fenced claims, transient retry/release, archive winning during processing does not publish READY, persisted attempts cap marks exhausted rows FAILED, oversized stored object is rejected before read.
+- `MediaProcessingRecoveryTest`: stale PROCESSING rows are re-enqueued; no stale rows -> no enqueue.
+- `MediaIT#shouldExcludeArchivedProcessingMediaFromClaimAndRecovery`: archived PROCESSING row cannot be claimed and is excluded from recovery.
+- `MediaIT#shouldFenceLeaseAndMarkExhaustedProcessingFailed`: stale lease cannot mark READY/release; exhausted SQL path writes FAILED.
+- `MediaAssetEntityTest`: retry resets attempts/failure/lease; archive clears processing lease.
+
+Result: PASS.

@@ -1,0 +1,22 @@
+# TARİHSEL — 2026-11-03 sayıları (54 IT, MediaIT 7/7). Güncel: AC-6-integration-179d3d0.md ve AC-6-qa-fixes-verification.md.
+
+# AC-1 — Media schema and catalog boundary
+
+Commands:
+```
+backend/hotel-api ./mvnw.cmd -B verify
+```
+
+Verified:
+- `db/migration/media/V8__create_media_assets.sql` creates only `media.media_assets` and `media.media_variants`.
+- `V9__add_media_processing_lease.sql` adds only `media.media_assets.processing_lease_id`.
+- `V10__create_public_cleanup_tasks.sql` creates only `media.media_public_cleanup_tasks` plus its unique key, attempts/created/last_attempt columns, created_at index and `app` grants.
+- `V11__harden_public_cleanup_retries.sql` widens `attempts` to `INTEGER` and adds `dead_lettered_at` on the same table.
+- JPA entities use `@Table(schema = "media")`; no `double`/`float`.
+- `media` depends on `catalog` only through `com.hotel.catalog.api.RoomTypeLookup`.
+- `HotelApiModularityTest` and `DatabaseSchemaAndRoleSeparationIT` passed.
+- `MediaIT` verifies unique room order, single published cover, invalid status/alt text, UUID/foreign-key behavior and inactive room type rejection.
+
+Historical result (2026-11-03): PASS (54 integration tests, including MediaIT 7/7).
+Current verification (2026-11-07): 186 unit + 58 IT, MediaIT 11/11; `public.flyway_schema_history`
+contains V8–V11 with `success = t`; see `AC-6-qa-fixes-verification.md`.

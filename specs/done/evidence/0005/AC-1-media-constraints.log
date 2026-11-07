@@ -1,0 +1,14 @@
+# TARİHSEL — 2026-11-03 sayıları (MediaIT 7/7). Güncel: AC-6-integration-179d3d0.md ve AC-6-qa-fixes-verification.md.
+
+# AC-1 — Media constraints
+
+Covered by `com.hotel.media.MediaIT#shouldEnforceSchemaConstraintsForOrderCoverAndAltText` and
+`#shouldReorderAllNonArchivedMediaAtomically`:
+
+- duplicate `(room_type_id, display_order)` for non-archived media -> `DataIntegrityViolationException`
+- second published cover for the same room -> `DataIntegrityViolationException`
+- alt text containing `<` -> `DataIntegrityViolationException`
+- reorder writes a complete unique 0..n-1 sequence
+- archived media is excluded from room order/cover and processing recovery
+
+Result: PASS (MediaIT 7/7).

@@ -33,6 +33,27 @@ spring:
 hotel:
   cors:
     allowed-origins: ${HOTEL_API_CORS_ALLOWED_ORIGINS:http://localhost:3000}
+  media:
+    s3:
+      endpoint: ${MEDIA_S3_ENDPOINT:http://localhost:9000}
+      public-endpoint: ${MEDIA_S3_PUBLIC_ENDPOINT:http://localhost:9000}
+      bucket: ${MEDIA_S3_BUCKET:hotel-media}
+      access-key: ${MEDIA_S3_ACCESS_KEY:minioadmin}
+      secret-key: ${MEDIA_S3_SECRET_KEY:minioadmin_local_dev}
+      region: ${MEDIA_S3_REGION:us-east-1}
+    public-base-url: ${MEDIA_PUBLIC_BASE_URL:http://localhost:9000/hotel-media/public}
+    upload:
+      presign-ttl: ${MEDIA_PRESIGN_TTL:10m}
+    processing:
+      max-attempts: ${MEDIA_PROCESSING_MAX_ATTEMPTS:3}
+      stale-threshold: ${MEDIA_PROCESSING_STALE_THRESHOLD:10m}
+      recovery-initial-delay: ${MEDIA_PROCESSING_RECOVERY_INITIAL_DELAY:30s}
+      recovery-interval: ${MEDIA_PROCESSING_RECOVERY_INTERVAL:60s}
+    cleanup:
+      initial-delay: ${MEDIA_CLEANUP_INITIAL_DELAY:30s}
+      interval: ${MEDIA_CLEANUP_INTERVAL:60s}
+      grace: ${MEDIA_CLEANUP_GRACE:5m}
+      max-attempts: ${MEDIA_CLEANUP_MAX_ATTEMPTS:10}
   admin:
     jwks-uri: ${HOTEL_ADMIN_JWKS_URI:http://localhost:8082/admin-api/.well-known/jwks.json}
     issuer: ${HOTEL_ADMIN_JWT_ISSUER:admin-api}
@@ -45,16 +66,20 @@ hotel:
     jwks-read-timeout: ${HOTEL_ADMIN_JWKS_READ_TIMEOUT:2s}
 
 management:
+  prometheus:
+    allowed-cidr: ${MANAGEMENT_PROMETHEUS_ALLOWED_CIDR:127.0.0.1/32,::1/128}
   endpoints:
     access:
       default: none
     web:
       exposure:
-        include: health
+        include: health,prometheus
   endpoint:
     health:
       access: read_only
       show-details: never
+    prometheus:
+      access: read_only
 
 logging:
   pattern:
