@@ -144,6 +144,11 @@ jobs:
           curl -fsS http://localhost:8081/actuator/health
           curl -fsS http://localhost:8082/actuator/health
 
+      - name: Verify Prometheus scrape exposes media cleanup metrics
+        run: |
+          curl -fsS http://localhost:8081/actuator/prometheus \
+            | grep -E '^media_public_cleanup_(failures|dead_lettered)_total'
+
       - name: Build and start web (:3000) and admin-web (:3001) in production mode
         run: |
           cd web && npm ci && npm run build
@@ -164,6 +169,10 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
           E2E_EVIDENCE_DIR="$RUNNER_TEMP/evidence-0002" npx playwright test tests/smoke.spec.ts --grep @empty
+
+      - name: Test evidence manifest verifier
+        working-directory: e2e
+        run: npm run test:manifest
 
       - name: Verify seed guard rejects missing or invalid seed environment
         working-directory: backend/hotel-api
