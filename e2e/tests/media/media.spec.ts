@@ -250,6 +250,7 @@ test.describe("Media management (AC-4, AC-5, AC-6)", () => {
           "# 0005 Media E2E Summary",
           "",
           "- authorized SUPER_ADMIN login: passed",
+          "- invalid SVG (415) and oversized upload (400) rejection: passed",
           "- real WebP upload (`home-hero-poster-1280.webp`) -> PROCESSING -> READY: passed",
           "- TR/EN alt text saved through the admin UI: passed",
           "- room type assignment, publish, cover: passed",
