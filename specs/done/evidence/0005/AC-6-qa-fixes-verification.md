@@ -3,6 +3,9 @@
 - **Tarih:** 2026-11-07
 - **Branch:** `fix/0005-qa-findings`
 - **Base:** `integration` @ `179d3d04150f32d209c8a6f0214bace4e9e542c4`
+- **Head:** `5fb88a6709d88fab936d956b4ac1c950c32c7f00` (PR #28)
+- **PR:** [#28](https://github.com/altananay/hotel-management-system/pull/28) — `fix/0005-qa-findings` → `integration`
+- **Merge commit:** `06d8182cb2999911b18a0d54dbb9d09de25c0af6`
 - **Kapsam:** `specs/0005-qa-findings.md` — QA-01…QA-07, R-01, R-02
 - **Ortam:** Windows 11, Java 25.0.2 (Temurin), Node 24.11.1, npm 11.19.1, Docker Desktop; PostgreSQL 17.4-alpine, MinIO `RELEASE.2025-10-15T17-29-55Z`, Mailpit
 - **Yöntem:** Tam backend `verify` (unit + gerçek PostgreSQL IT), frontend unit/lint/build, yerel `@media` E2E, SHA-256 arşiv doğrulaması
@@ -126,4 +129,5 @@ Result: UNCHANGED
 
 ## 8. CI
 
-PR açıldıktan sonra doldurulacaktır (Backend, Frontend, E2E Smoke, CI Quality Gate).
+- PR #28 final head (`5fb88a6`) — run [42376555577](https://github.com/altananay/hotel-management-system/actions/runs/42376555577): Backend, Frontend, E2E Smoke ve CI Quality Gate **success**.
+- Merge sonrası `integration` (`06d8182`) — run [42377168433](https://github.com/altananay/hotel-management-system/actions/runs/42377168433): Backend, Frontend, E2E Smoke ve CI Quality Gate **success**.
