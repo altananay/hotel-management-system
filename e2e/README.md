@@ -10,6 +10,9 @@ deneyimini Playwright ile doğrular.
 - Ortak helper her spec'i kendi alt dizinine yazar:
   - `0002` smoke testleri → `<kök>/0002/`
   - `0003` design testleri → `<kök>/0003/`
+- CI, eski spec'lerin arşivlerini korumak için tüm E2E kanıtlarını
+  `$RUNNER_TEMP/e2e-evidence` altına yazar; `0001–0005` üzerinde `git diff`
+  ve untracked kontrolü bu sayede anlamlı kalır.
 - `0002` arşivi değiştirilmez. `0002` regresyon koşumunu **geçici bir kökle**
   çalıştırın; böylece arşivdeki PNG'ler yeniden yazılmaz:
 
@@ -19,8 +22,8 @@ deneyimini Playwright ile doğrular.
   E2E_EVIDENCE_DIR=$RUNNER_TEMP/evidence-0002 npx playwright test tests/smoke.spec.ts --grep @seeded
   ```
 
-- `0003` design testleri varsayılan köke yazar. `0002` izolasyonu SHA-256
-  manifestiyle kanıtlanır:
+- `0003` design testleri yerelde varsayılan köke, CI'da geçici köke yazar.
+  `0002` izolasyonu SHA-256 manifestiyle kanıtlanır:
 
   ```bash
   node scripts/sha256-manifest.mjs capture ../specs/done/evidence/0002 "$RUNNER_TEMP/0002-before.json"
@@ -118,6 +121,22 @@ Ayrıntılı altyapı, migration, seed ve backend/frontend başlatma adımları 
 - 0002 canlı admin-web smoke testi kaldırıldı; 0002 smoke artık 3/3'tür (1 `@empty` + 2 `@seeded`).
 - 0003 design 40/40 korunur; 0004 kanıtları `specs/done/evidence/0004/` altına yazılır.
 
+## 0006 fiyatlandırma E2E
+
+- Testler: `npx playwright test tests/pricing --grep @pricing` (`@media` sonrası).
+- Sıra: SUPER_ADMIN login → `/pricing` yükleme/boş/hata/dolu → plan → sezon →
+  baz/sezon fiyat matrisi → varsayılan plan → eskimiş `expectedDefaultPlanId`
+  için 409 → manuel kur → manuel fiyat → public teklif API (TRY/EUR/USD, çok
+  gece) → 30 gece kabul / 31 gece 400 → sezon fiyatı silme (baz fallback) →
+  baz fiyat silme (409 + eksik uyarısı) → sıfır/negatif tutar
+  (`pricing.invalid_amount`) ve sıfır misafir (`pricing.invalid_guests`) →
+  oda vitrininde fiyat yok → FRONT_DESK okuma/yazma/silme 403.
+- Local/CI'da TCMB scheduler kapalıdır (`HOTEL_PRICING_TCMB_ENABLED=false`);
+  bayat kur uyarısı `db/seed/pricing` içindeki dünkü TCMB kuruyla gösterilir.
+- Kanıtlar: `specs/done/evidence/0006/`; `E2E_EVIDENCE_DIR` verilmezse bu dizine
+  yazılır. CI tüm E2E kanıtlarını `$RUNNER_TEMP/e2e-evidence` altına yazar;
+  0001–0005 arşivleri `git diff` + untracked kontrolüyle korunur.
+
 ## 0005 medya E2E
 
 - Testler: `npx playwright test tests/media --grep @media` (`@admin` sonrası).
@@ -127,4 +146,5 @@ Ayrıntılı altyapı, migration, seed ve backend/frontend başlatma adımları 
   yayın → kapak → public `room-card-image` (WebP) → FRONT_DESK 403 →
   unpublish/placeholder → archive onayı.
 - Kanıtlar: `specs/done/evidence/0005/`; `E2E_EVIDENCE_DIR` verilmezse bu dizine
-  yazılır. 0001–0004 arşivleri SHA-256 manifestiyle korunur.
+  yazılır. CI'da geçici köke yazılır. 0001–0004 arşivleri SHA-256 manifestiyle
+  korunur.

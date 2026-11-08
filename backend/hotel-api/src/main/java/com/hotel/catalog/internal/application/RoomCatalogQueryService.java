@@ -3,6 +3,7 @@ package com.hotel.catalog.internal.application;
 import com.hotel.catalog.api.ActiveRoomType;
 import com.hotel.catalog.api.RoomTypeId;
 import com.hotel.catalog.api.RoomTypeLookup;
+import com.hotel.catalog.api.RoomTypeSnapshot;
 import com.hotel.catalog.internal.domain.RoomType;
 import com.hotel.catalog.internal.persistence.RoomTypeEntity;
 import com.hotel.catalog.internal.persistence.RoomTypeJpaRepository;
@@ -95,9 +96,33 @@ public class RoomCatalogQueryService implements RoomTypeLookup {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<RoomTypeSnapshot> findByIds(Collection<RoomTypeId> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        List<UUID> values = ids.stream().map(RoomTypeId::value).toList();
+        return roomTypeRepository.findByIdIn(values).stream()
+                .map(RoomCatalogQueryService::toSnapshot)
+                .toList();
+    }
+
     private static ActiveRoomType toActive(RoomTypeEntity entity) {
         return new ActiveRoomType(
-                RoomTypeId.of(entity.getId()), entity.getNameTr(), entity.getNameEn());
+                RoomTypeId.of(entity.getId()),
+                entity.getNameTr(),
+                entity.getNameEn(),
+                entity.getMaxGuests());
+    }
+
+    private static RoomTypeSnapshot toSnapshot(RoomTypeEntity entity) {
+        return new RoomTypeSnapshot(
+                RoomTypeId.of(entity.getId()),
+                entity.getNameTr(),
+                entity.getNameEn(),
+                entity.getMaxGuests(),
+                entity.isActive());
     }
 
     public record PagedRoomTypesResult(List<RoomType> items, int page, int size, long total) {}

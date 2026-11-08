@@ -35,7 +35,7 @@ Personel ─► admin-web (Next.js, shadcn)        │
 |---|---|---|---|---|
 | **sharedkernel** | Ortak dil: `Money` (BigDecimal + Currency), `StayPeriod`, `HotelDate`, `TypedId`, `DomainError`. İş kuralı içermez. | — | — | — |
 | **catalog** | "Hangi odalar var, operasyonel durumları ne?" | Oda tipleri, odalar, olanaklar, oda operasyonel durumu (READY/DIRTY/OUT_OF_ORDER; V1 manuel) | `RoomOutOfOrder`, `RoomReleased`, `RoomTypeUpdated` | — |
-| **pricing** | "Bir konaklama kaça ve hangi indirimle satılır?" | Tarife planları, sezonlar, promosyon kodları + kullanımları, kur tablosu + geçmişi, buffer/yuvarlama ayarları | `RatePlanChanged`, `PromoCodeRedeemed` | — |
+| **pricing** | "Bir konaklama kaça ve hangi indirimle satılır?" | Tarife planları, sezonlar, oda tipi + misafir sayısı baz/sezon/manuel fiyatları, manuel kur override'ları, TCMB kur tablosu + geçmişi, buffer/yuvarlama ayarları, fiyat teklifi ve değişmez fiyat anlık görüntüsü payload'ı | (0006'da yayımlanmaz) | — |
 | **media** | "Oda medyası ve 360 tur içeriği nedir, yayında mı?" | Medya varlıkları (foto/panorama), işleme durumu, tur sahneleri + hotspot'lar, oda–medya ilişkisi, yayın durumu | `MediaReady`, `TourPublished` | — |
 | **booking** | "Kim, hangi odayı, hangi gecelerde tutuyor?" — **müsaitlik otoritesi** | Rezervasyonlar, oda-gece atamaları, rezervasyon kapsamı misafir bilgisi, fiyat anlık görüntüsü, statüler, hold süresi, iptal/iade kararı | `ReservationCreated`, `ReservationConfirmed`, `ReservationCancelled`, `ReservationExpired`, `CheckedIn`, `CheckedOut`, `NoShow` | `PaymentSucceeded/Failed/Expired/RefundCompleted`, (ops.) `RoomOutOfOrder` |
 | **payment** | Para hareketi ve sağlayıcı durumu | Ödeme niyetleri, sağlayıcı oturum referansları, webhook kayıtları, iadeler, mutabakat durumu, idempotency anahtarları. **Kart verisi asla.** | `PaymentSucceeded`, `PaymentFailed`, `PaymentExpired`, `RefundCompleted` | — |
@@ -91,6 +91,7 @@ Etkin bağımlılık = senkron çağrı **+** event aboneliği (abone, yayıncı
 | booking ← payment | event | `PaymentSucceeded` → rezervasyon CONFIRMED |
 | booking ← catalog | event (ops.) | `RoomOutOfOrder` → çakışan rezervasyon bayrağı |
 | media → catalog | senkron (read) | oda var mı doğrulaması |
+| pricing → catalog | senkron (read) | oda tipi aktiflik, `maxGuests` ve pasif kayıtların adları; yalnız `catalog.api` portu |
 | notification ← booking/payment | event | voucher, makbuz |
 | reporting → booking/catalog/payment/pricing | senkron (read) | doluluk, ciro |
 
@@ -143,7 +144,7 @@ Yaprak modüller: `catalog`, `pricing`, `payment`. `catalog` asla `booking`'e ba
   - *Aşama 3 (opsiyonel):* modüller arası tüketim tamamen broker üzerinden.
 - **Medya:** S3 uyumlu depo (local: MinIO). Tarayıcı presigned PUT ile doğrudan yükler; orijinaller `private/*` altında kalır, yalnız yayınlanmış WebP/JPEG varyantları `public/*` altında public-read olur. `minio-init` bucket'ı ve public-read policy'yi kurar; tarayıcı CORS'u `MINIO_CORS_ALLOW_ORIGIN` ile verilir. Public kopyalar DB cleanup-intent kayıtları + afterCommit/scheduler retry ile telafi edilir; processing varyantları yerinde güncellenir. İşleme hattı: normalize → EXIF/GPS temizle → yön düzelt → `thumb`/`card`/`cover` üret. 360 tur altyapısı hazırdır; gerçek panorama içeriği geldiğinde yayına alınır; geliştirmede CC0 örnek panoramalar seed'lenir.
 - **Ödeme:** `PaymentProvider` portu. `FakePaymentProvider` (local varsayılan: mock checkout sayfası + imzalı webhook simülasyonu; başarılı/başarısız/3DS/zaman aşımı senaryoları). `IyzicoPaymentProvider` (sandbox) sonraki dilimde ikinci implementasyon olarak eklenir. Statüler: `INITIATED → PENDING → SUCCEEDED | FAILED | EXPIRED`; iade; günlük mutabakat işi.
-- **Fiyatlandırma (D15):** Baz fiyat TRY (admin girer). TCMB `today.xml` günlük çekilir (iş günleri ~15:30; hafta sonu/tatil → son yayımlanan kur; kur geçmişi saklanır). EUR/USD fiyat = `TRY × kur(satış) × (1 + buffer)` → yuvarlama. Varsayılanlar: buffer %2, en yakın 5'e yuvarlama (ikisi de admin tarafından yapılandırılır). Öncelik: **elle girilen fiyat > elle kur > TCMB**. Onaylanan fiyat, kur/buffer/yuvarlama bilgisiyle **snapshot** olarak saklanır. Tahsilat para birimi = gösterim para birimi; ödeme anında çevrim yok; iade aynı para biriminde.
+- **Fiyatlandırma (D15):** Baz fiyat TRY (admin girer) ve plan + oda tipi + misafir sayısı (`1..maxGuests`) ekseninde açıkça tanımlanır; otomatik kişi başı formül yoktur. TCMB `today.xml` günlük çekilir (iş günleri ~15:30 Europe/Istanbul; hafta sonu/tatil → son yayımlanan kur; kur geçmişi saklanır). EUR/USD fiyat = `TRY × kur(satış) × (1 + buffer)` → **her zaman bir üst yuvarlama adımının katına yukarı** yuvarlanır; gece bazında yuvarlanır, toplam yuvarlanmış gecelerin toplamıdır ve yeniden yuvarlanmaz. Varsayılanlar: buffer %2, adım 5,00 (ikisi de admin tarafından yapılandırılır). TRY fiyatlarına buffer/yuvarlama uygulanmaz. Öncelik: **elle girilen fiyat > sezon fiyatı > plan baz fiyatı**; kurda **elle kur > TCMB (son bilinen dahil)**. Onaylanan fiyat, kur/buffer/yuvarlama bilgisiyle **snapshot** olarak saklanır. Tahsilat para birimi = gösterim para birimi; ödeme anında çevrim yok; iade aynı para biriminde.
 
 ## 8. Yasaklar (bağlayıcı)
 
@@ -191,7 +192,7 @@ Yaprak modüller: `catalog`, `pricing`, `payment`. `catalog` asla `booking`'e ba
 | D12 | Housekeeping | V1 manuel oda durumu; otomasyon V2 |
 | D13 | e-Fatura | V1 kapsam dışı |
 | D14 | Repo yapısı | Monorepo (backend/, web/, admin-web/, contracts/, docs/, specs/, infra/, e2e/) |
-| D15 | Fiyat/kur modeli | TRY baz + TCMB kuru + buffer/yuvarlama + manuel override (öncelik: elle fiyat > elle kur > TCMB) |
+| D15 | Fiyat/kur modeli | TRY baz + plan/oda tipi/misafir sayısı ekseni + sezon/manuel fiyat + TCMB kuru + buffer + yukarı yuvarlama; öncelik: elle fiyat > sezon > baz, elle kur > TCMB |
 | D16 | Event altyapısı | Aşama 1: in-process; Aşama 2: Kafka uyumlu broker; Aşama 3 opsiyonel broker tüketimi |
 | D17 | Broker + arayüz | **Redpanda** (KRaft Kafka yerine; Java ekip öğrenme tercihi) + **kafbat-ui** |
 | D18 | Hero video | Pexels 30653318 (Pexels License; kaynak + lisans `CREDITS.md`'ye işlenir) |

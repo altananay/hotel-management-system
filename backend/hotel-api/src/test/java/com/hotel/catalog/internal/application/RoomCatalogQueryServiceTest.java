@@ -6,6 +6,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.hotel.catalog.api.RoomTypeId;
+import com.hotel.catalog.api.RoomTypeSnapshot;
 import com.hotel.catalog.internal.application.RoomCatalogQueryService.PagedRoomTypesResult;
 import com.hotel.catalog.internal.domain.Amenity;
 import com.hotel.catalog.internal.persistence.AmenityEntity;
@@ -147,5 +149,51 @@ class RoomCatalogQueryServiceTest {
                         });
 
         verify(roomTypeRepository, never()).countActive();
+    }
+
+    @Test
+    void shouldReturnActiveAndInactiveSnapshotsWithMaxGuests_whenLookingUpByIds() {
+        Instant now = Instant.parse("2026-10-20T09:00:00Z");
+        UUID activeId = UUID.fromString("0199f2c0-0000-7000-8000-000000000001");
+        UUID inactiveId = UUID.fromString("0199f2c0-0000-7000-8000-000000000002");
+
+        RoomTypeEntity active =
+                new RoomTypeEntity(
+                        activeId,
+                        "Aktif Oda",
+                        "Active Room",
+                        "Açıklama",
+                        "Description",
+                        (short) 2,
+                        true,
+                        10,
+                        now,
+                        now,
+                        Set.of());
+        RoomTypeEntity inactive =
+                new RoomTypeEntity(
+                        inactiveId,
+                        "Pasif Oda",
+                        "Inactive Room",
+                        "Açıklama",
+                        "Description",
+                        (short) 4,
+                        false,
+                        5,
+                        now,
+                        now,
+                        Set.of());
+
+        when(roomTypeRepository.findByIdIn(List.of(activeId, inactiveId)))
+                .thenReturn(List.of(active, inactive));
+
+        List<RoomTypeSnapshot> result =
+                service.findByIds(List.of(RoomTypeId.of(activeId), RoomTypeId.of(inactiveId)));
+
+        assertThat(result)
+                .extracting(RoomTypeSnapshot::maxGuests, RoomTypeSnapshot::active)
+                .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple(2, true),
+                        org.assertj.core.groups.Tuple.tuple(4, false));
     }
 }
