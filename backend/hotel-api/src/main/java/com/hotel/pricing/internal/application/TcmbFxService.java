@@ -1,18 +1,8 @@
 package com.hotel.pricing.internal.application;
 
-import com.hotel.pricing.api.FxSource;
-import com.hotel.pricing.internal.domain.FxRate;
-import com.hotel.pricing.internal.domain.PricingIds;
-import com.hotel.pricing.internal.persistence.FxRateEntity;
-import com.hotel.pricing.internal.persistence.FxRateJpaRepository;
-import java.math.BigDecimal;
-import java.time.Clock;
-import java.time.Instant;
-import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class TcmbFxService {
@@ -21,21 +11,19 @@ public class TcmbFxService {
 
     private final TcmbFxClient client;
     private final TcmbFxParser parser;
-    private final FxRateJpaRepository repository;
-    private final Clock clock;
+    private final TcmbFxStoreService storeService;
 
     public TcmbFxService(
-            TcmbFxClient client,
-            TcmbFxParser parser,
-            FxRateJpaRepository repository,
-            Clock clock) {
+            TcmbFxClient client, TcmbFxParser parser, TcmbFxStoreService storeService) {
         this.client = client;
         this.parser = parser;
-        this.repository = repository;
-        this.clock = clock;
+        this.storeService = storeService;
     }
 
-    @Transactional
+    /**
+     * Network I/O and XML parsing deliberately happen outside a database transaction; only the
+     * short upsert phase is transactional.
+     */
     public void refresh() {
         String xml;
         try {
@@ -53,29 +41,6 @@ public class TcmbFxService {
             return;
         }
 
-        Instant now = clock.instant();
-        for (Map.Entry<com.hotel.pricing.api.SupportedCurrency, BigDecimal> entry :
-                rates.sellingRates().entrySet()) {
-            FxRateEntity entity =
-                    repository
-                            .findByCurrencyAndSourceAndRateDate(
-                                    entry.getKey(), FxSource.TCMB, rates.rateDate())
-                            .orElse(null);
-            if (entity == null) {
-                FxRate fxRate =
-                        FxRate.create(
-                                PricingIds.newId(),
-                                entry.getKey(),
-                                FxSource.TCMB,
-                                rates.rateDate(),
-                                entry.getValue(),
-                                now,
-                                now);
-                repository.save(FxRateEntity.fromDomain(fxRate));
-            } else {
-                entity.updateRate(entry.getValue(), now, now);
-                repository.save(entity);
-            }
-        }
+        storeService.store(rates);
     }
 }

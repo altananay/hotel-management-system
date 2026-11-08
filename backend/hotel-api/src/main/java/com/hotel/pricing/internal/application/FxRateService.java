@@ -107,25 +107,26 @@ public class FxRateService {
                         ? null
                         : SupportedCurrency.from(currencyRaw);
         PageRequest pageable = PageRequest.of(page, size);
+        LocalDate effectiveFrom = from == null ? LocalDate.of(1900, 1, 1) : from;
+        LocalDate effectiveTo = to == null ? HotelDate.now(clock).value() : to;
+        if (effectiveFrom.isAfter(effectiveTo)) {
+            throw com.hotel.pricing.internal.domain.PriceRules.invalid("from must not be after to.");
+        }
         Page<FxRateEntity> result;
-        if (currency == null && from == null) {
+        if (currency == null && from == null && to == null) {
             result = repository.findBySourceOrderByRateDateDesc(source, pageable);
         } else if (currency == null) {
             result =
                     repository.findBySourceAndRateDateBetweenOrderByRateDateDesc(
-                            source, from, to == null ? HotelDate.now(clock).value() : to, pageable);
-        } else if (from == null) {
+                            source, effectiveFrom, effectiveTo, pageable);
+        } else if (from == null && to == null) {
             result =
                     repository.findBySourceAndCurrencyOrderByRateDateDesc(
                             source, currency, pageable);
         } else {
             result =
                     repository.findBySourceAndCurrencyAndRateDateBetweenOrderByRateDateDesc(
-                            source,
-                            currency,
-                            from,
-                            to == null ? HotelDate.now(clock).value() : to,
-                            pageable);
+                            source, currency, effectiveFrom, effectiveTo, pageable);
         }
         return result.map(FxRateEntity::toDomain);
     }
@@ -142,23 +143,24 @@ public class FxRateService {
                         ? null
                         : SupportedCurrency.from(currencyRaw);
         PageRequest pageable = PageRequest.of(page, size);
+        LocalDate effectiveFrom = from == null ? LocalDate.of(1900, 1, 1) : from;
+        LocalDate effectiveTo = to == null ? HotelDate.now(clock).value() : to;
+        if (effectiveFrom.isAfter(effectiveTo)) {
+            throw com.hotel.pricing.internal.domain.PriceRules.invalid("from must not be after to.");
+        }
         Page<FxRateEntity> result;
-        if (currency == null && from == null) {
+        if (currency == null && from == null && to == null) {
             result = repository.findAllByOrderByRateDateDesc(pageable);
         } else if (currency == null) {
             result =
                     repository.findByRateDateBetweenOrderByRateDateDesc(
-                            from, to == null ? HotelDate.now(clock).value() : to, pageable);
-        } else if (from == null) {
-            result =
-                    repository.findByCurrencyOrderByRateDateDesc(currency, pageable);
+                            effectiveFrom, effectiveTo, pageable);
+        } else if (from == null && to == null) {
+            result = repository.findByCurrencyOrderByRateDateDesc(currency, pageable);
         } else {
             result =
                     repository.findByCurrencyAndRateDateBetweenOrderByRateDateDesc(
-                            currency,
-                            from,
-                            to == null ? HotelDate.now(clock).value() : to,
-                            pageable);
+                            currency, effectiveFrom, effectiveTo, pageable);
         }
         return result.map(FxRateEntity::toDomain);
     }

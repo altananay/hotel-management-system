@@ -9,20 +9,32 @@ export const ProblemDetailSchema = z
     instance: z.string(),
     code: z.string(),
     requestId: z.string(),
+    missing: z
+      .array(z.object({ roomTypeId: z.string(), guests: z.number() }))
+      .optional(),
   })
   .passthrough();
+
+export type MissingPrice = { roomTypeId: string; guests: number };
 
 export class AdminApiClientError extends Error {
   readonly status: number;
   readonly code?: string;
   readonly requestId?: string;
+  readonly missing?: MissingPrice[];
 
-  constructor(status: number, code?: string, requestId?: string) {
+  constructor(
+    status: number,
+    code?: string,
+    requestId?: string,
+    missing?: MissingPrice[],
+  ) {
     super(`Admin API error (${status})`);
     this.name = "AdminApiClientError";
     this.status = status;
     this.code = code;
     this.requestId = requestId;
+    this.missing = missing;
   }
 }
 
@@ -90,16 +102,18 @@ async function send(path: string, options: AdminApiRequestOptions): Promise<Resp
   if (!response.ok) {
     let code: string | undefined;
     let requestId = response.headers.get("X-Request-Id") ?? undefined;
+    let missing: MissingPrice[] | undefined;
     try {
       const parsed = ProblemDetailSchema.safeParse(await response.json());
       if (parsed.success) {
         code = parsed.data.code;
         requestId = parsed.data.requestId;
+        missing = parsed.data.missing;
       }
     } catch {
       // Generic message is safer than leaking a malformed envelope.
     }
-    throw new AdminApiClientError(response.status, code, requestId);
+    throw new AdminApiClientError(response.status, code, requestId, missing);
   }
   return response;
 }

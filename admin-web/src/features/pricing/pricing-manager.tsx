@@ -46,6 +46,8 @@ function PriceMatrixSection({
   onAmountChange,
   onSave,
   saving,
+  isError,
+  onRetry,
 }: {
   title: string;
   testId: string;
@@ -54,7 +56,25 @@ function PriceMatrixSection({
   onAmountChange: (key: string, value: string) => void;
   onSave: () => void;
   saving: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
 }) {
+  if (isError) {
+    return (
+      <Card className="mt-6" data-testid={testId}>
+        <h2 className="text-lg font-semibold">{title}</h2>
+        <div
+          role="alert"
+          className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+        >
+          Fiyat matrisi yüklenemedi.
+          <Button className="ml-3" size="sm" variant="secondary" onClick={onRetry}>
+            Tekrar Dene
+          </Button>
+        </div>
+      </Card>
+    );
+  }
   if (!matrix) {
     return (
       <Card className="mt-6">
@@ -85,6 +105,7 @@ function PriceMatrixSection({
                 <th className="py-2 pr-4">Oda Tipi</th>
                 <th className="py-2 pr-4">Misafir</th>
                 <th className="py-2 pr-4">TRY Gece Fiyatı</th>
+                <th className="py-2 pr-4">Güncelleme</th>
                 <th className="py-2">Durum</th>
               </tr>
             </thead>
@@ -93,6 +114,10 @@ function PriceMatrixSection({
                 Array.from({ length: Math.max(roomType.maxGuests, 1) }, (_, index) => {
                   const guests = index + 1;
                   const key = keyOf(roomType.id, guests);
+                  const storedRow = matrix.rows.find(
+                    (row) =>
+                      row.roomTypeId === roomType.id && row.guests === guests,
+                  );
                   return (
                     <tr
                       key={key}
@@ -112,6 +137,9 @@ function PriceMatrixSection({
                             onAmountChange(key, event.target.value)
                           }
                         />
+                      </td>
+                      <td className="py-2 pr-4 text-xs text-slate-500">
+                        {formatDateTime(storedRow?.updatedAt ?? "")}
                       </td>
                       <td className="py-2">
                         {roomType.active ? (
@@ -166,6 +194,11 @@ export function PricingManager() {
 
   const [planForm, setPlanForm] = useState({
     code: "",
+    nameTr: "",
+    nameEn: "",
+  });
+  const [planEdit, setPlanEdit] = useState({
+    id: "",
     nameTr: "",
     nameEn: "",
   });
@@ -245,6 +278,24 @@ export function PricingManager() {
     } catch (error) {
       const code =
         error instanceof AdminApiClientError ? error.code : undefined;
+      const missing =
+        error instanceof AdminApiClientError ? error.missing : undefined;
+      if (
+        code === "pricing.default_rate_plan_incomplete" &&
+        missing &&
+        missing.length > 0
+      ) {
+        const names = new Map(roomTypes.map((room) => [room.id, room.nameTr]));
+        setActionError(
+          `Varsayılan plan için eksik fiyatlar: ${missing
+            .map(
+              (item) =>
+                `${names.get(item.roomTypeId) ?? item.roomTypeId} / ${item.guests} misafir`,
+            )
+            .join(", ")}`,
+        );
+        return;
+      }
       setActionError(resolveAdminErrorMessage(code));
     }
   };
@@ -317,6 +368,21 @@ export function PricingManager() {
         active: true,
       });
       setPlanForm({ code: "", nameTr: "", nameEn: "" });
+    });
+  };
+
+  const submitPlanEdit = (event: FormEvent) => {
+    event.preventDefault();
+    if (!planEdit.id) {
+      return;
+    }
+    void run(async () => {
+      await mutations.updateRatePlan.mutateAsync({
+        id: planEdit.id,
+        nameTr: planEdit.nameTr,
+        nameEn: planEdit.nameEn,
+      });
+      setPlanEdit({ id: "", nameTr: "", nameEn: "" });
     });
   };
 
@@ -465,6 +531,7 @@ export function PricingManager() {
 
   return (
     <main data-testid="admin-pricing-page" className="mx-auto max-w-6xl px-6 py-12">
+      <div data-testid="admin-pricing-filled" className="hidden" />
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Fiyat Yönetimi</h1>
@@ -627,6 +694,19 @@ export function PricingManager() {
                   <Button
                     size="sm"
                     variant="secondary"
+                    onClick={() =>
+                      setPlanEdit({
+                        id: plan.id,
+                        nameTr: plan.nameTr,
+                        nameEn: plan.nameEn,
+                      })
+                    }
+                  >
+                    Düzenle
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
                     onClick={() => setSelectedPlanId(plan.id)}
                   >
                     Seç
@@ -637,6 +717,46 @@ export function PricingManager() {
           </div>
         )}
         {planFormView}
+        {planEdit.id && (
+          <form
+            className="mt-4 grid gap-3 md:grid-cols-3"
+            onSubmit={submitPlanEdit}
+          >
+            <input
+              aria-label="Plan düzenleme TR adı"
+              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+              value={planEdit.nameTr}
+              onChange={(event) =>
+                setPlanEdit((current) => ({
+                  ...current,
+                  nameTr: event.target.value,
+                }))
+              }
+            />
+            <input
+              aria-label="Plan düzenleme EN adı"
+              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+              value={planEdit.nameEn}
+              onChange={(event) =>
+                setPlanEdit((current) => ({
+                  ...current,
+                  nameEn: event.target.value,
+                }))
+              }
+            />
+            <div className="flex gap-2">
+              <Button type="submit" data-testid="admin-pricing-save">
+                Planı Güncelle
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => setPlanEdit({ id: "", nameTr: "", nameEn: "" })}
+              >
+                Vazgeç
+              </Button>
+            </div>
+          </form>
+        )}
       </Card>
 
       {plans.length > 0 && selectedPlan && (
@@ -660,7 +780,8 @@ export function PricingManager() {
                         {season.code} · {season.nameTr} / {season.nameEn}
                       </div>
                       <div className="text-xs text-slate-500">
-                        {season.startDate} → {season.endDate}
+                        {season.startDate} → {season.endDate} · Güncelleme:{" "}
+                        {formatDateTime(season.updatedAt)}
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -789,6 +910,8 @@ export function PricingManager() {
               )
             }
             saving={mutations.saveBasePrices.isPending}
+            isError={basePricesQuery.isError}
+            onRetry={() => void basePricesQuery.refetch()}
           />
 
           {selectedSeasonId && (
@@ -809,11 +932,29 @@ export function PricingManager() {
                 )
               }
               saving={mutations.saveSeasonPrices.isPending}
+              isError={seasonPricesQuery.isError}
+              onRetry={() => void seasonPricesQuery.refetch()}
             />
           )}
 
           <Card className="mt-6" data-testid="admin-pricing-manual-prices">
             <h2 className="text-lg font-semibold">Manuel Fiyatlar</h2>
+            {manualPricesQuery.isError && (
+              <div
+                role="alert"
+                className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+              >
+                Manuel fiyatlar yüklenemedi.
+                <Button
+                  className="ml-3"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => void manualPricesQuery.refetch()}
+                >
+                  Tekrar Dene
+                </Button>
+              </div>
+            )}
             <div className="mt-3 overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead>
@@ -822,13 +963,14 @@ export function PricingManager() {
                     <th className="py-2 pr-3">Misafir</th>
                     <th className="py-2 pr-3">Dönem</th>
                     <th className="py-2 pr-3">TRY</th>
+                    <th className="py-2 pr-3">Güncelleme</th>
                     <th className="py-2">İşlem</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(manualPricesQuery.data ?? []).length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-3 text-slate-600">
+                      <td colSpan={6} className="py-3 text-slate-600">
                         Manuel fiyat yok.
                       </td>
                     </tr>
@@ -844,6 +986,9 @@ export function PricingManager() {
                         </td>
                         <td className="py-2 pr-3">
                           {formatMoney(price.amountTry, "TRY")}
+                        </td>
+                        <td className="py-2 pr-3">
+                          {formatDateTime(price.updatedAt)}
                         </td>
                         <td className="py-2">
                           <Button
@@ -938,8 +1083,27 @@ export function PricingManager() {
             </form>
           </Card>
 
-          <Card className="mt-6" data-testid="admin-pricing-manual-fx">
-            <h2 className="text-lg font-semibold">Manuel Kur</h2>
+        </>
+      )}
+
+      <Card className="mt-6" data-testid="admin-pricing-manual-fx">
+        <h2 className="text-lg font-semibold">Manuel Kur</h2>
+        {manualFxQuery.isError && (
+          <div
+            role="alert"
+            className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+          >
+            Manuel kur listesi yüklenemedi.
+            <Button
+              className="ml-3"
+              size="sm"
+              variant="secondary"
+              onClick={() => void manualFxQuery.refetch()}
+            >
+              Tekrar Dene
+            </Button>
+          </div>
+        )}
             <div className="mt-3 overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead>
@@ -1054,8 +1218,6 @@ export function PricingManager() {
               </table>
             </div>
           </Card>
-        </>
-      )}
     </main>
   );
 }

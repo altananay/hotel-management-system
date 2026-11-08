@@ -93,14 +93,11 @@ public class RatePlanService {
             throw new PricingDefaultIncompleteException(missing);
         }
         Instant now = clock.instant();
-        for (RatePlanEntity plan : all) {
-            boolean shouldBeDefault = plan.getId().equals(id);
-            if (plan.isDefaultPlan() != shouldBeDefault) {
-                plan.setDefaultPlan(shouldBeDefault, now);
-            }
-        }
+        // Clear other defaults first so the partial unique index never sees two default rows.
+        repository.clearOtherDefaults(id, now);
+        target.setDefaultPlan(true, now);
         try {
-            repository.saveAll(all);
+            repository.saveAndFlush(target);
             return target.toDomain();
         } catch (DataIntegrityViolationException ex) {
             throw new DomainError(

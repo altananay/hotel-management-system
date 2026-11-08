@@ -10,6 +10,7 @@ import com.hotel.pricing.internal.persistence.FxRateEntity;
 import com.hotel.pricing.internal.persistence.FxRateJpaRepository;
 import com.hotel.sharedkernel.api.DomainError;
 import com.hotel.sharedkernel.api.DomainErrorCategory;
+import com.hotel.sharedkernel.api.HotelDate;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
@@ -43,21 +44,26 @@ public class ManualFxRateService {
                         ? null
                         : SupportedCurrency.from(currencyRaw);
         PageRequest pageable = PageRequest.of(page, size);
+        LocalDate effectiveFrom = from == null ? LocalDate.of(1900, 1, 1) : from;
+        LocalDate effectiveTo = to == null ? HotelDate.now(clock).value() : to;
+        if (effectiveFrom.isAfter(effectiveTo)) {
+            throw PriceRules.invalid("from must not be after to.");
+        }
         Page<FxRateEntity> result;
-        if (currency == null && from == null) {
+        if (currency == null && from == null && to == null) {
             result = repository.findBySourceOrderByRateDateDesc(FxSource.MANUAL, pageable);
         } else if (currency == null) {
             result =
                     repository.findBySourceAndRateDateBetweenOrderByRateDateDesc(
-                            FxSource.MANUAL, from, to == null ? LocalDate.now(clock) : to, pageable);
-        } else if (from == null) {
+                            FxSource.MANUAL, effectiveFrom, effectiveTo, pageable);
+        } else if (from == null && to == null) {
             result =
                     repository.findBySourceAndCurrencyOrderByRateDateDesc(
                             FxSource.MANUAL, currency, pageable);
         } else {
             result =
                     repository.findBySourceAndCurrencyAndRateDateBetweenOrderByRateDateDesc(
-                            FxSource.MANUAL, currency, from, to == null ? LocalDate.now(clock) : to, pageable);
+                            FxSource.MANUAL, currency, effectiveFrom, effectiveTo, pageable);
         }
         return result.map(FxRateEntity::toDomain);
     }

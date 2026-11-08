@@ -164,6 +164,7 @@ test.describe("Pricing management (AC-1..AC-6)", () => {
         },
       );
       expect(seasonResponse.status()).toBe(201);
+      const season = await json<{ id: string }>(seasonResponse);
 
       const baseRows = roomTypes.flatMap((roomType) =>
         Array.from({ length: roomType.maxGuests }, (_, index) => ({
@@ -180,6 +181,18 @@ test.describe("Pricing management (AC-1..AC-6)", () => {
       );
       expect(baseSave.status()).toBe(200);
 
+      const seasonRows = baseRows.map((row) => ({
+        ...row,
+        amountTry: (200 + (row.guests - 1) * 20).toFixed(2),
+      }));
+      const seasonSave = await adminSend(
+        page,
+        "PUT",
+        `/admin-api/pricing/seasons/${season.id}/prices`,
+        { rows: seasonRows },
+      );
+      expect(seasonSave.status()).toBe(200);
+
       const defaultResponse = await adminSend(
         page,
         "PUT",
@@ -189,7 +202,7 @@ test.describe("Pricing management (AC-1..AC-6)", () => {
 
       // Manual FX through the UI.
       await page.getByLabel("Manuel kur para birimi").selectOption("EUR");
-      await page.getByLabel("Manuel kur tarihi").fill(isoDatePlus(0));
+      await page.getByLabel("Manuel kur tarihi").fill(checkIn);
       await page.getByLabel("Manuel kur değeri").fill("42,500000");
       await page.getByRole("button", { name: "Manuel Kur Ekle" }).click();
       await expect(page.getByTestId("admin-pricing-manual-fx")).toContainText(
@@ -211,7 +224,6 @@ test.describe("Pricing management (AC-1..AC-6)", () => {
 
       await expect(page.getByTestId("admin-pricing-fx-warning")).toBeVisible();
       await capture(page, "0006", "AC-2-admin-pricing-filled.png");
-      await capture(page, "0006", "AC-3-admin-fx-warning.png");
 
       // Public quote API: TRY and EUR, multi-night.
       const tryQuote = await page.request.get(
@@ -226,20 +238,72 @@ test.describe("Pricing management (AC-1..AC-6)", () => {
       expect(tryBody.currency).toBe("TRY");
       expect(tryBody.nights).toHaveLength(3);
       expect(tryBody.nights[0].priceSource).toBe("MANUAL");
+      expect(tryBody.nights[1].priceSource).toBe("SEASON");
       expect(tryBody.total).toMatch(/^\d+\.\d{2}$/);
 
       const eurQuote = await page.request.get(
         `${API_BASE_URL}/api/pricing/quote?roomTypeId=${roomTypes[0].id}&checkIn=${checkIn}&checkOut=${checkOut}&guests=1&currency=EUR`,
       );
       expect(eurQuote.status()).toBe(200);
-      const eurBody = await json<{ currency: string; total: string }>(eurQuote);
+      const eurBody = await json<{
+        currency: string;
+        total: string;
+        nights: Array<{ fxSource: string }>;
+      }>(eurQuote);
       expect(eurBody.currency).toBe("EUR");
+      expect(eurBody.nights[0].fxSource).toBe("MANUAL");
       expect(eurBody.total).toMatch(/^\d+\.\d{2}$/);
+
+      const usdQuote = await page.request.get(
+        `${API_BASE_URL}/api/pricing/quote?roomTypeId=${roomTypes[0].id}&checkIn=${checkIn}&checkOut=${checkOut}&guests=1&currency=USD`,
+      );
+      expect(usdQuote.status()).toBe(200);
 
       const invalidGuests = await page.request.get(
         `${API_BASE_URL}/api/pricing/quote?roomTypeId=${roomTypes[0].id}&checkIn=${checkIn}&checkOut=${checkOut}&guests=0&currency=TRY`,
       );
       expect(invalidGuests.status()).toBe(400);
+      const invalidDate = await page.request.get(
+        `${API_BASE_URL}/api/pricing/quote?roomTypeId=${roomTypes[0].id}&checkIn=${checkIn}&checkOut=${checkIn}&guests=1&currency=TRY`,
+      );
+      expect(invalidDate.status()).toBe(400);
+      const invalidCurrency = await page.request.get(
+        `${API_BASE_URL}/api/pricing/quote?roomTypeId=${roomTypes[0].id}&checkIn=${checkIn}&checkOut=${checkOut}&guests=1&currency=GBP`,
+      );
+      expect(invalidCurrency.status()).toBe(400);
+
+      // Settings update must affect only new quotes.
+      const settingsUpdate = await adminSend(
+        page,
+        "PUT",
+        "/admin-api/pricing/settings",
+        { bufferPercent: "10.00", roundingStep: "10.00" },
+      );
+      expect(settingsUpdate.status()).toBe(200);
+      const eurAfterSettings = await page.request.get(
+        `${API_BASE_URL}/api/pricing/quote?roomTypeId=${roomTypes[0].id}&checkIn=${checkIn}&checkOut=${checkOut}&guests=1&currency=EUR`,
+      );
+      expect(eurAfterSettings.status()).toBe(200);
+      const eurAfterBody = await json<{ total: string }>(eurAfterSettings);
+      expect(eurAfterBody.total).not.toBe(eurBody.total);
+
+      const negativeAmount = await adminSend(
+        page,
+        "POST",
+        "/admin-api/pricing/manual-prices",
+        {
+          ratePlanId: plan!.id,
+          roomTypeId: roomTypes[0].id,
+          guests: 1,
+          startDate: checkIn,
+          endDate: checkIn,
+          amountTry: "-1.00",
+        },
+      );
+      expect(negativeAmount.status()).toBe(400);
+
+      await page.getByTestId("admin-pricing-fx-warning").scrollIntoViewIfNeeded();
+      await capture(page, "0006", "AC-3-admin-fx-warning.png");
 
       writeEvidence(
         "0006",
@@ -273,6 +337,18 @@ test.describe("Pricing management (AC-1..AC-6)", () => {
         `${ADMIN_WEB_BASE_URL}/admin-api/pricing/rate-plans`,
       );
       expect(forbidden.status()).toBe(403);
+      const forbiddenWrite = await adminSend(
+        frontDeskPage,
+        "POST",
+        "/admin-api/pricing/rate-plans",
+        {
+          code: `E2E-DENIED-${Date.now()}`,
+          nameTr: "Yasak",
+          nameEn: "Denied",
+          active: true,
+        },
+      );
+      expect(forbiddenWrite.status()).toBe(403);
       await frontDeskPage.goto(`${ADMIN_WEB_BASE_URL}/pricing`, {
         waitUntil: "networkidle",
       });

@@ -4,7 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.hotel.pricing.api.FxSource;
+import com.hotel.pricing.api.PriceSnapshot;
 import com.hotel.pricing.api.PricingDefaultIncompleteException;
+import com.hotel.pricing.api.PricingQuoteApi;
+import com.hotel.pricing.api.QuoteRequest;
 import com.hotel.pricing.api.SupportedCurrency;
 import com.hotel.pricing.internal.application.ManualFxRateService;
 import com.hotel.pricing.internal.application.ManualPriceService;
@@ -108,6 +111,7 @@ class PricingIT {
     @Autowired private ManualPriceService manualPriceService;
     @Autowired private ManualFxRateService manualFxRateService;
     @Autowired private PricingSettingsService settingsService;
+    @Autowired private PricingQuoteApi pricingQuoteApi;
     @Autowired private FxRateJpaRepository fxRateRepository;
     @Autowired private Clock clock;
     @LocalServerPort private int port;
@@ -320,6 +324,175 @@ class PricingIT {
                 "Açıklama",
                 "Description",
                 2);
+    }
+
+    @Test
+    void shouldSwitchDefaultPlanBackAndForth_whenBothPlansAreComplete() {
+        var planA = ratePlanService.create("PLAN-A", "Plan A", "Plan A", true);
+        saveCompleteBasePrices(planA.id(), new BigDecimal("100.00"), new BigDecimal("120.00"));
+        var planB = ratePlanService.create("PLAN-B", "Plan B", "Plan B", true);
+        saveCompleteBasePrices(planB.id(), new BigDecimal("110.00"), new BigDecimal("130.00"));
+
+        ratePlanService.setDefault(planA.id());
+        assertThat(ratePlanService.list()).anySatisfy(plan -> {
+            if (plan.id().equals(planA.id())) {
+                assertThat(plan.defaultPlan()).isTrue();
+            }
+        });
+        ratePlanService.setDefault(planB.id());
+        assertThat(ratePlanService.list()).anySatisfy(plan -> {
+            if (plan.id().equals(planB.id())) {
+                assertThat(plan.defaultPlan()).isTrue();
+            }
+        });
+        ratePlanService.setDefault(planA.id());
+        assertThat(ratePlanService.list()).anySatisfy(plan -> {
+            if (plan.id().equals(planA.id())) {
+                assertThat(plan.defaultPlan()).isTrue();
+            }
+        });
+    }
+
+    @Test
+    void shouldKeepOldSnapshotUnchangedAndProduceDifferentSnapshot_whenPriceChanges() {
+        LocalDate checkIn = LocalDate.now(ZoneOffset.UTC).plusDays(10);
+        LocalDate checkOut = checkIn.plusDays(2);
+        var plan = ratePlanService.create("STANDARD", "Standart", "Standard", true);
+        saveCompleteBasePrices(plan.id(), new BigDecimal("100.00"), new BigDecimal("120.00"));
+        ratePlanService.setDefault(plan.id());
+        QuoteRequest request =
+                new QuoteRequest(ROOM_TYPE_2, checkIn, checkOut, 2, "TRY");
+        PriceSnapshot first = pricingQuoteApi.snapshot(request);
+
+        priceMatrixService.saveBasePrices(
+                plan.id(),
+                List.of(
+                        new PriceMatrixService.PriceRowCommand(
+                                ROOM_TYPE_2, 2, new BigDecimal("200.00"))));
+        PriceSnapshot second = pricingQuoteApi.snapshot(request);
+
+        assertThat(first.total().amount()).isEqualByComparingTo("200.00");
+        assertThat(first.nights().get(0).amount().amount()).isEqualByComparingTo("100.00");
+        assertThat(second.total().amount()).isEqualByComparingTo("400.00");
+        assertThatThrownBy(() -> first.nights().add(first.nights().get(0)))
+                .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void shouldPreferManualFxAndApplyUpdatedSettings_whenQuotingEur() {
+        LocalDate checkIn = LocalDate.now(ZoneOffset.UTC).plusDays(10);
+        LocalDate checkOut = checkIn.plusDays(1);
+        var plan = ratePlanService.create("STANDARD", "Standart", "Standard", true);
+        saveCompleteBasePrices(plan.id(), new BigDecimal("100.00"), new BigDecimal("120.00"));
+        ratePlanService.setDefault(plan.id());
+        saveTcmbEurRate(checkIn.minusDays(1), new BigDecimal("32.500000"));
+        manualFxRateService.create("EUR", checkIn, new BigDecimal("40.000000"));
+
+        String url =
+                baseUrl()
+                        + "/api/pricing/quote?roomTypeId="
+                        + ROOM_TYPE_2
+                        + "&checkIn="
+                        + checkIn
+                        + "&checkOut="
+                        + checkOut
+                        + "&guests=2&currency=EUR";
+        JsonNode before = get(url);
+        assertThat(before.get("nights").get(0).get("fxSource").asText()).isEqualTo("MANUAL");
+        assertThat(before.get("nights").get(0).get("fxRate").asText()).isEqualTo("40.000000");
+
+        settingsService.update(new BigDecimal("100.00"), new BigDecimal("10.00"));
+        JsonNode after = get(url);
+        assertThat(after.get("total").asText()).isNotEqualTo(before.get("total").asText());
+        assertThat(after.get("nights").get(0).get("bufferPercent").asText()).isEqualTo("100.00");
+        assertThat(after.get("nights").get(0).get("roundingStep").asText()).isEqualTo("10.00");
+    }
+
+    @Test
+    void shouldFallbackToBasePriceAndRejectOverlapsAndDuplicates() {
+        LocalDate checkIn = LocalDate.now(ZoneOffset.UTC).plusDays(10);
+        LocalDate checkOut = checkIn.plusDays(1);
+        var plan = ratePlanService.create("STANDARD", "Standart", "Standard", true);
+        saveCompleteBasePrices(plan.id(), new BigDecimal("100.00"), new BigDecimal("120.00"));
+        ratePlanService.setDefault(plan.id());
+        var season =
+                seasonService.create(
+                        plan.id(), "HIGH", "Yüksek", "High", checkIn, checkIn.plusDays(5));
+        assertThatThrownBy(
+                        () ->
+                                seasonService.create(
+                                        plan.id(),
+                                        "HIGH-2",
+                                        "Yüksek 2",
+                                        "High 2",
+                                        checkIn.plusDays(1),
+                                        checkIn.plusDays(6)))
+                .isInstanceOf(DomainError.class)
+                .satisfies(
+                        ex ->
+                                assertThat(((DomainError) ex).code())
+                                        .isEqualTo(PricingErrorCodes.SEASON_OVERLAP));
+        JsonNode quote =
+                get(
+                        baseUrl()
+                                + "/api/pricing/quote?roomTypeId="
+                                + ROOM_TYPE_2
+                                + "&checkIn="
+                                + checkIn
+                                + "&checkOut="
+                                + checkOut
+                                + "&guests=2&currency=TRY");
+        assertThat(quote.get("nights").get(0).get("priceSource").asText()).isEqualTo("BASE");
+
+        manualPriceService.create(
+                plan.id(), ROOM_TYPE_2, 2, checkIn, checkIn, new BigDecimal("150.00"));
+        assertThatThrownBy(
+                        () ->
+                                manualPriceService.create(
+                                        plan.id(),
+                                        ROOM_TYPE_2,
+                                        2,
+                                        checkIn,
+                                        checkIn,
+                                        new BigDecimal("160.00")))
+                .isInstanceOf(DomainError.class)
+                .satisfies(
+                        ex ->
+                                assertThat(((DomainError) ex).code())
+                                        .isEqualTo(PricingErrorCodes.MANUAL_PRICE_OVERLAP));
+
+        manualFxRateService.create("EUR", checkIn, new BigDecimal("40.000000"));
+        assertThatThrownBy(
+                        () ->
+                                manualFxRateService.create(
+                                        "EUR", checkIn, new BigDecimal("41.000000")))
+                .isInstanceOf(DomainError.class)
+                .satisfies(
+                        ex ->
+                                assertThat(((DomainError) ex).code())
+                                        .isEqualTo(PricingErrorCodes.MANUAL_FX_DUPLICATE));
+    }
+
+    @Test
+    void shouldReturn503WhenEurHasNoFxRate() {
+        LocalDate checkIn = LocalDate.now(ZoneOffset.UTC).plusDays(10);
+        LocalDate checkOut = checkIn.plusDays(1);
+        var plan = ratePlanService.create("STANDARD", "Standart", "Standard", true);
+        saveCompleteBasePrices(plan.id(), new BigDecimal("100.00"), new BigDecimal("120.00"));
+        ratePlanService.setDefault(plan.id());
+        RawResponse response =
+                getRaw(
+                        baseUrl()
+                                + "/api/pricing/quote?roomTypeId="
+                                + ROOM_TYPE_2
+                                + "&checkIn="
+                                + checkIn
+                                + "&checkOut="
+                                + checkOut
+                                + "&guests=2&currency=EUR");
+        assertThat(response.statusCode()).isEqualTo(503);
+        assertThat(response.body().get("code").asText())
+                .isEqualTo(PricingErrorCodes.FX_RATE_UNAVAILABLE);
     }
 
     private void saveCompleteBasePrices(

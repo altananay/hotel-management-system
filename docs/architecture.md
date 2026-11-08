@@ -192,7 +192,7 @@ Yaprak modüller: `catalog`, `pricing`, `payment`. `catalog` asla `booking`'e ba
 | D12 | Housekeeping | V1 manuel oda durumu; otomasyon V2 |
 | D13 | e-Fatura | V1 kapsam dışı |
 | D14 | Repo yapısı | Monorepo (backend/, web/, admin-web/, contracts/, docs/, specs/, infra/, e2e/) |
-| D15 | Fiyat/kur modeli | TRY baz + TCMB kuru + buffer/yuvarlama + manuel override (öncelik: elle fiyat > elle kur > TCMB) |
+| D15 | Fiyat/kur modeli | TRY baz + plan/oda tipi/misafir sayısı ekseni + sezon/manuel fiyat + TCMB kuru + buffer + yukarı yuvarlama; öncelik: elle fiyat > sezon > baz, elle kur > TCMB |
 | D16 | Event altyapısı | Aşama 1: in-process; Aşama 2: Kafka uyumlu broker; Aşama 3 opsiyonel broker tüketimi |
 | D17 | Broker + arayüz | **Redpanda** (KRaft Kafka yerine; Java ekip öğrenme tercihi) + **kafbat-ui** |
 | D18 | Hero video | Pexels 30653318 (Pexels License; kaynak + lisans `CREDITS.md`'ye işlenir) |

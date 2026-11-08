@@ -241,10 +241,10 @@ public class PriceMatrixService {
 
         List<PriceKey> keys =
                 rows.stream().map(row -> new PriceKey(row.roomTypeId(), row.guests())).toList();
+        // Season prices are optional and fall back to the plan base price; only the base
+        // matrix reports missing combinations required for a default plan.
         List<MissingPrice> missing =
-                seasonMatrix
-                        ? missingForRows(activeRoomTypes, keys)
-                        : missingForRows(activeRoomTypes, keys);
+                seasonMatrix ? List.of() : missingForRows(activeRoomTypes, keys);
         return new MatrixView(List.copyOf(roomTypes), List.copyOf(rows), missing);
     }
 

@@ -27,7 +27,7 @@ class TcmbFxParserTest {
     @Test
     void shouldUseXmlDate_whenWeekendOrHolidayFeedReturnsLastPublishedDate() throws IOException {
         TcmbRates rates = parser.parse(fixture("tcmb-weekend.xml"));
-        assertThat(rates.rateDate()).hasToString("2026-11-08");
+        assertThat(rates.rateDate()).hasToString("2026-11-06");
         assertThat(rates.sellingRates()).containsKeys(SupportedCurrency.EUR, SupportedCurrency.USD);
     }
 

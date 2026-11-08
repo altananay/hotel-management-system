@@ -1,5 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -159,6 +159,7 @@ describe("PricingManager (AC-2)", () => {
       expect(screen.getByTestId("admin-pricing-empty")).toBeInTheDocument(),
     );
     expect(screen.getByTestId("admin-pricing-page")).toBeInTheDocument();
+    expect(screen.getByTestId("admin-pricing-manual-fx")).toBeInTheDocument();
   });
 
   it("shouldRenderErrorAndRecoverAfterRetry_whenRatePlansFail", async () => {
@@ -193,12 +194,45 @@ describe("PricingManager (AC-2)", () => {
     );
   });
 
+  it("shouldUpdatePlanName_whenEditFormSubmitted", async () => {
+    let currentPlan = { ...plan };
+    server.use(
+      http.get("*/admin-api/pricing/rate-plans", () =>
+        HttpResponse.json([currentPlan]),
+      ),
+      http.patch(
+        `*/admin-api/pricing/rate-plans/${PLAN_ID}`,
+        async ({ request }) => {
+          const body = (await request.json()) as {
+            nameTr?: string;
+            nameEn?: string;
+          };
+          currentPlan = { ...currentPlan, ...body };
+          return HttpResponse.json(currentPlan);
+        },
+      ),
+    );
+
+    renderManager();
+    const row = await screen.findByTestId("admin-pricing-rate-plan-row");
+    fireEvent.click(within(row).getByRole("button", { name: "Düzenle" }));
+    fireEvent.change(screen.getByLabelText("Plan düzenleme TR adı"), {
+      target: { value: "Güncel Ad" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Planı Güncelle" }));
+
+    await waitFor(() =>
+      expect(screen.getByText(/Güncel Ad/)).toBeInTheDocument(),
+    );
+  });
+
   it("shouldRenderFilledStateAndStaleFxWarning_whenDataExists", async () => {
     renderManager();
 
     await waitFor(() =>
       expect(screen.getByTestId("admin-pricing-rate-plans")).toBeInTheDocument(),
     );
+    expect(screen.getByTestId("admin-pricing-filled")).toBeInTheDocument();
     expect(screen.getByTestId("admin-pricing-rate-plan-row")).toBeInTheDocument();
     expect(
       screen.getByTestId("admin-pricing-rate-plan-default"),
