@@ -1,6 +1,7 @@
 package com.hotel.web;
 
 import com.hotel.media.api.MediaStorageException;
+import com.hotel.pricing.api.PricingDefaultIncompleteException;
 import com.hotel.sharedkernel.api.DomainError;
 import com.hotel.sharedkernel.api.DomainErrorCategory;
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,6 +41,9 @@ public class GlobalExceptionHandler {
     private static final String MEDIA_INVALID_IMAGE = "media.invalid_image";
     private static final String MEDIA_IMAGE_TOO_LARGE = "media.image_too_large";
     private static final String MEDIA_UPLOAD_EXPIRED = "media.upload_expired";
+    private static final String PRICING_DEFAULT_RATE_PLAN_REQUIRED =
+            "pricing.default_rate_plan_required";
+    private static final String PRICING_FX_RATE_UNAVAILABLE = "pricing.fx_rate_unavailable";
 
     @ExceptionHandler({
         MethodArgumentNotValidException.class,
@@ -53,6 +57,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ProblemDetail> handleValidationException(
             Exception ex, HttpServletRequest request) {
         return problem(HttpStatus.BAD_REQUEST, request);
+    }
+
+    @ExceptionHandler(PricingDefaultIncompleteException.class)
+    public ResponseEntity<ProblemDetail> handlePricingDefaultIncomplete(
+            PricingDefaultIncompleteException ex, HttpServletRequest request) {
+        ProblemDetail problem =
+                ProblemDetailFactory.forStatus(
+                        HttpStatus.CONFLICT, request, ex.code(), ex.getMessage());
+        problem.setProperty("missing", ex.missing());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
     }
 
     @ExceptionHandler(DomainError.class)
@@ -143,6 +159,8 @@ public class GlobalExceptionHandler {
 
     private static HttpStatus statusFor(DomainError error) {
         return switch (error.code()) {
+            case PRICING_DEFAULT_RATE_PLAN_REQUIRED, PRICING_FX_RATE_UNAVAILABLE ->
+                    HttpStatus.SERVICE_UNAVAILABLE;
             case MEDIA_INVALID_CONTENT_TYPE -> HttpStatus.UNSUPPORTED_MEDIA_TYPE;
             case MEDIA_INVALID_IMAGE, MEDIA_IMAGE_TOO_LARGE -> HttpStatus.UNPROCESSABLE_ENTITY;
             case MEDIA_UPLOAD_EXPIRED -> HttpStatus.CONFLICT;

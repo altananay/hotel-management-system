@@ -54,6 +54,18 @@ hotel:
       interval: ${MEDIA_CLEANUP_INTERVAL:60s}
       grace: ${MEDIA_CLEANUP_GRACE:5m}
       max-attempts: ${MEDIA_CLEANUP_MAX_ATTEMPTS:10}
+  pricing:
+    quote-ttl: ${HOTEL_PRICING_QUOTE_TTL:15m}
+    defaults:
+      buffer-percent: ${HOTEL_PRICING_DEFAULT_BUFFER_PERCENT:2.00}
+      rounding-step: ${HOTEL_PRICING_DEFAULT_ROUNDING_STEP:5.00}
+    tcmb:
+      enabled: ${HOTEL_PRICING_TCMB_ENABLED:true}
+      url: ${HOTEL_PRICING_TCMB_URL:https://www.tcmb.gov.tr/kurlar/today.xml}
+      cron: ${HOTEL_PRICING_TCMB_CRON:0 30 15 * * MON-FRI}
+      zone: ${HOTEL_PRICING_TCMB_ZONE:Europe/Istanbul}
+      connect-timeout: ${HOTEL_PRICING_TCMB_CONNECT_TIMEOUT:3s}
+      read-timeout: ${HOTEL_PRICING_TCMB_READ_TIMEOUT:10s}
   admin:
     jwks-uri: ${HOTEL_ADMIN_JWKS_URI:http://localhost:8082/admin-api/.well-known/jwks.json}
     issuer: ${HOTEL_ADMIN_JWT_ISSUER:admin-api}
