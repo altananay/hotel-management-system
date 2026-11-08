@@ -279,13 +279,16 @@ ile çizilir.
   `admin-pricing-rate-plans`, `admin-pricing-rate-plan-row`,
   `admin-pricing-rate-plan-default`, `admin-pricing-seasons`,
   `admin-pricing-season-row`, `admin-pricing-prices`,
-  `admin-pricing-price-row`, `admin-pricing-manual-prices`,
+  `admin-pricing-price-row`, `admin-pricing-price-delete`, `admin-pricing-manual-prices`,
   `admin-pricing-manual-fx`, `admin-pricing-settings`,
   `admin-pricing-fx-warning`, `admin-pricing-save`.
 - Tutarlar API'den string ondalıklı gelir; gösterim `Intl.NumberFormat` ile
   yapılır, JS `number` ile hesaplama yapılmaz.
 - Ekran; plan/sezon/fiyat/override/ayar değişikliğinin yalnız yeni teklifleri
   etkilediğini, mevcut snapshot'ları değiştirmediğini açıkça gösterir.
+- Baz/sezon fiyat matrisinde satır bazlı `Sil` aksiyonu vardır
+  (`admin-pricing-price-delete`). Input'u boşaltıp kaydetmek silme sayılmaz; silme yalnız
+  açık aksiyonla yapılır. Pasif oda tiplerinde silme butonu görünmez.
 - Güncel TCMB kuru, kaynak, kur tarihi, son güncelleme ve bayat kur uyarısı
   görünür; kur geçmişi tarih/para birimi/kaynak ile listelenir.
 - Public fiyat UI'si, oda kartı fiyatı ve oda detay sayfası 0006 kapsamı dışıdır;

@@ -10,7 +10,7 @@
 
 - **Spec No:** `0006`
 - **Başlık:** Fiyatlandırma ve Fiyat Teklifi (`pricing`)
-- **Durum:** Uygulama tamamlandı; kapanış onayı bekliyor (2026-11-08)
+- **Durum:** Rev.1 uygulama tamamlandı; kapanış onayı bekliyor (2026-11-08)
 - **Branch:** `feature/0006-pricing`
 - **İlgili doküman/kararlar:** `docs/architecture.md` (§3 `pricing`, §5 R1/R3/R6, §7/D15, §8, §10 D8/D15, §11), `docs/domain.md` (§1 fiyat terimleri, §3.4–§3.7, §3.13–§3.14, rol tablosu), `docs/conventions.md` (§1, §2.1, §2.3, §2.4, §3, §4), `docs/frontend.md`, `docs/testing.md`, `docs/git.md`, `specs/done/0002-room-catalog.md`, `specs/done/0004-admin-identity.md`, `specs/done/0005-media.md`, Takım Yöneticisi 0006 brief'i (2026-11-08); Onaylı kararlar: `Q1=C`, `Q2=A`, `Q3=A (koşullu)`, `Q4=A`, `Q5=A`, `Q6=A`, `Q7=A`, `Q8=A`; misafir sayısı fiyatı etkiler (2026-11-08)
 - **Tarih:** 2026-11-08
@@ -54,7 +54,7 @@ Otel yönetimi, oda tipleri için tarife planı ve sezon bazlı, misafir sayıs�
   - **Test edilebilirlik:** Local/CI ortamında TCMB'ye ağ bağımlılığı olmadan fixture/fake kullanılmalı; hafta içi, hafta sonu, tatil, bozuk XML, erişilemezlik ve kur yokluğu senaryoları test edilmelidir. Zaman bağımlı davranışlar enjekte edilen `Clock` ile test edilir; gerçek bekleme yapılmaz.
   - **Ayarların etkisi:** Buffer/yuvarlama değişikliği yalnız yeni teklifleri etkiler; mevcut teklifin gösterimi ve snapshot değişmez. Admin ekranı güncel ayarları ve son değişiklik zamanını gösterir.
 
-- **REQ-4 (Public Fiyat Teklifi ve Booking Portu — Q1=C, Q2=A, Q4=A, Q5=A):** Misafir; oda tipi, konaklama dönemi, misafir sayısı ve para birimi ile **anonim** fiyat teklifi alabilmelidir. Teklif, varsayılan aktif tarife planını kullanmalı; oda tipi aktif olmalı; misafir sayısı `1..maxGuests` aralığında olmalı; giriş tarihi bugünden (HotelDate) önce olamaz ve çıkış girişten sonra olmalıdır. Para birimi TRY/EUR/USD'dir; başka değer reddedilir.
+- **REQ-4 (Public Fiyat Teklifi ve Booking Portu — Q1=C, Q2=A, Q4=A, Q5=A):** Misafir; oda tipi, konaklama dönemi, misafir sayısı ve para birimi ile **anonim** fiyat teklifi alabilmelidir. Teklif, varsayılan aktif tarife planını kullanmalı; oda tipi aktif olmalı; misafir sayısı `1..maxGuests` aralığında olmalı; giriş tarihi bugünden (HotelDate) önce olamaz ve çıkış girişten sonra olmalıdır. **Konaklama en fazla 30 gece olabilir; `checkOut - checkIn > 30` ise `400 pricing.invalid_period` döner. 30 gece dahil kabul edilir; sınır `hotel.pricing.max-stay-nights` ile yapılandırılabilir (varsayılan 30).** Para birimi TRY/EUR/USD'dir; başka değer reddedilir.
   - **Yanıt dökümü:** Teklif; oda tipi, varsayılan plan kodu/adı, dönem, misafir sayısı, para birimi, gece sayısı, her gece için tarih, sezon, fiyat kaynağı (manuel/sezon/baz), TRY gece tutarı, kur ve kaynağı/tarihi, buffer, yuvarlama adımı, gece tutarı ve toplamı taşımalıdır. Tutarlar frontend'e **string ondalıklı** taşınır; JS `number` ile hesaplanmaz. Teklifte misafir kimliği/PII yer almaz.
   - **Geçerlilik ve yeniden hesaplama:** Teklif `quotedAt` ve `expiresAt` (15 dakika) taşır; gösterge niteliğindedir. Rezervasyon anında fiyat yeniden hesaplanır; eski teklifin tutarı körü körüne kullanılamaz. Fiyat değiştiyse yeni tutar misafire gösterilmeden rezervasyon oluşturulamaz. `pricing` uzun süreli teklif kaydı tutmaz; rezervasyon anında üretilen snapshot `booking` tarafından saklanır.
   - **Booking portu:** `booking → pricing` senkron çağrısı (R3) ile rezervasyon anında fiyat istenir; `pricing` snapshot payload'ını döndürür. `booking` onaylanan fiyatı kendi snapshot'ı olarak saklar; fiyatı kendisi hesaplamaz, başka modülden fiyat kopyalamaz.
@@ -149,9 +149,9 @@ Otel yönetimi, oda tipleri için tarife planı ve sezon bazlı, misafir sayıs�
   - **Public teklif:** Anonim `GET /api/pricing/quote?roomTypeId=...&checkIn=YYYY-MM-DD&checkOut=YYYY-MM-DD&guests=N&currency=TRY|EUR|USD`. `200` yanıtı `roomTypeId`, `ratePlanCode`, `ratePlanNameTr/En`, `checkIn`, `checkOut`, `guests`, `currency`, `nights[]` (tarih, `seasonCode`, `seasonNameTr/En`, `priceSource`, `baseAmountTry`, `fxRate`, `fxSource`, `fxRateDate`, `fxStale`, `bufferPercent`, `roundingStep`, `amount`), `total`, `quotedAt`, `expiresAt` taşır. Tutarlar string ondalıklıdır. `400/404/409/503` RFC 7807.
   - **Booking portu:** HTTP değil, `pricing.api` üzerinden senkron read portu; rezervasyon anında snapshot payload'ı döndürür. `booking` snapshot'ı saklar; fiyat hesaplamaz.
   - **Admin plan/sezon:** `GET/POST /admin-api/pricing/rate-plans`, `PATCH /admin-api/pricing/rate-plans/{id}`, `PUT /admin-api/pricing/rate-plans/{id}/default`; `GET/POST /admin-api/pricing/rate-plans/{id}/seasons`, `PATCH/DELETE /admin-api/pricing/seasons/{id}`. Tümü `SUPER_ADMIN`/`MANAGER`; gateway üzerinden. Varsayılan plan bütünlüğü eksikse `409 pricing.default_rate_plan_incomplete`.
-  - **Admin fiyat/override/ayar:** `GET/PUT /admin-api/pricing/rate-plans/{id}/prices` (baz matris), `GET/PUT /admin-api/pricing/seasons/{id}/prices` (sezon matris), `GET/POST/PATCH/DELETE /admin-api/pricing/manual-prices`, `GET/POST/PATCH/DELETE /admin-api/pricing/manual-fx-rates`, `GET/PUT /admin-api/pricing/settings`, `GET /admin-api/pricing/fx-rates`, `GET /admin-api/pricing/room-types` (aktif oda tipleri). Tümü `SUPER_ADMIN`/`MANAGER`; gateway üzerinden.
-  - **Hata kodları (asgari):** `pricing.invalid_period`, `pricing.invalid_guests`, `pricing.invalid_currency`, `pricing.invalid_amount`, `pricing.invalid_buffer`, `pricing.invalid_rounding_step`, `pricing.room_type_not_found`, `pricing.price_not_configured`, `pricing.default_rate_plan_required`, `pricing.default_rate_plan_incomplete`, `pricing.rate_plan_not_found`, `pricing.rate_plan_duplicate`, `pricing.rate_plan_in_use`, `pricing.season_not_found`, `pricing.season_overlap`, `pricing.manual_price_overlap`, `pricing.manual_fx_duplicate`, `pricing.fx_rate_unavailable`, `security.forbidden`, `system.internal_error`. HTTP eşlemesi `docs/conventions.md` §2.3'e uyar.
-  - **Admin testid'leri (asgari):** `admin-pricing-page`, `admin-pricing-loading`, `admin-pricing-empty`, `admin-pricing-error`, `admin-pricing-retry`, `admin-pricing-rate-plans`, `admin-pricing-rate-plan-row`, `admin-pricing-rate-plan-default`, `admin-pricing-seasons`, `admin-pricing-season-row`, `admin-pricing-prices`, `admin-pricing-price-row`, `admin-pricing-manual-prices`, `admin-pricing-manual-fx`, `admin-pricing-settings`, `admin-pricing-fx-warning`, `admin-pricing-save`.
+  - **Admin fiyat/override/ayar:** `GET/PUT /admin-api/pricing/rate-plans/{id}/prices` (baz matris), `DELETE /admin-api/pricing/rate-plans/{id}/prices/{priceRowId}`, `GET/PUT /admin-api/pricing/seasons/{id}/prices` (sezon matris), `DELETE /admin-api/pricing/seasons/{id}/prices/{priceRowId}`, `GET/POST/PATCH/DELETE /admin-api/pricing/manual-prices`, `GET/POST/PATCH/DELETE /admin-api/pricing/manual-fx-rates`, `GET/PUT /admin-api/pricing/settings`, `GET /admin-api/pricing/fx-rates`, `GET /admin-api/pricing/room-types` (aktif oda tipleri). Tümü `SUPER_ADMIN`/`MANAGER`; gateway üzerinden. Fiyat satırı silme `204` döner; satır üst kayda ait değilse veya yoksa `404 pricing.rate_plan_price_not_found` / `pricing.season_price_not_found`.
+  - **Hata kodları (asgari):** `pricing.invalid_period`, `pricing.invalid_guests`, `pricing.invalid_currency`, `pricing.invalid_amount`, `pricing.invalid_buffer`, `pricing.invalid_rounding_step`, `pricing.room_type_not_found`, `pricing.price_not_configured`, `pricing.default_rate_plan_required`, `pricing.default_rate_plan_incomplete`, `pricing.rate_plan_not_found`, `pricing.rate_plan_duplicate`, `pricing.rate_plan_in_use`, `pricing.rate_plan_price_not_found`, `pricing.season_not_found`, `pricing.season_price_not_found`, `pricing.season_overlap`, `pricing.manual_price_overlap`, `pricing.manual_fx_duplicate`, `pricing.fx_rate_unavailable`, `security.forbidden`, `system.internal_error`. HTTP eşlemesi `docs/conventions.md` §2.3'e uyar.
+  - **Admin testid'leri (asgari):** `admin-pricing-page`, `admin-pricing-loading`, `admin-pricing-empty`, `admin-pricing-error`, `admin-pricing-retry`, `admin-pricing-rate-plans`, `admin-pricing-rate-plan-row`, `admin-pricing-rate-plan-default`, `admin-pricing-seasons`, `admin-pricing-season-row`, `admin-pricing-prices`, `admin-pricing-price-row`, `admin-pricing-price-delete`, `admin-pricing-manual-prices`, `admin-pricing-manual-fx`, `admin-pricing-settings`, `admin-pricing-fx-warning`, `admin-pricing-save`.
   - **Not:** Path/method önerileri uygulama kolaylığı içindir; bağlayıcı olan yetki, doğrulama, hata kodu, para/yuvarlama ve snapshot davranışıdır. Developer gerekçeli sapmayı spec uygulama notunda belirtir.
 
 - **Bağımlı spec'ler ve cross-spec:**
@@ -165,6 +165,7 @@ Otel yönetimi, oda tipleri için tarife planı ve sezon bazlı, misafir sayıs�
   - Çocuk/yaş indirimi yoktur; tüm misafirler aynı sayılır; ek yatak/ekstra hizmet fiyatı yoktur.
   - RatePlan yalnız fiyat/sezon taşır; iade koşulu global X gün kuralıdır (`docs/domain.md` §3.7); plan bazlı iade 0006'da yoktur.
   - TCMB bayat kuru için maksimum yaş sınırı yoktur; son bilinen kur + uyarı yeterlidir.
+  - Maksimum konaklama 30 gecedir; `hotel.pricing.max-stay-nights` ile yapılandırılabilir, varsayılan 30'dur.
   - Buffer yalnız FX çevrimine uygulanır; TRY baz/manuel fiyatına uygulanmaz.
   - KDV dahil tek tutar; ödeme anında çevrim yok; iade aynı para biriminde.
   - Public teklifte misafir plan seçimi yoktur; yalnız varsayılan plan.
@@ -202,7 +203,7 @@ Otel yönetimi, oda tipleri için tarife planı ve sezon bazlı, misafir sayıs�
   - Admin ekranında güncel kur, kaynak, tarih ve bayat uyarısı; kur geçmişi görünür. Ayar değişikliği yeni teklifleri etkiler; eski snapshot'ı değiştirmez.
 
 - **AC-4 (Public Fiyat Teklifi, Doğrulama ve Booking Portu — REQ-4, Q1=C, Q2=A, Q4=A, Q5=A):**
-  - Anonim public teklif yüzeyi; oda tipi + giriş/çıkış + misafir sayısı + para birimi ile `200` ve gece dökümü döner. Giriş tarihi bugünden önce, çıkış ≤ giriş, misafir `0` veya `> maxGuests`, geçersiz/eksik para birimi `400`; pasif/bulunmayan oda tipi `404 pricing.room_type_not_found`; varsayılan plan yok `503 pricing.default_rate_plan_required`; fiyat eksik `409 pricing.price_not_configured`; kur yok `503 pricing.fx_rate_unavailable`. Hatalar RFC 7807, stack trace yok.
+  - Anonim public teklif yüzeyi; oda tipi + giriş/çıkış + misafir sayısı + para birimi ile `200` ve gece dökümü döner. Giriş tarihi bugünden önce, çıkış ≤ giriş, misafir `0` veya `> maxGuests`, geçersiz/eksik para birimi ve **31 gece** `400`; 30 gece kabul edilir. Pasif/bulunmayan oda tipi `404 pricing.room_type_not_found`; varsayılan plan yok `503 pricing.default_rate_plan_required`; fiyat eksik `409 pricing.price_not_configured`; kur yok `503 pricing.fx_rate_unavailable`. Hatalar RFC 7807, stack trace yok. Sınır enjekte edilen `Clock` ile test edilir.
   - Yanıt; oda tipi, varsayılan plan kodu/adı, dönem, misafir sayısı, para birimi, gece sayısı, her gece için tarih/sezon/fiyat kaynağı/TRY tutar/kur/kaynak/tarih/bayat bayrağı/buffer/yuvarlama/gece tutarı ve toplamı taşır. Tutarlar string ondalıklıdır; PII yoktur. TRY yanıtında FX alanları yok/`null`; buffer/yuvarlama uygulanmaz.
   - Teklif `quotedAt` + `expiresAt` (15 dk) taşır; gösterge niteliğindedir. Rezervasyon anında fiyat yeniden hesaplanır; eski teklif tutarı körü körüne kullanılamaz; fiyat değiştiyse yeni tutar misafire gösterilmeden rezervasyon oluşturulamaz. `pricing` uzun süreli teklif saklamaz; snapshot booking'de saklanır.
   - `booking → pricing` portu rezervasyon anında snapshot payload'ı döndürür; booking fiyatı kendisi hesaplamaz, başka modülden kopyalamaz. Snapshot; gece dökümü, kaynaklar, kur, buffer, yuvarlama, toplam ve para birimini taşır.
@@ -225,21 +226,34 @@ Otel yönetimi, oda tipleri için tarife planı ve sezon bazlı, misafir sayıs�
   - Doküman/CI: `docs/architecture.md` §3/§5 R3/§7/D15, `docs/conventions.md` §3/§4, `docs/frontend.md`, `.env.example`, `.github/workflows/ci.yml`, `HotelApiModularityTest`, `e2e/README.md` güncellenir; pipeline (lint + build + test + smoke) yeşildir.
   - Promosyon kodları, oda detay sayfası, booking/payment, KDV/fatura, audit, toplu içe aktarma ve takvim grid'i 0006'da yoktur; kapsam dışı maddeleri ihlal eden değişiklik build/inceleme kapısında reddedilir.
 
+### Revizyon 1 (2026-11-08) — Code Review düzeltmeleri
+
+- **CR-01:** Baz ve sezon fiyat satırları için ayrı `DELETE` endpointleri eklendi; `PUT`
+  replace semantiği değişmedi. UI'da satır bazlı `Sil` aksiyonu vardır; input temizleme
+  otomatik silme yapmaz. Silme snapshot'ları etkilemez; eksik fiyat davranışı korunur.
+- **CR-03:** `internal.application` artık `internal.web` DTO/mapper'ına bağımlı değildir;
+  dönüşüm controller + `PricingWebMapper` katmanında yapılır. ArchUnit kuralı eklendi.
+- **CR-14:** Teklif en fazla 30 gece; 31 gece `400 pricing.invalid_period`. Sınır
+  `hotel.pricing.max-stay-nights` ile yapılandırılabilir, varsayılan 30'dur.
+
 ## 6. Definition of Done
 
 - [x] Tüm AC'ler doğrulandı (test ve/veya görsel kanıt)
 - [x] Pipeline yeşil (lint + build + test + kritik akış smoke)
-- [ ] Kod incelemesi onaylandı (Takım Yöneticisi) — Code Reviewer subagent turu tamamlandı; 2 kapsam/katman itirazı raporlandı, Takım Yöneticisi onayı bekliyor
+- [ ] Kod incelemesi onaylandı (Takım Yöneticisi) — Code Reviewer subagent turları tamamlandı; 2 kapsam/katman itirazı raporlandı, Takım Yöneticisi kapanış onayı bekliyor
 - [x] Davranış değiştiyse dokümanlar güncellendi (`docs/architecture.md`, `docs/conventions.md`, `docs/frontend.md`, `.env.example`, CI)
 - [ ] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi — Takım Yöneticisi kapanış onayından sonra taşınacak
+- [x] CR-01 baz/sezon fiyatı delete endpointleri ve admin-ui satır silme tamamlandı
+- [x] CR-03 `internal.application` → `internal.web` bağımlılığı kaldırıldı; ArchUnit kuralı eklendi
+- [x] CR-14 maksimum 30 gece sınırı ve config tamamlandı
 - [x] SCORECARD dolduruldu
 - [x] 0007 planlama kaydı (oda kartlarında fiyat gösterimi zorunlu) kapanış raporunda doğrulandı
 - [x] 0001–0005 arşivleri değişmedi (SHA-256/`git diff`)
 
 ## 7. SCORECARD
 
-- **Spec revizyon sayısı:** 0 (onaylı spec değiştirilmedi)
-- **Düzeltme turu sayısı:** 1 (Code Reviewer bulguları + doğrulama turu)
-- **Bulgu gerçek/gürültü oranı:** 17 bulgu; 15 gerçek/uygulandı, 2 kapsam/katman kararı (CR-10, CR-13) itiraz/ertelendi
+- **Spec revizyon sayısı:** 1 (CR-01 delete endpointleri + CR-14 maksimum 30 gece)
+- **Düzeltme turu sayısı:** 2 (ilk Code Review turu + CR-01/CR-03/CR-14 düzeltme turu)
+- **Bulgu gerçek/gürültü oranı:** 20 bulgu; 18 gerçek/uygulandı, 2 kapsam/katman kararı (CR-10, CR-13) itiraz/ertelendi
 - **Regresyon sayısı:** 0
 - **Kaçan hata (escaped bug):** 0 (bilinen)

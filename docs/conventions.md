@@ -15,6 +15,7 @@
 
 - Kök paket: `com.hotel.<modül>` (ör. `com.hotel.booking`); `admin-api` modülleri de `com.hotel` kökündedir (ör. `com.hotel.adminidentity`; ayrı artifact olduğu için çakışma yoktur).
 - Modül düzeni: `<modül>/api` **public** (arayüzler, DTO'lar, event tipleri) — import edilebilen tek alan; `<modül>/internal` **private**, alt paketleri sabittir: `internal.domain`, `internal.application`, `internal.web`, `internal.persistence`. Başka modül `internal`'ı import edemez (Spring Modulith + ArchUnit ile zorlanır).
+- **Katman yönü:** `internal.application` web DTO/mapper'ına bağımlı olamaz; application kendi view record'larını/domain tiplerini döndürür, DTO dönüşümü `internal.web` içinde yapılır. ArchUnit kuralı CI'da zorunludur.
 - JPA `@Entity` sınıfları `..api..` ve `..internal.web..` paketlerinden referans alamaz (entity sızması yasağı; ArchUnit).
 - **Cross-cutting sınıflar** (problem advice, request-id filtresi, security/CORS config, geçici scaffold controller'lar) uygulama kökünde ayrı paketlerde yaşar (`com.hotel.web`, `com.hotel.config`, `com.hotel.scaffold`); ayrı ortak modül açılmaz; `sharedkernel`'e web kodu girmez; iş modülleri bu paketlere bağımlı olamaz (bağımlılık tek yönlüdür).
 - Çapraz modül erişimi yalnızca `docs/architecture.md` §5 R3 izin listesindedir (kapalı liste; listede olmayan çapraz import ihlaldir). Tüm modüller `sharedkernel`'e bağımlı olabilir; `sharedkernel` hiçbir modüle bağımlı olamaz.
