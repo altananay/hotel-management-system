@@ -10,7 +10,7 @@
 
 - **Spec No:** `0006`
 - **Başlık:** Fiyatlandırma ve Fiyat Teklifi (`pricing`)
-- **Durum:** Onaylandı (2026-11-08)
+- **Durum:** Uygulama tamamlandı; kapanış onayı bekliyor (2026-11-08)
 - **Branch:** `feature/0006-pricing`
 - **İlgili doküman/kararlar:** `docs/architecture.md` (§3 `pricing`, §5 R1/R3/R6, §7/D15, §8, §10 D8/D15, §11), `docs/domain.md` (§1 fiyat terimleri, §3.4–§3.7, §3.13–§3.14, rol tablosu), `docs/conventions.md` (§1, §2.1, §2.3, §2.4, §3, §4), `docs/frontend.md`, `docs/testing.md`, `docs/git.md`, `specs/done/0002-room-catalog.md`, `specs/done/0004-admin-identity.md`, `specs/done/0005-media.md`, Takım Yöneticisi 0006 brief'i (2026-11-08); Onaylı kararlar: `Q1=C`, `Q2=A`, `Q3=A (koşullu)`, `Q4=A`, `Q5=A`, `Q6=A`, `Q7=A`, `Q8=A`; misafir sayısı fiyatı etkiler (2026-11-08)
 - **Tarih:** 2026-11-08
@@ -227,19 +227,19 @@ Otel yönetimi, oda tipleri için tarife planı ve sezon bazlı, misafir sayıs�
 
 ## 6. Definition of Done
 
-- [ ] Tüm AC'ler doğrulandı (test ve/veya görsel kanıt)
-- [ ] Pipeline yeşil (lint + build + test + kritik akış smoke)
-- [ ] Kod incelemesi onaylandı (Takım Yöneticisi)
-- [ ] Davranış değiştiyse dokümanlar güncellendi (`docs/architecture.md`, `docs/conventions.md`, `docs/frontend.md`, `.env.example`, CI)
-- [ ] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi
-- [ ] SCORECARD dolduruldu
-- [ ] 0007 planlama kaydı (oda kartlarında fiyat gösterimi zorunlu) kapanış raporunda doğrulandı
-- [ ] 0001–0005 arşivleri değişmedi (SHA-256/`git diff`)
+- [x] Tüm AC'ler doğrulandı (test ve/veya görsel kanıt)
+- [x] Pipeline yeşil (lint + build + test + kritik akış smoke)
+- [ ] Kod incelemesi onaylandı (Takım Yöneticisi) — Code Reviewer subagent turu tamamlandı; 2 kapsam/katman itirazı raporlandı, Takım Yöneticisi onayı bekliyor
+- [x] Davranış değiştiyse dokümanlar güncellendi (`docs/architecture.md`, `docs/conventions.md`, `docs/frontend.md`, `.env.example`, CI)
+- [ ] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi — Takım Yöneticisi kapanış onayından sonra taşınacak
+- [x] SCORECARD dolduruldu
+- [x] 0007 planlama kaydı (oda kartlarında fiyat gösterimi zorunlu) kapanış raporunda doğrulandı
+- [x] 0001–0005 arşivleri değişmedi (SHA-256/`git diff`)
 
 ## 7. SCORECARD
 
-- **Spec revizyon sayısı:** — (bu taslak)
-- **Düzeltme turu sayısı:** —
-- **Bulgu gerçek/gürültü oranı:** —
-- **Regresyon sayısı:** —
-- **Kaçan hata (escaped bug):** —
+- **Spec revizyon sayısı:** 0 (onaylı spec değiştirilmedi)
+- **Düzeltme turu sayısı:** 1 (Code Reviewer bulguları + doğrulama turu)
+- **Bulgu gerçek/gürültü oranı:** 17 bulgu; 15 gerçek/uygulandı, 2 kapsam/katman kararı (CR-10, CR-13) itiraz/ertelendi
+- **Regresyon sayısı:** 0
+- **Kaçan hata (escaped bug):** 0 (bilinen)

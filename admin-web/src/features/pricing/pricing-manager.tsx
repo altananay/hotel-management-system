@@ -531,7 +531,9 @@ export function PricingManager() {
 
   return (
     <main data-testid="admin-pricing-page" className="mx-auto max-w-6xl px-6 py-12">
-      <div data-testid="admin-pricing-filled" className="hidden" />
+      {plans.length > 0 && (
+        <div data-testid="admin-pricing-filled" className="hidden" />
+      )}
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Fiyat Yönetimi</h1>
@@ -968,7 +970,8 @@ export function PricingManager() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(manualPricesQuery.data ?? []).length === 0 ? (
+                  {(manualPricesQuery.data ?? []).length === 0 &&
+                  !manualPricesQuery.isError ? (
                     <tr>
                       <td colSpan={6} className="py-3 text-slate-600">
                         Manuel fiyat yok.
@@ -1115,7 +1118,8 @@ export function PricingManager() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(manualFxQuery.data?.items ?? []).length === 0 ? (
+                  {(manualFxQuery.data?.items ?? []).length === 0 &&
+                  !manualFxQuery.isError ? (
                     <tr>
                       <td colSpan={4} className="py-3 text-slate-600">
                         Manuel kur yok.
