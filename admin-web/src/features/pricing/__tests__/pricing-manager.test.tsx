@@ -7,6 +7,7 @@ import { createAdminQueryClient } from "@/lib/query-client";
 import { PricingManager } from "../pricing-manager";
 
 const PLAN_ID = "0199f2c0-0000-7000-8000-000000000701";
+const SECOND_PLAN_ID = "0199f2c0-0000-7000-8000-000000000703";
 const SEASON_ID = "0199f2c0-0000-7000-8000-000000000702";
 const ROOM_TYPE_ID = "0199f2c0-0000-7000-8000-000000000301";
 
@@ -32,6 +33,16 @@ const plan = {
       updatedAt: "2026-11-08T10:00:00Z",
     },
   ],
+};
+
+const secondPlan = {
+  ...plan,
+  id: SECOND_PLAN_ID,
+  code: "FLEX",
+  nameTr: "Esnek",
+  nameEn: "Flexible",
+  defaultPlan: false,
+  seasons: [],
 };
 
 const settings = {
@@ -223,6 +234,117 @@ describe("PricingManager (AC-2)", () => {
 
     await waitFor(() =>
       expect(screen.getByText(/Güncel Ad/)).toBeInTheDocument(),
+    );
+  });
+
+  it("shouldSendCurrentDefaultPlanId_whenSettingAnotherPlanAsDefault", async () => {
+    let requestBody: unknown;
+    server.use(
+      http.get("*/admin-api/pricing/rate-plans", () =>
+        HttpResponse.json([plan, secondPlan]),
+      ),
+      http.put(
+        `*/admin-api/pricing/rate-plans/${SECOND_PLAN_ID}/default`,
+        async ({ request }) => {
+          requestBody = await request.json();
+          return HttpResponse.json({ ...secondPlan, defaultPlan: true });
+        },
+      ),
+    );
+
+    renderManager();
+    const rows = await screen.findAllByTestId("admin-pricing-rate-plan-row");
+    const secondRow = rows.find((row) => within(row).queryByText(/Esnek/));
+    expect(secondRow).toBeTruthy();
+    fireEvent.click(
+      within(secondRow!).getByRole("button", { name: "Varsayılan Yap" }),
+    );
+
+    await waitFor(() =>
+      expect(requestBody).toEqual({ expectedDefaultPlanId: PLAN_ID }),
+    );
+  });
+
+  it("shouldShowRefreshMessage_whenDefaultChangeConflicts", async () => {
+    server.use(
+      http.get("*/admin-api/pricing/rate-plans", () =>
+        HttpResponse.json([plan, secondPlan]),
+      ),
+      http.put(
+        `*/admin-api/pricing/rate-plans/${SECOND_PLAN_ID}/default`,
+        () =>
+          HttpResponse.json(
+            {
+              type: "about:blank",
+              title: "Conflict",
+              status: 409,
+              detail: "stale default",
+              instance: "/admin-api/pricing/rate-plans",
+              code: "pricing.rate_plan_in_use",
+              requestId: "req-default-conflict",
+            },
+            { status: 409 },
+          ),
+      ),
+    );
+
+    renderManager();
+    const rows = await screen.findAllByTestId("admin-pricing-rate-plan-row");
+    const secondRow = rows.find((row) => within(row).queryByText(/Esnek/));
+    expect(secondRow).toBeTruthy();
+    fireEvent.click(
+      within(secondRow!).getByRole("button", { name: "Varsayılan Yap" }),
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("admin-pricing-action-error")).toHaveTextContent(
+        /varsayılan plan değişti/i,
+      ),
+    );
+    expect(screen.getByTestId("admin-pricing-page")).toBeInTheDocument();
+  });
+
+  it("shouldShowInvalidAmountMessage_whenManualPriceIsZero", async () => {
+    server.use(
+      http.post("*/admin-api/pricing/manual-prices", () =>
+        HttpResponse.json(
+          {
+            type: "about:blank",
+            title: "Bad Request",
+            status: 400,
+            detail: "invalid amount",
+            instance: "/admin-api/pricing/manual-prices",
+            code: "pricing.invalid_amount",
+            requestId: "req-invalid-amount",
+          },
+          { status: 400 },
+        ),
+      ),
+    );
+
+    renderManager();
+    await screen.findByTestId("admin-pricing-manual-prices");
+    fireEvent.change(screen.getByLabelText("Manuel fiyat oda tipi"), {
+      target: { value: ROOM_TYPE_ID },
+    });
+    fireEvent.change(screen.getByLabelText("Manuel fiyat misafir sayısı"), {
+      target: { value: "1" },
+    });
+    fireEvent.change(screen.getByLabelText("Manuel fiyat başlangıç"), {
+      target: { value: "2026-11-10" },
+    });
+    fireEvent.change(screen.getByLabelText("Manuel fiyat bitiş"), {
+      target: { value: "2026-11-11" },
+    });
+    fireEvent.change(screen.getByLabelText("Manuel fiyat tutarı"), {
+      target: { value: "0,00" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Manuel Fiyat Ekle" }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("admin-pricing-action-error")).toHaveTextContent(
+        "Tutar sıfırdan büyük ve en fazla iki ondalıklı olmalıdır.",
+      ),
     );
   });
 

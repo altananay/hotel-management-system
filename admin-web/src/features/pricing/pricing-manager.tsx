@@ -198,6 +198,10 @@ export function PricingManager() {
   const [actionError, setActionError] = useState<string | null>(null);
 
   const plans = useMemo(() => plansQuery.data ?? [], [plansQuery.data]);
+  const currentDefaultPlanId = useMemo(
+    () => plans.find((plan) => plan.defaultPlan)?.id ?? null,
+    [plans],
+  );
   const roomTypes = useMemo(
     () => roomTypesQuery.data ?? [],
     [roomTypesQuery.data],
@@ -693,7 +697,12 @@ export function PricingManager() {
                     <Button
                       size="sm"
                       onClick={() =>
-                        void run(() => mutations.setDefault.mutateAsync(plan.id))
+                        void run(() =>
+                          mutations.setDefault.mutateAsync({
+                            id: plan.id,
+                            expectedDefaultPlanId: currentDefaultPlanId,
+                          }),
+                        )
                       }
                     >
                       <Star className="h-3 w-3" aria-hidden="true" />

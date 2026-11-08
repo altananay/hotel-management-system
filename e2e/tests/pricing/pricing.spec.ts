@@ -203,6 +203,17 @@ test.describe("Pricing management (AC-1..AC-6)", () => {
       );
       expect(defaultResponse.status()).toBe(200);
 
+      const staleDefault = await adminSend(
+        page,
+        "PUT",
+        `/admin-api/pricing/rate-plans/${plan!.id}/default`,
+        { expectedDefaultPlanId: "0199f2c0-0000-7000-8000-000000000799" },
+      );
+      expect(staleDefault.status()).toBe(409);
+      expect((await json<{ code: string }>(staleDefault)).code).toBe(
+        "pricing.rate_plan_in_use",
+      );
+
       // Manual FX through the UI.
       await page.getByLabel("Manuel kur para birimi").selectOption("EUR");
       await page.getByLabel("Manuel kur tarihi").fill(checkIn);
@@ -304,6 +315,102 @@ test.describe("Pricing management (AC-1..AC-6)", () => {
         },
       );
       expect(negativeAmount.status()).toBe(400);
+      expect((await json<{ code: string }>(negativeAmount)).code).toBe(
+        "pricing.invalid_amount",
+      );
+
+      const zeroAmount = await adminSend(
+        page,
+        "POST",
+        "/admin-api/pricing/manual-prices",
+        {
+          ratePlanId: plan!.id,
+          roomTypeId: roomTypes[0].id,
+          guests: 1,
+          startDate: checkIn,
+          endDate: checkIn,
+          amountTry: "0.00",
+        },
+      );
+      expect(zeroAmount.status()).toBe(400);
+      expect((await json<{ code: string }>(zeroAmount)).code).toBe(
+        "pricing.invalid_amount",
+      );
+
+      const zeroGuests = await adminSend(
+        page,
+        "POST",
+        "/admin-api/pricing/manual-prices",
+        {
+          ratePlanId: plan!.id,
+          roomTypeId: roomTypes[0].id,
+          guests: 0,
+          startDate: checkIn,
+          endDate: checkIn,
+          amountTry: "10.00",
+        },
+      );
+      expect(zeroGuests.status()).toBe(400);
+      expect((await json<{ code: string }>(zeroGuests)).code).toBe(
+        "pricing.invalid_guests",
+      );
+
+      const zeroBaseAmount = await adminSend(
+        page,
+        "PUT",
+        `/admin-api/pricing/rate-plans/${plan!.id}/prices`,
+        {
+          rows: [
+            {
+              roomTypeId: roomTypes[0].id,
+              guests: 1,
+              amountTry: "0.00",
+            },
+          ],
+        },
+      );
+      expect(zeroBaseAmount.status()).toBe(400);
+      expect((await json<{ code: string }>(zeroBaseAmount)).code).toBe(
+        "pricing.invalid_amount",
+      );
+
+      const zeroBaseGuests = await adminSend(
+        page,
+        "PUT",
+        `/admin-api/pricing/rate-plans/${plan!.id}/prices`,
+        {
+          rows: [
+            {
+              roomTypeId: roomTypes[0].id,
+              guests: 0,
+              amountTry: "10.00",
+            },
+          ],
+        },
+      );
+      expect(zeroBaseGuests.status()).toBe(400);
+      expect((await json<{ code: string }>(zeroBaseGuests)).code).toBe(
+        "pricing.invalid_guests",
+      );
+
+      const zeroSeasonAmount = await adminSend(
+        page,
+        "PUT",
+        `/admin-api/pricing/seasons/${season.id}/prices`,
+        {
+          rows: [
+            {
+              roomTypeId: roomTypes[0].id,
+              guests: 1,
+              amountTry: "0.00",
+            },
+          ],
+        },
+      );
+      expect(zeroSeasonAmount.status()).toBe(400);
+      expect((await json<{ code: string }>(zeroSeasonAmount)).code).toBe(
+        "pricing.invalid_amount",
+      );
 
       // CR-14: 30 nights accepted, 31 nights rejected.
       const thirtyNights = await page.request.get(
