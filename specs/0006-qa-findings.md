@@ -5,7 +5,7 @@
 > **İnceleme dalı / commit:** `integration` / `8d717da` (`feat(pricing): add pricing and quote management (#36) [plan 0006]`)
 > **Not:** `integration` ağacı `feature/0006-pricing` ağacıyla birebir aynıdır (`git diff` boş; tree hash `593ef3d3…`).
 > **Ortam:** İzole QA PostgreSQL (`hotel-qa-postgres`, `:55432`), mevcut dev veritabanına dokunulmadı; servisler `:8081/8082/3000/3001` üzerinde çalıştırıldı.
-> **Durum:** 2 bulgu; 0 kritik. Kapanış için Takım Yöneticisi kararı bekleniyor.
+> **Durum:** 2 bulgu; 0 kritik. **QA-1 ve QA-2 kapandı.** Retest: `specs/0006-qa-retest.md`; Takım Yöneticisi no-op yorumunu 2026-11-08'de kabul etti. Açık QA bulgusu yok.
 
 ## 1. Yönetici Özeti
 
@@ -146,7 +146,7 @@ QA aşağıdaki iki kararı istiyor:
 
 ## 6. Referanslar
 
-- Spec: `specs/0006-pricing.md`
+- Spec: `specs/done/0006-pricing.md`
 - Integration commit: `8d717da` (`origin/integration`)
 - CI: `https://github.com/altananay/hotel-management-system/actions/runs/42500749839`
 - Yerel kanıtlar: `.local/qa-0006-*` ve `.local/qa-0006-e2e-evidence/0006/`
@@ -165,4 +165,4 @@ QA aşağıdaki iki kararı istiyor:
 - Testler: `backend/hotel-api` 76 test (`PricingIT` 18), admin-web 50 Vitest,
   `@pricing` E2E 1 passed.
 - Ayrıntı: `specs/done/evidence/0006/QA-1-QA-2-fix-summary.md`.
-- QA yeniden doğrulaması bekleniyor.
+- QA yeniden doğrulaması 2026-11-08'de tamamlandı; QA-1/QA-2 kapandı (`specs/0006-qa-retest.md`).

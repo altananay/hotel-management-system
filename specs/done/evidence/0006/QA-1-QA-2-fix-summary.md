@@ -48,4 +48,5 @@ Kaynak: `specs/0006-qa-findings.md`
 ## Durum
 
 - QA-1 ve QA-2 developer tarafında kapatıldı.
-- QA ajanının fix sonrası yeniden doğrulaması bekleniyor.
+- QA yeniden doğrulaması 2026-11-08'de tamamlandı; QA-1/QA-2 kapandı, açık bulgu yok
+  (`specs/0006-qa-retest.md`).

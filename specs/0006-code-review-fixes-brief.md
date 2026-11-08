@@ -11,7 +11,7 @@
 > **Tarih:** 2026-11-08
 > **Hazırlayan:** Code Reviewer
 > **Onaylayan:** Takım Yöneticisi
-> **İlgili spec:** `specs/0006-pricing.md`
+> **İlgili spec:** `specs/done/0006-pricing.md`
 > **İlgili bulgular:** CR-01, CR-03, CR-14 (0006 Code Review turu, 2026-11-08)
 > **Branch:** Mevcut `feature/0006-pricing` üzerinde küçük commit'ler; istenirse
 > `feature/0006-pricing`'ten `fix/0006-code-review` açılabilir. Korumalı branch'lere
@@ -28,7 +28,7 @@
 ## 2. Ortak ilkeler
 
 1. **Spec revizyonu önce gelir.** CR-01'in yeni API/error code'ları ve CR-14'ün 30 gece kuralı
-   `specs/0006-pricing.md` içine işlenmeden kod yazılmaz. Bu brief'teki delta metinleri
+   `specs/done/0006-pricing.md` içine işlenmeden kod yazılmaz. Bu brief'teki delta metinleri
    Takım Yöneticisi onayına sunulur; onay sonrası spec rev.1 olarak güncellenir.
 2. **Küçük commit'ler.** Her adım ayrı commit; commit mesajı İngilizce, Conventional Commits
    ve `[plan 0006/n]` atıflıdır.
@@ -139,7 +139,7 @@ Kurallar:
 
 ### 4.1 Spec ve doküman deltası
 
-`specs/0006-pricing.md` rev.1 içine:
+`specs/done/0006-pricing.md` rev.1 içine:
 
 - **REQ-4 doğrulama:** “Konaklama en fazla **30 gece** olabilir; `checkOut - checkIn > 30`
   ise `400 pricing.invalid_period` döner. 30 gece dahil kabul edilir.”
@@ -269,7 +269,7 @@ noClasses()
 
 ## 6. Uygulama sırası ve commit önerisi
 
-1. **Spec/doküman deltası:** `specs/0006-pricing.md` rev.1 (CR-01 API/error code + CR-14
+1. **Spec/doküman deltası:** `specs/done/0006-pricing.md` rev.1 (CR-01 API/error code + CR-14
    30 gece), `docs/domain.md`, `docs/conventions.md`, `.env.example` notları.
 2. **CR-14:** `PricingProperties`, `QuoteService`, `application.yml`, `.env.example`,
    testler.
@@ -293,7 +293,7 @@ noClasses()
 
 ## 7. Doküman, CI ve kanıt etkisi
 
-- `specs/0006-pricing.md`: rev.1; CR-01 API/error code, CR-14 30 gece, SCORECARD
+- `specs/done/0006-pricing.md`: rev.1; CR-01 API/error code, CR-14 30 gece, SCORECARD
   “Spec revizyon sayısı: 1”, “Düzeltme turu sayısı: 2”.
 - `docs/conventions.md`: application → web yasağı.
 - `docs/domain.md`: maksimum 30 gece kuralı.
