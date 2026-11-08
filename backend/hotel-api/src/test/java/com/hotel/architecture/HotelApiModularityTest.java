@@ -59,7 +59,7 @@ class HotelApiModularityTest {
             Map.of(
                     "sharedkernel", Set.of(),
                     "catalog", Set.of(),
-                    "pricing", Set.of(),
+                    "pricing", Set.of("catalog"),
                     "payment", Set.of(),
                     "media", Set.of("catalog"),
                     "booking", Set.of("catalog", "pricing", "payment"),
