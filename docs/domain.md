@@ -87,7 +87,8 @@ READY ⇄ DIRTY ;  OUT_OF_ORDER (müsaitlikte bloklu; elle READY'ye alınır)
 12. **Tur yalnız yayınlandığında (`TourPublished`) public'te görünür.**
 13. **Fiyatlar KDV dahildir** (V1: tek tutar). Ayrıştırılmış vergi/fatura hesabı V2'dir.
 14. **Dil ve para birimi bağımsızdır** (EN + TRY geçerli bir kombinasyondur). Fiyat gösterimi seçilen para biriminde yapılır.
-15. **Roller (kaba):** aşağıdaki tablo. Yetki zorlaması her zaman **hotel-api/admin-api tarafındadır**; arayüz gizlemesi güvenlik sayılmaz.
+15. **Fiyat teklifi en fazla 30 gecedir**; `checkOut - checkIn > 30` reddedilir. Sınır `hotel.pricing.max-stay-nights` ile yapılandırılabilir; varsayılan 30'dur.
+16. **Roller (kaba):** aşağıdaki tablo. Yetki zorlaması her zaman **hotel-api/admin-api tarafındadır**; arayüz gizlemesi güvenlik sayılmaz.
 
 | İşlev | SUPER_ADMIN | MANAGER | FRONT_DESK |
 |---|---|---|---|

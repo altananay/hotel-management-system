@@ -227,6 +227,7 @@
                                 <location>filesystem:src/main/resources/db/migration/media</location>
                                 <location>filesystem:src/main/resources/db/migration/notification</location>
                                 <location>filesystem:src/main/resources/db/seed/catalog</location>
+                                <location>filesystem:src/main/resources/db/seed/pricing</location>
                             </locations>
                         </configuration>
                     </plugin>

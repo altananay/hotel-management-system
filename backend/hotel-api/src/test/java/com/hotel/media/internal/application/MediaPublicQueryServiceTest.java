@@ -99,7 +99,7 @@ class MediaPublicQueryServiceTest {
                 .thenReturn(
                         List.of(
                                 new ActiveRoomType(
-                                        RoomTypeId.of(ROOM_TYPE_ID), "Süit", "Suite")));
+                                        RoomTypeId.of(ROOM_TYPE_ID), "Süit", "Suite", 2)));
         when(assetRepository.findPublishedByRoomTypeIds(MediaStatus.READY, java.util.Set.of(ROOM_TYPE_ID)))
                 .thenReturn(List.of(first, second));
         when(variantRepository.findByMediaAssetIdIn(anyList()))
@@ -139,7 +139,7 @@ class MediaPublicQueryServiceTest {
                 .thenReturn(
                         List.of(
                                 new ActiveRoomType(
-                                        RoomTypeId.of(ROOM_TYPE_ID), "Süit", "Suite")));
+                                        RoomTypeId.of(ROOM_TYPE_ID), "Süit", "Suite", 2)));
         when(assetRepository.findPublishedByRoomTypeIds(MediaStatus.READY, java.util.Set.of(ROOM_TYPE_ID)))
                 .thenReturn(List.of(first, second));
         when(variantRepository.findByMediaAssetIdIn(anyList()))
@@ -163,7 +163,7 @@ class MediaPublicQueryServiceTest {
                 .thenReturn(
                         List.of(
                                 new ActiveRoomType(
-                                        RoomTypeId.of(ROOM_TYPE_ID), "Süit", "Suite")));
+                                        RoomTypeId.of(ROOM_TYPE_ID), "Süit", "Suite", 2)));
         when(assetRepository.findPublishedByRoomTypeIds(MediaStatus.READY, java.util.Set.of(ROOM_TYPE_ID)))
                 .thenReturn(List.of(asset));
         when(variantRepository.findByMediaAssetIdIn(anyList()))
@@ -200,7 +200,7 @@ class MediaPublicQueryServiceTest {
                 .thenReturn(
                         List.of(
                                 new ActiveRoomType(
-                                        RoomTypeId.of(ROOM_TYPE_ID), "Süit", "Suite")));
+                                        RoomTypeId.of(ROOM_TYPE_ID), "Süit", "Suite", 2)));
         when(assetRepository.findPublishedByRoomTypeIds(MediaStatus.READY, java.util.Set.of(ROOM_TYPE_ID)))
                 .thenReturn(List.of());
 
@@ -229,7 +229,7 @@ class MediaPublicQueryServiceTest {
                 .thenReturn(
                         List.of(
                                 new ActiveRoomType(
-                                        RoomTypeId.of(ROOM_TYPE_ID), "Süit", "Suite")));
+                                        RoomTypeId.of(ROOM_TYPE_ID), "Süit", "Suite", 2)));
         when(assetRepository.findPublishedByRoomTypeIds(
                         MediaStatus.READY, java.util.Set.of(ROOM_TYPE_ID)))
                 .thenThrow(new DataAccessResourceFailureException("database down"));
