@@ -15,6 +15,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -83,7 +84,11 @@ public class ManualFxRateService {
                         validatedRate,
                         now,
                         now);
-        return repository.saveAndFlush(FxRateEntity.fromDomain(fxRate)).toDomain();
+        try {
+            return repository.saveAndFlush(FxRateEntity.fromDomain(fxRate)).toDomain();
+        } catch (DataIntegrityViolationException ex) {
+            throw duplicate();
+        }
     }
 
     @Transactional

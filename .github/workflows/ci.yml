@@ -135,6 +135,7 @@ jobs:
           MEDIA_S3_ACCESS_KEY=minioadmin \
           MEDIA_S3_SECRET_KEY=minioadmin_local_dev \
           MEDIA_PUBLIC_BASE_URL=http://localhost:9000/hotel-media/public \
+          HOTEL_PRICING_TCMB_ENABLED=false \
           nohup java -jar backend/hotel-api/target/hotel-api-0.0.1-SNAPSHOT.jar > /tmp/hotel-api.log 2>&1 &
           SPRING_PROFILES_ACTIVE=ci \
           ADMIN_JWT_ACTIVE_KEY_PATH="$RUNNER_TEMP/admin-jwt-active.pem" \
@@ -259,6 +260,26 @@ jobs:
         working-directory: e2e
         run: npx playwright test tests/media --grep @media
 
+      - name: Run @pricing admin, quote and role boundary tests
+        working-directory: e2e
+        run: npx playwright test tests/pricing --grep @pricing
+
+      - name: Verify 0001-0005 evidence archives are unchanged
+        run: |
+          mkdir -p specs/done/evidence/0006
+          ARCHIVES="specs/done/evidence/0001 specs/done/evidence/0002 specs/done/evidence/0003 specs/done/evidence/0004 specs/done/evidence/0005"
+          if ! git diff --exit-code -- $ARCHIVES; then
+            echo "Tracked 0001-0005 evidence changed" | tee specs/done/evidence/0006/AC-6-archive-unchanged.log
+            exit 1
+          fi
+          UNTRACKED="$(git ls-files --others --exclude-standard -- $ARCHIVES)"
+          if [ -n "$UNTRACKED" ]; then
+            echo "Untracked files appeared under 0001-0005 evidence:" | tee specs/done/evidence/0006/AC-6-archive-unchanged.log
+            echo "$UNTRACKED" | tee -a specs/done/evidence/0006/AC-6-archive-unchanged.log
+            exit 1
+          fi
+          echo "0001-0005 evidence archives unchanged (git diff + untracked check)." > specs/done/evidence/0006/AC-6-archive-unchanged.log
+
       - name: Upload 0005 media evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -294,6 +315,14 @@ jobs:
         with:
           name: 0004-evidence
           path: specs/done/evidence/0004
+          if-no-files-found: warn
+
+      - name: Upload 0006 pricing evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 0006-pricing-evidence
+          path: specs/done/evidence/0006
           if-no-files-found: warn
 
       - name: Tear down infrastructure

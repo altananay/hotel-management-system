@@ -1,5 +1,14 @@
 package com.hotel.pricing.internal.domain;
 
+import com.hotel.pricing.api.FxSource;
+import com.hotel.pricing.api.PriceSource;
+import com.hotel.pricing.api.PricedNight;
+import com.hotel.pricing.api.Quote;
+import com.hotel.pricing.api.SupportedCurrency;
+import com.hotel.sharedkernel.api.DomainError;
+import com.hotel.sharedkernel.api.DomainErrorCategory;
+import com.hotel.sharedkernel.api.HotelDate;
+import com.hotel.sharedkernel.api.Money;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Duration;
@@ -10,15 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import com.hotel.pricing.api.FxSource;
-import com.hotel.pricing.api.PriceSource;
-import com.hotel.pricing.api.PricedNight;
-import com.hotel.pricing.api.Quote;
-import com.hotel.pricing.api.SupportedCurrency;
-import com.hotel.sharedkernel.api.DomainError;
-import com.hotel.sharedkernel.api.DomainErrorCategory;
-import com.hotel.sharedkernel.api.HotelDate;
-import com.hotel.sharedkernel.api.Money;
 
 public final class QuoteCalculator {
 

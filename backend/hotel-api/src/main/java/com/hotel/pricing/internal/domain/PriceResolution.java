@@ -1,9 +1,9 @@
 package com.hotel.pricing.internal.domain;
 
+import com.hotel.pricing.api.PriceSource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
-import com.hotel.pricing.api.PriceSource;
 
 public record PriceResolution(
         LocalDate date,

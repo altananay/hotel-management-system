@@ -1,14 +1,14 @@
 package com.hotel.pricing.internal.domain;
 
+import com.hotel.pricing.api.FxSource;
+import com.hotel.pricing.api.SupportedCurrency;
+import com.hotel.sharedkernel.api.DomainError;
+import com.hotel.sharedkernel.api.DomainErrorCategory;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Objects;
 import java.util.UUID;
-import com.hotel.pricing.api.FxSource;
-import com.hotel.pricing.api.SupportedCurrency;
-import com.hotel.sharedkernel.api.DomainError;
-import com.hotel.sharedkernel.api.DomainErrorCategory;
 
 public record FxRate(
         UUID id,

@@ -1,8 +1,8 @@
 package com.hotel.pricing.internal.domain;
 
+import com.hotel.pricing.api.SupportedCurrency;
 import java.time.LocalDate;
 import java.util.Optional;
-import com.hotel.pricing.api.SupportedCurrency;
 
 @FunctionalInterface
 public interface FxLookup {

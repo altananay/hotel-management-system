@@ -1,12 +1,12 @@
 package com.hotel.pricing.internal.domain;
 
+import com.hotel.sharedkernel.api.DomainError;
+import com.hotel.sharedkernel.api.DomainErrorCategory;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Objects;
 import java.util.regex.Pattern;
-import com.hotel.sharedkernel.api.DomainError;
-import com.hotel.sharedkernel.api.DomainErrorCategory;
 
 public final class PriceRules {
 

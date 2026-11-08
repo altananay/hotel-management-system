@@ -118,6 +118,17 @@ Ayrıntılı altyapı, migration, seed ve backend/frontend başlatma adımları 
 - 0002 canlı admin-web smoke testi kaldırıldı; 0002 smoke artık 3/3'tür (1 `@empty` + 2 `@seeded`).
 - 0003 design 40/40 korunur; 0004 kanıtları `specs/done/evidence/0004/` altına yazılır.
 
+## 0006 fiyatlandırma E2E
+
+- Testler: `npx playwright test tests/pricing --grep @pricing` (`@media` sonrası).
+- Sıra: SUPER_ADMIN login → `/pricing` yükleme/boş/hata/dolu → plan → sezon →
+  baz fiyat matrisi → varsayılan plan → manuel kur → manuel fiyat → public
+  teklif API (TRY/EUR, çok gece) → oda vitrininde fiyat yok → FRONT_DESK 403.
+- Local/CI'da TCMB scheduler kapalıdır (`HOTEL_PRICING_TCMB_ENABLED=false`);
+  bayat kur uyarısı `db/seed/pricing` içindeki dünkü TCMB kuruyla gösterilir.
+- Kanıtlar: `specs/done/evidence/0006/`; `E2E_EVIDENCE_DIR` verilmezse bu dizine
+  yazılır. 0001–0005 arşivleri CI'da `git diff` + untracked kontrolüyle korunur.
+
 ## 0005 medya E2E
 
 - Testler: `npx playwright test tests/media --grep @media` (`@admin` sonrası).

@@ -1,8 +1,8 @@
 package com.hotel.pricing.api;
 
-import java.util.List;
 import com.hotel.sharedkernel.api.DomainError;
 import com.hotel.sharedkernel.api.DomainErrorCategory;
+import java.util.List;
 
 public class PricingDefaultIncompleteException extends DomainError {
 

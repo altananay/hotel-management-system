@@ -3,9 +3,9 @@ package com.hotel.pricing.internal.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.hotel.pricing.api.PriceSnapshot;
 import com.hotel.pricing.api.PriceSource;
 import com.hotel.pricing.api.PricedNight;
-import com.hotel.pricing.api.PriceSnapshot;
 import com.hotel.pricing.api.SupportedCurrency;
 import com.hotel.sharedkernel.api.Money;
 import java.math.BigDecimal;

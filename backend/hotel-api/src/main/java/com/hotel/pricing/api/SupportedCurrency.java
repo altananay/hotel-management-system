@@ -1,11 +1,11 @@
 package com.hotel.pricing.api;
 
+import com.hotel.sharedkernel.api.DomainError;
+import com.hotel.sharedkernel.api.DomainErrorCategory;
 import java.math.BigDecimal;
 import java.util.Currency;
 import java.util.Locale;
 import java.util.Objects;
-import com.hotel.sharedkernel.api.DomainError;
-import com.hotel.sharedkernel.api.DomainErrorCategory;
 
 public enum SupportedCurrency {
     TRY,

@@ -1,9 +1,9 @@
 package com.hotel.pricing.api;
 
+import com.hotel.sharedkernel.api.Money;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
-import com.hotel.sharedkernel.api.Money;
 
 public record PricedNight(
         LocalDate date,

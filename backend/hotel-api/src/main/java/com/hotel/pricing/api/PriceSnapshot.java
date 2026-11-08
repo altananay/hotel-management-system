@@ -1,11 +1,11 @@
 package com.hotel.pricing.api;
 
+import com.hotel.sharedkernel.api.Money;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import com.hotel.sharedkernel.api.Money;
 
 /**
  * Immutable price snapshot payload produced by pricing at reservation time. Persisting the
