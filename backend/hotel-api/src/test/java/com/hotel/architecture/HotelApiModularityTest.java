@@ -59,7 +59,7 @@ class HotelApiModularityTest {
             Map.of(
                     "sharedkernel", Set.of(),
                     "catalog", Set.of(),
-                    "pricing", Set.of(),
+                    "pricing", Set.of("catalog"),
                     "payment", Set.of(),
                     "media", Set.of("catalog"),
                     "booking", Set.of("catalog", "pricing", "payment"),
@@ -206,6 +206,18 @@ class HotelApiModularityTest {
                     .allowEmptyShould(true)
                     .check(productionClasses);
         }
+    }
+
+    @Test
+    void shouldForbidApplicationDependingOnWebLayer_whenCheckingModuleLayers() {
+        noClasses()
+                .that()
+                .resideInAPackage("com.hotel..internal.application..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage("com.hotel..internal.web..")
+                .allowEmptyShould(true)
+                .check(productionClasses);
     }
 
     @Test

@@ -15,6 +15,7 @@
 
 - Kök paket: `com.hotel.<modül>` (ör. `com.hotel.booking`); `admin-api` modülleri de `com.hotel` kökündedir (ör. `com.hotel.adminidentity`; ayrı artifact olduğu için çakışma yoktur).
 - Modül düzeni: `<modül>/api` **public** (arayüzler, DTO'lar, event tipleri) — import edilebilen tek alan; `<modül>/internal` **private**, alt paketleri sabittir: `internal.domain`, `internal.application`, `internal.web`, `internal.persistence`. Başka modül `internal`'ı import edemez (Spring Modulith + ArchUnit ile zorlanır).
+- **Katman yönü:** `internal.application` web DTO/mapper'ına bağımlı olamaz; application kendi view record'larını/domain tiplerini döndürür, DTO dönüşümü `internal.web` içinde yapılır. ArchUnit kuralı CI'da zorunludur.
 - JPA `@Entity` sınıfları `..api..` ve `..internal.web..` paketlerinden referans alamaz (entity sızması yasağı; ArchUnit).
 - **Cross-cutting sınıflar** (problem advice, request-id filtresi, security/CORS config, geçici scaffold controller'lar) uygulama kökünde ayrı paketlerde yaşar (`com.hotel.web`, `com.hotel.config`, `com.hotel.scaffold`); ayrı ortak modül açılmaz; `sharedkernel`'e web kodu girmez; iş modülleri bu paketlere bağımlı olamaz (bağımlılık tek yönlüdür).
 - Çapraz modül erişimi yalnızca `docs/architecture.md` §5 R3 izin listesindedir (kapalı liste; listede olmayan çapraz import ihlaldir). Tüm modüller `sharedkernel`'e bağımlı olabilir; `sharedkernel` hiçbir modüle bağımlı olamaz.
@@ -52,6 +53,7 @@
 - **Her zaman `BigDecimal`.** `double`/`float` hiçbir katmanda (entity, DTO, TS istemci) kullanılamaz.
 - `Money` value object: `amount: BigDecimal` + `currency: Currency`. Tutar, para birimini **her zaman** yanında taşır.
 - DB: `NUMERIC(p,2)`. Ölçek ve yuvarlama yalnız **sınırda** ve açık modla uygulanır (varsayılan `HALF_UP`); yuvarlanmış ara sonuçla yeniden hesap yapılmaz.
+- **Fiyat yuvarlaması (0006):** TRY baz fiyatları ve TRY teklifleri exact'tir; buffer/yuvarlama uygulanmaz. EUR/USD türevi fiyatlarda gece tutarı `TRY × satış kuru × (1 + buffer)` formülüyle hesaplanır ve **her zaman bir üst yuvarlama adımının katına yukarı** (`CEILING`) yuvarlanır. Gece bazında yuvarlanır; toplam, yuvarlanmış gece tutarlarının toplamıdır ve yeniden yuvarlanmaz. Varsayılan buffer `%2,00`, varsayılan adım `5,00`'dir; ikisi de admin tarafından yapılandırılır.
 - Yüzdeler de `BigDecimal` (ör. %2 → `0.02`); kural parametreleri (buffer, yuvarlama, iade kuralı) DB'de tutulur, kodda gömülü değildir.
 - Karşılaştırma `compareTo` ile; `Money.equals` ölçekten bağımsız normalize eder (ör. `10` = `10.00`).
 - Frontend tarafında para **string ondalıklı** taşınır ve `Intl.NumberFormat` ile gösterilir; JS `number` ile hesaplanmaz.
@@ -59,7 +61,7 @@
 ## 4. Veritabanı ve Flyway
 
 - `hotel_core` içinde modül başına şema: `catalog`, `pricing`, `booking`, `payment`, `media`, `notification` (6 şema). `sharedkernel` ve V1'de veri sahibi olmayan `reporting` şemasızdır. `hotel_admin` ayrı veritabanıdır (admin-api yönetir).
-- Migration yolu: `db/migration/<modül>/V<n>__<aciklama>.sql` (ör. `V1__init_catalog_schema.sql`). Numara tahsisi: `hotel_core` tek Flyway history kullandığından `V<n>` **global benzersizdir**; yeni numara tüm modül klasörlerindeki en büyük numaranın +1'idir (çakışma CI'da kırmızı build'dir). **Bir modülün migration'ı başka şemaya dokunamaz.**
+- Migration yolu: `db/migration/<modül>/V<n>__<aciklama>.sql` (ör. `V1__init_catalog_schema.sql`). Numara tahsisi: `hotel_core` tek Flyway history kullandığından `V<n>` **global benzersizdir**; yeni numara tüm modül klasörlerindeki en büyük numaranın +1'idir (çakışma CI'da kırmızı build'dir). **Bir modülün migration'ı başka şemaya dokunamaz.** 0006 itibarıyla `pricing` şeması için global sıradaki ilk numara `V12`'dir; `V12+` yalnız `pricing` şemasına tablo/indeks/kısıt ekler.
 - İsimlendirme: tablolar çoğul `snake_case`; kolonlar `snake_case`; index `ix_<tablo>_<kolon>`; FK yalnızca modül içinde mümkündür (`fk_<tablo>_<hedef>`).
 - DB kullanıcıları: `migrator` (DDL) ve `app` (yalnız DML) ayrıdır.
 - `public` şeması uygulama akışının dışındadır: yalnız `migrator` (`USAGE`+`CREATE`) kullanır; `app` rolüne `public` üzerinde hiçbir yetki verilmez (`public.flyway_schema_history` dahil). DML yetkileri yalnız modül şemalarında (`IN SCHEMA <modül>` default privilege'ları) tanımlanır.

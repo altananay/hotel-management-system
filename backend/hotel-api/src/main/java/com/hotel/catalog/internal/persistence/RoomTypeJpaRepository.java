@@ -37,6 +37,9 @@ public interface RoomTypeJpaRepository extends JpaRepository<RoomTypeEntity, UUI
     @Query("SELECT rt FROM RoomTypeEntity rt WHERE rt.id IN :ids AND rt.active = true")
     List<RoomTypeEntity> findActiveByIdIn(@Param("ids") Collection<UUID> ids);
 
+    @Query("SELECT rt FROM RoomTypeEntity rt WHERE rt.id IN :ids")
+    List<RoomTypeEntity> findByIdIn(@Param("ids") Collection<UUID> ids);
+
     @Query("SELECT rt FROM RoomTypeEntity rt WHERE rt.active = true ORDER BY rt.displayOrder, rt.id")
     List<RoomTypeEntity> findAllActiveOrdered();
 }

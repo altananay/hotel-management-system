@@ -135,6 +135,7 @@ jobs:
           MEDIA_S3_ACCESS_KEY=minioadmin \
           MEDIA_S3_SECRET_KEY=minioadmin_local_dev \
           MEDIA_PUBLIC_BASE_URL=http://localhost:9000/hotel-media/public \
+          HOTEL_PRICING_TCMB_ENABLED=false \
           nohup java -jar backend/hotel-api/target/hotel-api-0.0.1-SNAPSHOT.jar > /tmp/hotel-api.log 2>&1 &
           SPRING_PROFILES_ACTIVE=ci \
           ADMIN_JWT_ACTIVE_KEY_PATH="$RUNNER_TEMP/admin-jwt-active.pem" \
@@ -241,30 +242,53 @@ jobs:
 
       - name: Run @seeded design tests
         working-directory: e2e
-        run: npx playwright test tests/design --grep @seeded
+        # E2E tests regenerate evidence for older specs. Keep those writes out
+        # of the tracked archive so the 0001-0005 immutability check stays meaningful.
+        run: E2E_EVIDENCE_DIR="$RUNNER_TEMP/e2e-evidence" npx playwright test tests/design --grep @seeded
 
       - name: Verify 0002 evidence is byte-identical after the 0003 run
         working-directory: e2e
-        run: node scripts/sha256-manifest.mjs verify ../specs/done/evidence/0002 "$RUNNER_TEMP/0002-before.json" ../specs/done/evidence/0003/AC-6-0002-evidence-sha256.txt
+        run: node scripts/sha256-manifest.mjs verify ../specs/done/evidence/0002 "$RUNNER_TEMP/0002-before.json" "$RUNNER_TEMP/0003-0002-evidence-sha256.txt"
 
       - name: Run @admin login and session tests
         working-directory: e2e
-        run: npx playwright test tests/admin --grep @admin
+        run: E2E_EVIDENCE_DIR="$RUNNER_TEMP/e2e-evidence" npx playwright test tests/admin --grep @admin
 
       - name: Capture 0004 admin CSRF and session gate evidence
         working-directory: e2e
-        run: node scripts/capture-0004-admin-evidence.mjs
+        run: E2E_EVIDENCE_DIR="$RUNNER_TEMP/e2e-evidence" node scripts/capture-0004-admin-evidence.mjs
 
       - name: Run @media upload, publish, public showcase and unpublish tests
         working-directory: e2e
-        run: npx playwright test tests/media --grep @media
+        run: E2E_EVIDENCE_DIR="$RUNNER_TEMP/e2e-evidence" npx playwright test tests/media --grep @media
+
+      - name: Run @pricing admin, quote and role boundary tests
+        working-directory: e2e
+        run: E2E_EVIDENCE_DIR="$RUNNER_TEMP/e2e-evidence" npx playwright test tests/pricing --grep @pricing
+
+      - name: Verify 0001-0005 evidence archives are unchanged
+        run: |
+          EVIDENCE_ROOT="$RUNNER_TEMP/e2e-evidence"
+          mkdir -p "$EVIDENCE_ROOT/0006"
+          ARCHIVES="specs/done/evidence/0001 specs/done/evidence/0002 specs/done/evidence/0003 specs/done/evidence/0004 specs/done/evidence/0005"
+          if ! git diff --exit-code -- $ARCHIVES; then
+            echo "Tracked 0001-0005 evidence changed" | tee "$EVIDENCE_ROOT/0006/AC-6-archive-unchanged.log"
+            exit 1
+          fi
+          UNTRACKED="$(git ls-files --others --exclude-standard -- $ARCHIVES)"
+          if [ -n "$UNTRACKED" ]; then
+            echo "Untracked files appeared under 0001-0005 evidence:" | tee "$EVIDENCE_ROOT/0006/AC-6-archive-unchanged.log"
+            echo "$UNTRACKED" | tee -a "$EVIDENCE_ROOT/0006/AC-6-archive-unchanged.log"
+            exit 1
+          fi
+          echo "0001-0005 evidence archives unchanged (git diff + untracked check)." > "$EVIDENCE_ROOT/0006/AC-6-archive-unchanged.log"
 
       - name: Upload 0005 media evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: 0005-media-evidence
-          path: specs/done/evidence/0005
+          path: ${{ runner.temp }}/e2e-evidence/0005
           if-no-files-found: warn
 
       - name: Upload admin E2E failure artifacts
@@ -285,7 +309,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: 0003-evidence
-          path: specs/done/evidence/0003
+          path: ${{ runner.temp }}/e2e-evidence/0003
           if-no-files-found: warn
 
       - name: Upload 0004 evidence
@@ -293,7 +317,15 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: 0004-evidence
-          path: specs/done/evidence/0004
+          path: ${{ runner.temp }}/e2e-evidence/0004
+          if-no-files-found: warn
+
+      - name: Upload 0006 pricing evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 0006-pricing-evidence
+          path: ${{ runner.temp }}/e2e-evidence/0006
           if-no-files-found: warn
 
       - name: Tear down infrastructure

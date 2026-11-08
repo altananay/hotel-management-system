@@ -50,12 +50,20 @@ export default async function AdminHomePage() {
           Oturumunuz doğrulandı. Yönetim modülleri bir sonraki dilimlerde etkinleştirilecek.
         </p>
         {session.role !== "FRONT_DESK" && (
-          <Link
-            className="mt-4 inline-flex text-sm font-semibold text-slate-900 underline"
-            href="/media"
-          >
-            Medya yönetimine git
-          </Link>
+          <div className="mt-4 flex flex-wrap gap-4">
+            <Link
+              className="inline-flex text-sm font-semibold text-slate-900 underline"
+              href="/media"
+            >
+              Medya yönetimine git
+            </Link>
+            <Link
+              className="inline-flex text-sm font-semibold text-slate-900 underline"
+              href="/pricing"
+            >
+              Fiyat yönetimine git
+            </Link>
+          </div>
         )}
       </section>
     </main>

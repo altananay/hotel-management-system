@@ -1,0 +1,9 @@
+0001-0005 evidence archive check (local run, 2026-11-08):
+
+$ git diff --exit-code -- specs/done/evidence/0001 specs/done/evidence/0002 specs/done/evidence/0003 specs/done/evidence/0004 specs/done/evidence/0005
+(no output; exit 0)
+
+$ git ls-files --others --exclude-standard -- specs/done/evidence/0001 specs/done/evidence/0002 specs/done/evidence/0003 specs/done/evidence/0004 specs/done/evidence/0005
+(no output)
+
+Result: 0001-0005 evidence archives are unchanged.
