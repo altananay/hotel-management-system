@@ -57,6 +57,8 @@ async function adminSend(
     method,
     headers: {
       "X-XSRF-TOKEN": token,
+      Origin: ADMIN_WEB_BASE_URL,
+      Referer: `${ADMIN_WEB_BASE_URL}/pricing`,
       ...(data ? { "Content-Type": "application/json" } : {}),
     },
     data,
