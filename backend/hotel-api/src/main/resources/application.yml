@@ -56,6 +56,7 @@ hotel:
       max-attempts: ${MEDIA_CLEANUP_MAX_ATTEMPTS:10}
   pricing:
     quote-ttl: ${HOTEL_PRICING_QUOTE_TTL:15m}
+    max-stay-nights: ${HOTEL_PRICING_MAX_STAY_NIGHTS:30}
     defaults:
       buffer-percent: ${HOTEL_PRICING_DEFAULT_BUFFER_PERCENT:2.00}
       rounding-step: ${HOTEL_PRICING_DEFAULT_ROUNDING_STEP:5.00}

@@ -95,6 +95,15 @@ public class QuoteService implements PricingQuoteApi {
                     "checkIn must be today or later and checkOut must be after checkIn.",
                     DomainErrorCategory.VALIDATION);
         }
+        long nightsCount =
+                java.time.temporal.ChronoUnit.DAYS.between(
+                        request.checkIn(), request.checkOut());
+        if (nightsCount > properties.getMaxStayNights()) {
+            throw new DomainError(
+                    PricingErrorCodes.INVALID_PERIOD,
+                    "Stay must be at most " + properties.getMaxStayNights() + " nights.",
+                    DomainErrorCategory.VALIDATION);
+        }
         SupportedCurrency currency = SupportedCurrency.from(request.currency());
         ActiveRoomType roomType =
                 roomTypeLookup
@@ -113,12 +122,6 @@ public class QuoteService implements PricingQuoteApi {
         PricingSettings settings = settingsService.get();
         LocalDate lastNight = request.checkOut().minusDays(1);
         List<LocalDate> nights = request.checkIn().datesUntil(request.checkOut()).toList();
-        if (nights.isEmpty()) {
-            throw new DomainError(
-                    PricingErrorCodes.INVALID_PERIOD,
-                    "The stay must contain at least one night.",
-                    DomainErrorCategory.VALIDATION);
-        }
 
         List<ManualPrice> manualPrices =
                 manualPriceRepository

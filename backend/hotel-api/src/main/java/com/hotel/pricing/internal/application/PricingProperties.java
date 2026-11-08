@@ -12,6 +12,7 @@ public class PricingProperties {
     private final Tcmb tcmb = new Tcmb();
     private final Defaults defaults = new Defaults();
     private Duration quoteTtl = Duration.ofMinutes(15);
+    private int maxStayNights = 30;
 
     public Tcmb getTcmb() {
         return tcmb;
@@ -27,6 +28,17 @@ public class PricingProperties {
 
     public void setQuoteTtl(Duration quoteTtl) {
         this.quoteTtl = quoteTtl;
+    }
+
+    public int getMaxStayNights() {
+        return maxStayNights;
+    }
+
+    public void setMaxStayNights(int maxStayNights) {
+        if (maxStayNights < 1) {
+            throw new IllegalArgumentException("hotel.pricing.max-stay-nights must be at least 1");
+        }
+        this.maxStayNights = maxStayNights;
     }
 
     public static class Tcmb {
