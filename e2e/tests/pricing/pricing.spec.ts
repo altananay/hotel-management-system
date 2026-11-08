@@ -4,7 +4,7 @@ import {
   API_BASE_URL,
   WEB_BASE_URL,
 } from "../../helpers/config";
-import { capture, writeEvidence } from "../../helpers/evidence";
+import { capture, evidencePath, writeEvidence } from "../../helpers/evidence";
 
 test.describe.configure({ timeout: 180_000 });
 
@@ -180,6 +180,9 @@ test.describe("Pricing management (AC-1..AC-6)", () => {
         { rows: baseRows },
       );
       expect(baseSave.status()).toBe(200);
+      const baseMatrix = await json<{
+        rows: Array<{ id: string; roomTypeId: string; guests: number }>;
+      }>(baseSave);
 
       const seasonRows = baseRows.map((row) => ({
         ...row,
@@ -192,6 +195,9 @@ test.describe("Pricing management (AC-1..AC-6)", () => {
         { rows: seasonRows },
       );
       expect(seasonSave.status()).toBe(200);
+      const seasonMatrix = await json<{
+        rows: Array<{ id: string; roomTypeId: string; guests: number }>;
+      }>(seasonSave);
 
       const defaultResponse = await adminSend(
         page,
@@ -302,8 +308,63 @@ test.describe("Pricing management (AC-1..AC-6)", () => {
       );
       expect(negativeAmount.status()).toBe(400);
 
+      // CR-14: 30 nights accepted, 31 nights rejected.
+      const thirtyNights = await page.request.get(
+        `${API_BASE_URL}/api/pricing/quote?roomTypeId=${roomTypes[0].id}&checkIn=${checkIn}&checkOut=${isoDatePlus(60)}&guests=1&currency=TRY`,
+      );
+      expect(thirtyNights.status()).toBe(200);
+      const thirtyOneNights = await page.request.get(
+        `${API_BASE_URL}/api/pricing/quote?roomTypeId=${roomTypes[0].id}&checkIn=${checkIn}&checkOut=${isoDatePlus(61)}&guests=1&currency=TRY`,
+      );
+      expect(thirtyOneNights.status()).toBe(400);
+
+      // CR-01: deleting a season price falls back to the base price.
+      const targetBaseRow = baseMatrix.rows.find(
+        (row) => row.roomTypeId === roomTypes[0].id && row.guests === 1,
+      );
+      const targetSeasonRow = seasonMatrix.rows.find(
+        (row) => row.roomTypeId === roomTypes[0].id && row.guests === 1,
+      );
+      expect(targetBaseRow).toBeTruthy();
+      expect(targetSeasonRow).toBeTruthy();
+      const deleteSeasonPrice = await adminSend(
+        page,
+        "DELETE",
+        `/admin-api/pricing/seasons/${season.id}/prices/${targetSeasonRow!.id}`,
+      );
+      expect(deleteSeasonPrice.status()).toBe(204);
+      const afterSeasonDelete = await page.request.get(
+        `${API_BASE_URL}/api/pricing/quote?roomTypeId=${roomTypes[0].id}&checkIn=${checkIn}&checkOut=${checkOut}&guests=1&currency=TRY`,
+      );
+      expect(afterSeasonDelete.status()).toBe(200);
+      const afterSeasonBody = await json<{
+        nights: Array<{ priceSource: string }>;
+      }>(afterSeasonDelete);
+      expect(afterSeasonBody.nights[1].priceSource).toBe("BASE");
+      expect(afterSeasonBody.nights[2].priceSource).toBe("BASE");
+
+      // Deleting the base price makes only that combination unquotable; default stays default.
+      const deleteBasePrice = await adminSend(
+        page,
+        "DELETE",
+        `/admin-api/pricing/rate-plans/${plan!.id}/prices/${targetBaseRow!.id}`,
+      );
+      expect(deleteBasePrice.status()).toBe(204);
+      const afterBaseDelete = await page.request.get(
+        `${API_BASE_URL}/api/pricing/quote?roomTypeId=${roomTypes[0].id}&checkIn=${checkIn}&checkOut=${checkOut}&guests=1&currency=TRY`,
+      );
+      expect(afterBaseDelete.status()).toBe(409);
+
+      await page.reload({ waitUntil: "networkidle" });
+      await expect(page.getByTestId("admin-pricing-prices")).toContainText(
+        "Eksik fiyatlar",
+      );
+      await capture(page, "0006", "AC-2-admin-pricing-delete.png");
+
       await page.getByTestId("admin-pricing-fx-warning").scrollIntoViewIfNeeded();
-      await capture(page, "0006", "AC-3-admin-fx-warning.png");
+      await page
+        .getByTestId("admin-pricing-fx-warning")
+        .screenshot({ path: evidencePath("0006", "AC-3-admin-fx-warning.png") });
 
       writeEvidence(
         "0006",
@@ -311,6 +372,8 @@ test.describe("Pricing management (AC-1..AC-6)", () => {
         [
           `TRY quote: ${JSON.stringify(tryBody)}`,
           `EUR quote: ${JSON.stringify(eurBody)}`,
+          `30 nights: ${thirtyNights.status()}; 31 nights: ${thirtyOneNights.status()}`,
+          "Season price delete -> BASE fallback; base price delete -> 409 price_not_configured.",
           "Public quote is anonymous and returns string decimal amounts.",
         ].join("\n"),
       );
@@ -349,6 +412,12 @@ test.describe("Pricing management (AC-1..AC-6)", () => {
         },
       );
       expect(forbiddenWrite.status()).toBe(403);
+      const forbiddenDelete = await adminSend(
+        frontDeskPage,
+        "DELETE",
+        `/admin-api/pricing/rate-plans/${plan!.id}/prices/${targetBaseRow!.id}`,
+      );
+      expect(forbiddenDelete.status()).toBe(403);
       await frontDeskPage.goto(`${ADMIN_WEB_BASE_URL}/pricing`, {
         waitUntil: "networkidle",
       });

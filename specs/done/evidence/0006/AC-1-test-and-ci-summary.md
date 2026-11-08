@@ -1,4 +1,4 @@
-# 0006 — Test ve CI Özeti
+# 0006 — Test ve CI Özeti (Rev.1)
 
 Tarih: 2026-11-08
 
@@ -6,19 +6,23 @@ Tarih: 2026-11-08
 
 - `backend/hotel-api`: `.\mvnw.cmd -B verify`
   - Sonuç: `BUILD SUCCESS`
-  - Unit + integration: `Tests run: 69, Failures: 0, Errors: 0, Skipped: 0`
-  - `PricingIT`: 11 test (şema, TRY/EUR/USD, manuel fiyat/kur, sezon fallback,
-    default bütünlüğü, overlap/duplicate, snapshot değişmezliği, ayar etkisi)
-  - `AdminPricingControllerTest`: 5 test (401/403, 503, eksik liste, MANAGER erişimi)
+  - Unit + integration: `Tests run: 72, Failures: 0, Errors: 0, Skipped: 0`
+  - `PricingIT`: 14 test (şema, TRY/EUR/USD, manuel fiyat/kur, sezon fallback,
+    default bütünlüğü, overlap/duplicate, snapshot değişmezliği, ayar etkisi,
+    30/31 gece sınırı, baz/sezon fiyat silme).
+  - `AdminPricingControllerTest`: 8 test (401/403, 204 delete, 404 yanlış/eksik satır,
+    503, eksik liste, MANAGER erişimi).
+  - `PricingPropertiesTest`: varsayılan 30 gece, pozitif override, geçersiz değer.
   - `TcmbFxParserTest` + `TcmbFxServiceTest`: hafta içi/hafta sonu/bozuk XML/erişilemezlik.
-  - `HotelApiModularityTest`: `pricing → catalog` izinli read kenarı yeşil.
+  - `HotelApiModularityTest`: `pricing → catalog` izinli read kenarı ve
+    `internal.application → internal.web` yasağı yeşil.
 - TCMB ağı kullanılmadı; fixture/fake ve `hotel.pricing.tcmb.enabled=false` kullanıldı.
 
 ## Admin-web
 
 - `npm run lint`: geçti (ESLint + `tsc --noEmit`).
-- `npm test`: 43 test geçti; `PricingManager` yükleme/boş/hata/dolu, bayat kur
-  uyarısı ve plan düzenleme.
+- `npm test`: 44 test geçti; `PricingManager` yükleme/boş/hata/dolu, bayat kur
+  uyarısı, plan düzenleme ve baz/sezon fiyat satırı silme.
 - `npm run build`: başarılı; `/pricing` route'u üretildi.
 
 ## E2E
@@ -26,9 +30,10 @@ Tarih: 2026-11-08
 - `npx playwright test tests/pricing --grep @pricing`: 1 test geçti.
 - Akış: SUPER_ADMIN login → yükleme/boş/hata/dolu → plan → sezon → baz/sezon
   fiyat matrisi → varsayılan plan → manuel kur → manuel fiyat → TRY/EUR/USD
-  public teklif → buffer/yuvarlama güncellemesinin yeni teklife etkisi →
+  public teklif → buffer/yuvarlama güncellemesi → 30 gece kabul / 31 gece 400 →
+  sezon fiyatı silme (baz fallback) → baz fiyat silme (409 + eksik uyarısı) →
   geçersiz tarih/misafir/para birimi/negatif tutar → oda vitrininde fiyat yok →
-  FRONT_DESK okuma/yazma 403.
-- Kanıtlar: `AC-2-admin-pricing-{loading,empty,error,filled}.png`,
+  FRONT_DESK okuma/yazma/silme 403.
+- Kanıtlar: `AC-2-admin-pricing-{loading,empty,error,filled,delete}.png`,
   `AC-3-admin-fx-warning.png` (ayrı görsel), `AC-4-quote-response.md`,
   `AC-5-snapshot-immutability.md`.

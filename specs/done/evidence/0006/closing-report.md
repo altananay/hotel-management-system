@@ -5,21 +5,24 @@
 **0007 oda detay sayfası spec'i, oda vitrini kartlarında fiyat gösterimini zorunlu olarak
 içerecektir.** 0007 yazılırken bu madde kontrol edilecektir.
 
-## Kod incelemesi
+## Kod incelemesi — Rev.1
 
-- Code Reviewer subagent turu tamamlandı; 17 bulgu raporlandı.
-- 15 bulgu gerçek kabul edilip düzeltildi (CR-1..CR-9, CR-11, CR-12, CR-14..CR-17).
-- **CR-10 (maksimum gece sınırı):** Uygulanmadı. Gerekçe: final planda R12 “0006'da cap yok”
-  olarak onaylandı; anonim uçta uzun dönem/rate-limit koruması ayrı spec/operasyonel backlog.
-- **CR-13 (application → web mapper):** Uygulanmadı. Gerekçe: aynı modül içinde katman
-  tercihi; modül sınırı/closed allowlist ihlali değil. 0006 için kabul edilen teknik ödünç.
-- Kalan takip: anonim quote için maksimum gece/rate-limit hardening (0007 veya ayrı spec).
+- İlk tur: 17 bulgu; 15 gerçek/uygulandı, 2 kapsam/katman itirazı (CR-10, CR-13).
+- Rev.1 turu (CR-01, CR-03, CR-14) Takım Yöneticisi kararlarıyla uygulandı:
+  - **CR-01:** Baz/sezon fiyat satırı `DELETE` endpointleri + admin-ui satır silme +
+    testler. Silme snapshot'ları etkilemez; default plan varsayılan kalır ve eksik
+    kombinasyon `409` döner.
+  - **CR-03:** `internal.application` → `internal.web` bağımlılığı kaldırıldı;
+    application view record'ları + controller/mapper dönüşümü; ArchUnit kuralı eklendi.
+  - **CR-14:** Maksimum 30 gece; 31 gece `400 pricing.invalid_period`; sınır
+    `hotel.pricing.max-stay-nights` ile yapılandırılabilir.
+- Açık takip: anonim quote için rate limiting/operasyonel hardening (0007 veya ayrı spec).
 
 ## Test özeti
 
-- `backend/hotel-api`: `mvn -B verify` → 69 test, 0 failure/error; `PricingIT` 11 test.
+- `backend/hotel-api`: `mvn -B verify` → 72 test, 0 failure/error; `PricingIT` 14 test.
 - `backend/admin-api`: değişiklik yok; mevcut doğrulama CI'da.
-- `admin-web`: ESLint + `tsc --noEmit` geçti; 43 Vitest testi; `next build` başarılı.
+- `admin-web`: ESLint + `tsc --noEmit` geçti; 44 Vitest testi; `next build` başarılı.
 - E2E: `npx playwright test tests/pricing --grep @pricing` → 1 passed.
 - 0001–0005 kanıt arşivleri: `git diff` + untracked kontrolü temiz.
 
@@ -27,4 +30,4 @@ içerecektir.** 0007 yazılırken bu madde kontrol edilecektir.
 
 - Spec `specs/0006-pricing.md` olarak bırakıldı; DoD gereği Takım Yöneticisi kapanış onayından
   sonra `specs/done/` altına taşınacak.
-- SCORECARD dolduruldu.
+- SCORECARD dolduruldu (spec revizyon 1, düzeltme turu 2).
