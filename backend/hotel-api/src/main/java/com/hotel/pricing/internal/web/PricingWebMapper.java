@@ -4,7 +4,10 @@ import com.hotel.catalog.api.ActiveRoomType;
 import com.hotel.catalog.api.RoomTypeSnapshot;
 import com.hotel.pricing.api.PricedNight;
 import com.hotel.pricing.api.Quote;
+import com.hotel.pricing.internal.application.FxRateHistoryView;
+import com.hotel.pricing.internal.application.ManualPriceAdminView;
 import com.hotel.pricing.internal.application.PriceMatrixService;
+import com.hotel.pricing.internal.application.RatePlanAdminView;
 import com.hotel.pricing.internal.domain.FxRate;
 import com.hotel.pricing.internal.domain.ManualPrice;
 import com.hotel.pricing.internal.domain.PricingSettings;
@@ -66,6 +69,10 @@ public class PricingWebMapper {
                 amount(night.amount().amount()));
     }
 
+    public RatePlanResponse toResponse(RatePlanAdminView view) {
+        return toResponse(view.plan(), view.seasons());
+    }
+
     public RatePlanResponse toResponse(RatePlan plan, List<Season> seasons) {
         return new RatePlanResponse(
                 plan.id(),
@@ -119,6 +126,10 @@ public class PricingWebMapper {
                         .toList());
     }
 
+    public ManualPriceResponse toResponse(ManualPriceAdminView view) {
+        return toResponse(view.manualPrice(), view.roomType());
+    }
+
     public ManualPriceResponse toResponse(
             ManualPrice manualPrice, RoomTypeSnapshot roomType) {
         return new ManualPriceResponse(
@@ -144,6 +155,18 @@ public class PricingWebMapper {
                 fxRate(fxRate.rate()),
                 instant(fxRate.capturedAt()),
                 instant(fxRate.updatedAt()));
+    }
+
+    public com.hotel.pricing.internal.web.dto.FxRateHistoryResponse toResponse(
+            FxRateHistoryView view) {
+        return new com.hotel.pricing.internal.web.dto.FxRateHistoryResponse(
+                view.latest().stream().map(this::toFxResponse).toList(),
+                view.items().stream().map(this::toFxResponse).toList(),
+                view.page(),
+                view.size(),
+                view.total(),
+                view.stale(),
+                view.staleCurrencies());
     }
 
     public FxRateResponse toFxResponse(FxRate fxRate) {

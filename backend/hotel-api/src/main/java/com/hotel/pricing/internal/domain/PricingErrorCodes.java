@@ -17,7 +17,9 @@ public final class PricingErrorCodes {
     public static final String RATE_PLAN_NOT_FOUND = "pricing.rate_plan_not_found";
     public static final String RATE_PLAN_DUPLICATE = "pricing.rate_plan_duplicate";
     public static final String RATE_PLAN_IN_USE = "pricing.rate_plan_in_use";
+    public static final String RATE_PLAN_PRICE_NOT_FOUND = "pricing.rate_plan_price_not_found";
     public static final String SEASON_NOT_FOUND = "pricing.season_not_found";
+    public static final String SEASON_PRICE_NOT_FOUND = "pricing.season_price_not_found";
     public static final String SEASON_DUPLICATE = "pricing.season_duplicate";
     public static final String SEASON_OVERLAP = "pricing.season_overlap";
     public static final String MANUAL_PRICE_OVERLAP = "pricing.manual_price_overlap";

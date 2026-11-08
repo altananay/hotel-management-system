@@ -14,4 +14,6 @@ public interface RatePlanPriceJpaRepository
 
     Optional<RatePlanPriceEntity> findByRatePlanIdAndRoomTypeIdAndGuests(
             UUID ratePlanId, UUID roomTypeId, int guests);
+
+    Optional<RatePlanPriceEntity> findByIdAndRatePlanId(UUID id, UUID ratePlanId);
 }

@@ -1,5 +1,6 @@
 package com.hotel.pricing.internal.application;
 
+import com.hotel.catalog.api.ActiveRoomType;
 import com.hotel.catalog.api.RoomTypeId;
 import com.hotel.catalog.api.RoomTypeLookup;
 import com.hotel.catalog.api.RoomTypeSnapshot;
@@ -8,16 +9,7 @@ import com.hotel.pricing.internal.domain.FxRate;
 import com.hotel.pricing.internal.domain.ManualPrice;
 import com.hotel.pricing.internal.domain.PricingSettings;
 import com.hotel.pricing.internal.domain.RatePlan;
-import com.hotel.pricing.internal.web.PricingWebMapper;
-import com.hotel.pricing.internal.web.dto.FxRateHistoryResponse;
-import com.hotel.pricing.internal.web.dto.FxRateResponse;
-import com.hotel.pricing.internal.web.dto.ManualFxRateResponse;
-import com.hotel.pricing.internal.web.dto.ManualPriceResponse;
-import com.hotel.pricing.internal.web.dto.PageResponse;
-import com.hotel.pricing.internal.web.dto.PriceMatrixResponse;
-import com.hotel.pricing.internal.web.dto.RatePlanResponse;
-import com.hotel.pricing.internal.web.dto.RoomTypeOptionResponse;
-import com.hotel.pricing.internal.web.dto.SettingsResponse;
+import com.hotel.pricing.internal.domain.Season;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,7 +31,6 @@ public class PricingAdminQueryService {
     private final FxRateService fxRateService;
     private final PricingSettingsService settingsService;
     private final RoomTypeLookup roomTypeLookup;
-    private final PricingWebMapper mapper;
 
     public PricingAdminQueryService(
             RatePlanService ratePlanService,
@@ -49,8 +40,7 @@ public class PricingAdminQueryService {
             ManualFxRateService manualFxRateService,
             FxRateService fxRateService,
             PricingSettingsService settingsService,
-            RoomTypeLookup roomTypeLookup,
-            PricingWebMapper mapper) {
+            RoomTypeLookup roomTypeLookup) {
         this.ratePlanService = ratePlanService;
         this.seasonService = seasonService;
         this.priceMatrixService = priceMatrixService;
@@ -59,70 +49,59 @@ public class PricingAdminQueryService {
         this.fxRateService = fxRateService;
         this.settingsService = settingsService;
         this.roomTypeLookup = roomTypeLookup;
-        this.mapper = mapper;
     }
 
     @Transactional(readOnly = true)
-    public List<RatePlanResponse> listRatePlans() {
-        List<RatePlanResponse> result = new ArrayList<>();
+    public List<RatePlanAdminView> listRatePlans() {
+        List<RatePlanAdminView> result = new ArrayList<>();
         for (RatePlan plan : ratePlanService.list()) {
-            result.add(mapper.toResponse(plan, seasonService.list(plan.id())));
+            result.add(new RatePlanAdminView(plan, seasonService.list(plan.id())));
         }
         return result;
     }
 
     @Transactional(readOnly = true)
-    public List<com.hotel.pricing.internal.web.dto.SeasonResponse> listSeasons(UUID ratePlanId) {
-        return seasonService.list(ratePlanId).stream().map(mapper::toResponse).toList();
+    public List<Season> listSeasons(UUID ratePlanId) {
+        return seasonService.list(ratePlanId);
     }
 
     @Transactional(readOnly = true)
-    public PriceMatrixResponse baseMatrix(UUID ratePlanId) {
-        return mapper.toResponse(priceMatrixService.getBaseMatrix(ratePlanId));
+    public PriceMatrixService.MatrixView baseMatrix(UUID ratePlanId) {
+        return priceMatrixService.getBaseMatrix(ratePlanId);
     }
 
     @Transactional(readOnly = true)
-    public PriceMatrixResponse seasonMatrix(UUID seasonId) {
-        return mapper.toResponse(priceMatrixService.getSeasonMatrix(seasonId));
+    public PriceMatrixService.MatrixView seasonMatrix(UUID seasonId) {
+        return priceMatrixService.getSeasonMatrix(seasonId);
     }
 
     @Transactional(readOnly = true)
-    public List<ManualPriceResponse> listManualPrices(UUID ratePlanId) {
+    public List<ManualPriceAdminView> listManualPrices(UUID ratePlanId) {
         List<ManualPrice> prices = manualPriceService.list(ratePlanId);
         Map<UUID, RoomTypeSnapshot> roomTypes = roomTypes(prices);
         return prices.stream()
-                .map(
-                        price ->
-                                mapper.toResponse(
-                                        price,
-                                        roomTypes.get(price.roomTypeId())))
+                .map(price -> new ManualPriceAdminView(price, roomTypes.get(price.roomTypeId())))
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<ManualFxRateResponse> listManualFxRates(
+    public Page<FxRate> listManualFxRates(
             String currency, LocalDate from, LocalDate to, int page, int size) {
-        Page<FxRate> result = manualFxRateService.list(currency, from, to, page, size);
-        return new PageResponse<>(
-                result.getContent().stream().map(mapper::toResponse).toList(),
-                result.getNumber(),
-                result.getSize(),
-                result.getTotalElements());
+        return manualFxRateService.list(currency, from, to, page, size);
     }
 
     @Transactional(readOnly = true)
-    public SettingsResponse settings() {
-        PricingSettings settings = settingsService.get();
-        return mapper.toResponse(settings);
+    public PricingSettings settings() {
+        return settingsService.get();
     }
 
     @Transactional(readOnly = true)
-    public List<RoomTypeOptionResponse> activeRoomTypes() {
-        return roomTypeLookup.findAllActive().stream().map(mapper::toResponse).toList();
+    public List<ActiveRoomType> activeRoomTypes() {
+        return roomTypeLookup.findAllActive();
     }
 
     @Transactional(readOnly = true)
-    public FxRateHistoryResponse fxRates(
+    public FxRateHistoryView fxRates(
             String currency, LocalDate from, LocalDate to, int page, int size) {
         List<FxRate> latest = new ArrayList<>();
         List<String> staleCurrencies = new ArrayList<>();
@@ -140,17 +119,14 @@ public class PricingAdminQueryService {
             }
         }
         Page<FxRate> result = fxRateService.pageAll(currency, from, to, page, size);
-        List<FxRateResponse> items = result.getContent().stream().map(mapper::toFxResponse).toList();
-        List<FxRateResponse> latestResponses =
-                latest.stream().map(mapper::toFxResponse).toList();
-        return new FxRateHistoryResponse(
-                latestResponses,
-                items,
+        return new FxRateHistoryView(
+                latest,
+                result.getContent(),
                 result.getNumber(),
                 result.getSize(),
                 result.getTotalElements(),
                 !staleCurrencies.isEmpty(),
-                List.copyOf(staleCurrencies));
+                staleCurrencies);
     }
 
     private Map<UUID, RoomTypeSnapshot> roomTypes(List<ManualPrice> prices) {

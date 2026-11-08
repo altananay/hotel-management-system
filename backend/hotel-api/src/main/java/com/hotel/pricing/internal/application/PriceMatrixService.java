@@ -141,6 +141,27 @@ public class PriceMatrixService {
         return getSeasonMatrix(seasonId);
     }
 
+    @Transactional
+    public void deleteBasePrice(UUID ratePlanId, UUID priceRowId) {
+        requireLockedPlan(ratePlanId);
+        RatePlanPriceEntity entity =
+                ratePlanPriceRepository
+                        .findByIdAndRatePlanId(priceRowId, ratePlanId)
+                        .orElseThrow(this::ratePlanPriceNotFound);
+        ratePlanPriceRepository.delete(entity);
+    }
+
+    @Transactional
+    public void deleteSeasonPrice(UUID seasonId, UUID priceRowId) {
+        SeasonEntity season = requireSeason(seasonId);
+        requireLockedPlan(season.getRatePlanId());
+        SeasonPriceEntity entity =
+                seasonPriceRepository
+                        .findByIdAndSeasonId(priceRowId, seasonId)
+                        .orElseThrow(this::seasonPriceNotFound);
+        seasonPriceRepository.delete(entity);
+    }
+
     @Transactional(readOnly = true)
     public List<MissingPrice> findMissingForPlan(UUID ratePlanId) {
         requirePlan(ratePlanId);
@@ -326,6 +347,20 @@ public class PriceMatrixService {
         return new DomainError(
                 PricingErrorCodes.ROOM_TYPE_NOT_FOUND,
                 "The room type is not active.",
+                DomainErrorCategory.NOT_FOUND);
+    }
+
+    private DomainError ratePlanPriceNotFound() {
+        return new DomainError(
+                PricingErrorCodes.RATE_PLAN_PRICE_NOT_FOUND,
+                "The base price row was not found for this rate plan.",
+                DomainErrorCategory.NOT_FOUND);
+    }
+
+    private DomainError seasonPriceNotFound() {
+        return new DomainError(
+                PricingErrorCodes.SEASON_PRICE_NOT_FOUND,
+                "The season price row was not found for this season.",
                 DomainErrorCategory.NOT_FOUND);
     }
 

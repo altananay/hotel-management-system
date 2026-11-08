@@ -13,6 +13,8 @@ public interface SeasonPriceJpaRepository extends JpaRepository<SeasonPriceEntit
     Optional<SeasonPriceEntity> findBySeasonIdAndRoomTypeIdAndGuests(
             UUID seasonId, UUID roomTypeId, int guests);
 
+    Optional<SeasonPriceEntity> findByIdAndSeasonId(UUID id, UUID seasonId);
+
     List<SeasonPriceEntity> findBySeasonIdInAndRoomTypeIdAndGuests(
             Collection<UUID> seasonIds, UUID roomTypeId, int guests);
 }

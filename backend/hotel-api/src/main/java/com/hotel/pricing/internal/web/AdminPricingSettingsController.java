@@ -25,21 +25,26 @@ public class AdminPricingSettingsController {
 
     private final PricingAdminService adminService;
     private final PricingAdminQueryService queryService;
+    private final PricingWebMapper mapper;
 
     public AdminPricingSettingsController(
-            PricingAdminService adminService, PricingAdminQueryService queryService) {
+            PricingAdminService adminService,
+            PricingAdminQueryService queryService,
+            PricingWebMapper mapper) {
         this.adminService = adminService;
         this.queryService = queryService;
+        this.mapper = mapper;
     }
 
     @GetMapping("/settings")
     public SettingsResponse settings() {
-        return queryService.settings();
+        return mapper.toResponse(queryService.settings());
     }
 
     @PutMapping("/settings")
     public SettingsResponse updateSettings(@Valid @RequestBody SettingsUpdateRequest request) {
-        return adminService.updateSettings(request);
+        return mapper.toResponse(
+                adminService.updateSettings(request.bufferPercent(), request.roundingStep()));
     }
 
     @GetMapping("/fx-rates")
@@ -51,11 +56,11 @@ public class AdminPricingSettingsController {
                     LocalDate to,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return queryService.fxRates(currency, from, to, page, size);
+        return mapper.toResponse(queryService.fxRates(currency, from, to, page, size));
     }
 
     @GetMapping("/room-types")
     public List<RoomTypeOptionResponse> roomTypes() {
-        return queryService.activeRoomTypes();
+        return queryService.activeRoomTypes().stream().map(mapper::toResponse).toList();
     }
 }

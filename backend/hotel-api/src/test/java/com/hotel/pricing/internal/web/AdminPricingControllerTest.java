@@ -1,6 +1,9 @@
 package com.hotel.pricing.internal.web;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -52,7 +55,8 @@ import org.springframework.test.web.servlet.MockMvc;
     AdminJwtAuthenticationEntryPoint.class,
     RequestIdFilter.class,
     GlobalExceptionHandler.class,
-    ClockConfig.class
+    ClockConfig.class,
+    PricingWebMapper.class
 })
 class AdminPricingControllerTest {
 
@@ -85,6 +89,94 @@ class AdminPricingControllerTest {
                         get("/admin-api/pricing/manual-fx-rates")
                                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldDeleteBaseAndSeasonPriceRowsForManager() throws Exception {
+        UUID planId = UUID.fromString("0199f2c0-0000-7000-8000-000000000701");
+        UUID seasonId = UUID.fromString("0199f2c0-0000-7000-8000-000000000702");
+        UUID priceRowId = UUID.fromString("0199f2c0-0000-7000-8000-000000000703");
+        String token = token("MANAGER");
+
+        mockMvc.perform(
+                        delete(
+                                        "/admin-api/pricing/rate-plans/"
+                                                + planId
+                                                + "/prices/"
+                                                + priceRowId)
+                                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(
+                        delete(
+                                        "/admin-api/pricing/seasons/"
+                                                + seasonId
+                                                + "/prices/"
+                                                + priceRowId)
+                                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void shouldReturn404ForUnknownOrWrongParentPriceRow_whenDeleting() throws Exception {
+        UUID planId = UUID.fromString("0199f2c0-0000-7000-8000-000000000701");
+        UUID seasonId = UUID.fromString("0199f2c0-0000-7000-8000-000000000702");
+        UUID priceRowId = UUID.fromString("0199f2c0-0000-7000-8000-000000000703");
+        doThrow(
+                        new DomainError(
+                                PricingErrorCodes.RATE_PLAN_PRICE_NOT_FOUND,
+                                "Base price row was not found.",
+                                DomainErrorCategory.NOT_FOUND))
+                .when(adminService)
+                .deleteBasePrice(any(), any());
+        doThrow(
+                        new DomainError(
+                                PricingErrorCodes.SEASON_PRICE_NOT_FOUND,
+                                "Season price row was not found.",
+                                DomainErrorCategory.NOT_FOUND))
+                .when(adminService)
+                .deleteSeasonPrice(any(), any());
+        String token = token("SUPER_ADMIN");
+
+        mockMvc.perform(
+                        delete(
+                                        "/admin-api/pricing/rate-plans/"
+                                                + planId
+                                                + "/prices/"
+                                                + priceRowId)
+                                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("pricing.rate_plan_price_not_found"));
+        mockMvc.perform(
+                        delete(
+                                        "/admin-api/pricing/seasons/"
+                                                + seasonId
+                                                + "/prices/"
+                                                + priceRowId)
+                                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("pricing.season_price_not_found"));
+    }
+
+    @Test
+    void shouldForbidFrontDeskAndAnonymous_whenDeletingPriceRows() throws Exception {
+        UUID planId = UUID.fromString("0199f2c0-0000-7000-8000-000000000701");
+        UUID priceRowId = UUID.fromString("0199f2c0-0000-7000-8000-000000000703");
+        mockMvc.perform(
+                        delete(
+                                "/admin-api/pricing/rate-plans/"
+                                        + planId
+                                        + "/prices/"
+                                        + priceRowId))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(
+                        delete(
+                                        "/admin-api/pricing/rate-plans/"
+                                                + planId
+                                                + "/prices/"
+                                                + priceRowId)
+                                .header("Authorization", "Bearer " + token("FRONT_DESK")))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("security.forbidden"));
     }
 
     @Test

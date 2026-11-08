@@ -2,6 +2,7 @@ package com.hotel.pricing.internal.web;
 
 import com.hotel.pricing.internal.application.PricingAdminQueryService;
 import com.hotel.pricing.internal.application.PricingAdminService;
+import com.hotel.pricing.internal.domain.FxRate;
 import com.hotel.pricing.internal.web.dto.ManualFxRateCreateRequest;
 import com.hotel.pricing.internal.web.dto.ManualFxRateResponse;
 import com.hotel.pricing.internal.web.dto.ManualFxRateUpdateRequest;
@@ -13,6 +14,7 @@ import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,29 +36,50 @@ public class AdminManualOverrideController {
 
     private final PricingAdminService adminService;
     private final PricingAdminQueryService queryService;
+    private final PricingWebMapper mapper;
 
     public AdminManualOverrideController(
-            PricingAdminService adminService, PricingAdminQueryService queryService) {
+            PricingAdminService adminService,
+            PricingAdminQueryService queryService,
+            PricingWebMapper mapper) {
         this.adminService = adminService;
         this.queryService = queryService;
+        this.mapper = mapper;
     }
 
     @GetMapping("/manual-prices")
     public List<ManualPriceResponse> manualPrices(@RequestParam UUID ratePlanId) {
-        return queryService.listManualPrices(ratePlanId);
+        return queryService.listManualPrices(ratePlanId).stream()
+                .map(mapper::toResponse)
+                .toList();
     }
 
     @PostMapping("/manual-prices")
     public ResponseEntity<ManualPriceResponse> createManualPrice(
             @Valid @RequestBody ManualPriceCreateRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(adminService.createManualPrice(request));
+                .body(
+                        mapper.toResponse(
+                                adminService.createManualPrice(
+                                        request.ratePlanId(),
+                                        request.roomTypeId(),
+                                        request.guests(),
+                                        request.startDate(),
+                                        request.endDate(),
+                                        request.amountTry())));
     }
 
     @PatchMapping("/manual-prices/{id}")
     public ManualPriceResponse updateManualPrice(
             @PathVariable UUID id, @Valid @RequestBody ManualPriceUpdateRequest request) {
-        return adminService.updateManualPrice(id, request);
+        return mapper.toResponse(
+                adminService.updateManualPrice(
+                        id,
+                        request.roomTypeId(),
+                        request.guests(),
+                        request.startDate(),
+                        request.endDate(),
+                        request.amountTry()));
     }
 
     @DeleteMapping("/manual-prices/{id}")
@@ -74,20 +97,31 @@ public class AdminManualOverrideController {
                     LocalDate to,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return queryService.listManualFxRates(currency, from, to, page, size);
+        Page<FxRate> result =
+                queryService.listManualFxRates(currency, from, to, page, size);
+        return new PageResponse<>(
+                result.getContent().stream().map(mapper::toResponse).toList(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements());
     }
 
     @PostMapping("/manual-fx-rates")
     public ResponseEntity<ManualFxRateResponse> createManualFxRate(
             @Valid @RequestBody ManualFxRateCreateRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(adminService.createManualFxRate(request));
+                .body(
+                        mapper.toResponse(
+                                adminService.createManualFxRate(
+                                        request.currency(),
+                                        request.rateDate(),
+                                        request.rate())));
     }
 
     @PatchMapping("/manual-fx-rates/{id}")
     public ManualFxRateResponse updateManualFxRate(
             @PathVariable UUID id, @Valid @RequestBody ManualFxRateUpdateRequest request) {
-        return adminService.updateManualFxRate(id, request);
+        return mapper.toResponse(adminService.updateManualFxRate(id, request.rate()));
     }
 
     @DeleteMapping("/manual-fx-rates/{id}")

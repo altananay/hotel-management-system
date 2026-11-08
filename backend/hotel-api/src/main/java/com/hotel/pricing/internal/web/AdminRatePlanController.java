@@ -1,5 +1,6 @@
 package com.hotel.pricing.internal.web;
 
+import com.hotel.pricing.internal.application.PriceMatrixService;
 import com.hotel.pricing.internal.application.PricingAdminQueryService;
 import com.hotel.pricing.internal.application.PricingAdminService;
 import com.hotel.pricing.internal.web.dto.PriceMatrixRequest;
@@ -33,52 +34,78 @@ public class AdminRatePlanController {
 
     private final PricingAdminService adminService;
     private final PricingAdminQueryService queryService;
+    private final PricingWebMapper mapper;
 
     public AdminRatePlanController(
-            PricingAdminService adminService, PricingAdminQueryService queryService) {
+            PricingAdminService adminService,
+            PricingAdminQueryService queryService,
+            PricingWebMapper mapper) {
         this.adminService = adminService;
         this.queryService = queryService;
+        this.mapper = mapper;
     }
 
     @GetMapping("/rate-plans")
     public List<RatePlanResponse> ratePlans() {
-        return queryService.listRatePlans();
+        return queryService.listRatePlans().stream().map(mapper::toResponse).toList();
     }
 
     @PostMapping("/rate-plans")
     public ResponseEntity<RatePlanResponse> createRatePlan(
             @Valid @RequestBody RatePlanCreateRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(adminService.createRatePlan(request));
+        RatePlanResponse response =
+                mapper.toResponse(
+                        adminService.createRatePlan(
+                                request.code(),
+                                request.nameTr(),
+                                request.nameEn(),
+                                request.active() == null || request.active()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PatchMapping("/rate-plans/{id}")
     public RatePlanResponse updateRatePlan(
             @PathVariable UUID id, @Valid @RequestBody RatePlanUpdateRequest request) {
-        return adminService.updateRatePlan(id, request);
+        return mapper.toResponse(
+                adminService.updateRatePlan(
+                        id, request.nameTr(), request.nameEn(), request.active()));
     }
 
     @PutMapping("/rate-plans/{id}/default")
     public RatePlanResponse setDefault(@PathVariable UUID id) {
-        return adminService.setDefault(id);
+        return mapper.toResponse(adminService.setDefault(id));
     }
 
     @GetMapping("/rate-plans/{id}/seasons")
     public List<SeasonResponse> seasons(@PathVariable UUID id) {
-        return queryService.listSeasons(id);
+        return queryService.listSeasons(id).stream().map(mapper::toResponse).toList();
     }
 
     @PostMapping("/rate-plans/{id}/seasons")
     public ResponseEntity<SeasonResponse> createSeason(
             @PathVariable UUID id, @Valid @RequestBody SeasonCreateRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(adminService.createSeason(id, request));
+        SeasonResponse response =
+                mapper.toResponse(
+                        adminService.createSeason(
+                                id,
+                                request.code(),
+                                request.nameTr(),
+                                request.nameEn(),
+                                request.startDate(),
+                                request.endDate()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PatchMapping("/seasons/{id}")
     public SeasonResponse updateSeason(
             @PathVariable UUID id, @Valid @RequestBody SeasonUpdateRequest request) {
-        return adminService.updateSeason(id, request);
+        return mapper.toResponse(
+                adminService.updateSeason(
+                        id,
+                        request.nameTr(),
+                        request.nameEn(),
+                        request.startDate(),
+                        request.endDate()));
     }
 
     @DeleteMapping("/seasons/{id}")
@@ -89,23 +116,47 @@ public class AdminRatePlanController {
 
     @GetMapping("/rate-plans/{id}/prices")
     public PriceMatrixResponse basePrices(@PathVariable UUID id) {
-        return queryService.baseMatrix(id);
+        return mapper.toResponse(queryService.baseMatrix(id));
     }
 
     @PutMapping("/rate-plans/{id}/prices")
     public PriceMatrixResponse saveBasePrices(
             @PathVariable UUID id, @Valid @RequestBody PriceMatrixRequest request) {
-        return adminService.saveBasePrices(id, request);
+        return mapper.toResponse(adminService.saveBasePrices(id, commands(request)));
+    }
+
+    @DeleteMapping("/rate-plans/{id}/prices/{priceRowId}")
+    public ResponseEntity<Void> deleteBasePrice(
+            @PathVariable UUID id, @PathVariable UUID priceRowId) {
+        adminService.deleteBasePrice(id, priceRowId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/seasons/{id}/prices")
     public PriceMatrixResponse seasonPrices(@PathVariable UUID id) {
-        return queryService.seasonMatrix(id);
+        return mapper.toResponse(queryService.seasonMatrix(id));
     }
 
     @PutMapping("/seasons/{id}/prices")
     public PriceMatrixResponse saveSeasonPrices(
             @PathVariable UUID id, @Valid @RequestBody PriceMatrixRequest request) {
-        return adminService.saveSeasonPrices(id, request);
+        return mapper.toResponse(adminService.saveSeasonPrices(id, commands(request)));
+    }
+
+    @DeleteMapping("/seasons/{id}/prices/{priceRowId}")
+    public ResponseEntity<Void> deleteSeasonPrice(
+            @PathVariable UUID id, @PathVariable UUID priceRowId) {
+        adminService.deleteSeasonPrice(id, priceRowId);
+        return ResponseEntity.noContent().build();
+    }
+
+    private static List<PriceMatrixService.PriceRowCommand> commands(
+            PriceMatrixRequest request) {
+        return request.rows().stream()
+                .map(
+                        row ->
+                                new PriceMatrixService.PriceRowCommand(
+                                        row.roomTypeId(), row.guests(), row.amountTry()))
+                .toList();
     }
 }

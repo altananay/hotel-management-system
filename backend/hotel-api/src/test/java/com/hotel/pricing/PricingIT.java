@@ -327,6 +327,95 @@ class PricingIT {
     }
 
     @Test
+    void shouldDeleteBasePriceAndOnlyBreakThatCombination_whenDefaultPlanStaysDefault() {
+        LocalDate checkIn = LocalDate.now(ZoneOffset.UTC).plusDays(10);
+        LocalDate checkOut = checkIn.plusDays(1);
+        var plan = ratePlanService.create("STANDARD", "Standart", "Standard", true);
+        saveCompleteBasePrices(plan.id(), new BigDecimal("100.00"), new BigDecimal("120.00"));
+        ratePlanService.setDefault(plan.id());
+
+        UUID rowId =
+                priceMatrixService.getBaseMatrix(plan.id()).rows().stream()
+                        .filter(
+                                row ->
+                                        row.roomTypeId().equals(ROOM_TYPE_2)
+                                                && row.guests() == 2)
+                        .findFirst()
+                        .orElseThrow()
+                        .id();
+        priceMatrixService.deleteBasePrice(plan.id(), rowId);
+
+        assertThat(getRaw(quoteUrl(ROOM_TYPE_2, checkIn, checkOut, 2, "TRY")).statusCode())
+                .isEqualTo(409);
+        assertThat(getRaw(quoteUrl(ROOM_TYPE_2, checkIn, checkOut, 1, "TRY")).statusCode())
+                .isEqualTo(200);
+        assertThat(ratePlanService.findActiveDefault()).isPresent();
+        assertThat(priceMatrixService.findMissingForPlan(plan.id()))
+                .anySatisfy(
+                        missing -> {
+                            assertThat(missing.roomTypeId()).isEqualTo(ROOM_TYPE_2);
+                            assertThat(missing.guests()).isEqualTo(2);
+                        });
+    }
+
+    @Test
+    void shouldDeleteSeasonPriceFallbackToBaseAndKeepOldSnapshotUnchanged() {
+        LocalDate checkIn = LocalDate.now(ZoneOffset.UTC).plusDays(10);
+        LocalDate checkOut = checkIn.plusDays(2);
+        var plan = ratePlanService.create("STANDARD", "Standart", "Standard", true);
+        saveCompleteBasePrices(plan.id(), new BigDecimal("100.00"), new BigDecimal("120.00"));
+        ratePlanService.setDefault(plan.id());
+        var season =
+                seasonService.create(
+                        plan.id(), "HIGH", "Yüksek", "High", checkIn, checkOut.minusDays(1));
+        priceMatrixService.saveSeasonPrices(
+                season.id(),
+                List.of(
+                        new PriceMatrixService.PriceRowCommand(
+                                ROOM_TYPE_2, 2, new BigDecimal("200.00"))));
+        QuoteRequest request =
+                new QuoteRequest(ROOM_TYPE_2, checkIn, checkOut, 2, "TRY");
+        PriceSnapshot before = pricingQuoteApi.snapshot(request);
+        assertThat(before.nights().get(0).priceSource().name()).isEqualTo("SEASON");
+
+        UUID rowId =
+                priceMatrixService.getSeasonMatrix(season.id()).rows().stream()
+                        .filter(
+                                row ->
+                                        row.roomTypeId().equals(ROOM_TYPE_2)
+                                                && row.guests() == 2)
+                        .findFirst()
+                        .orElseThrow()
+                        .id();
+        priceMatrixService.deleteSeasonPrice(season.id(), rowId);
+
+        PriceSnapshot after = pricingQuoteApi.snapshot(request);
+        assertThat(after.nights().get(0).priceSource().name()).isEqualTo("BASE");
+        assertThat(before.nights().get(0).priceSource().name()).isEqualTo("SEASON");
+        assertThat(before.total().amount()).isEqualByComparingTo("400.00");
+        assertThat(after.total().amount()).isEqualByComparingTo("200.00");
+    }
+
+    @Test
+    void shouldAcceptThirtyNightsAndRejectThirtyOneNights_whenQuoting() {
+        LocalDate checkIn = LocalDate.now(ZoneOffset.UTC).plusDays(10);
+        var plan = ratePlanService.create("STANDARD", "Standart", "Standard", true);
+        saveCompleteBasePrices(plan.id(), new BigDecimal("100.00"), new BigDecimal("120.00"));
+        ratePlanService.setDefault(plan.id());
+
+        RawResponse thirty =
+                getRaw(quoteUrl(ROOM_TYPE_2, checkIn, checkIn.plusDays(30), 2, "TRY"));
+        assertThat(thirty.statusCode()).isEqualTo(200);
+        assertThat(thirty.body().get("nightCount").asInt()).isEqualTo(30);
+
+        RawResponse thirtyOne =
+                getRaw(quoteUrl(ROOM_TYPE_2, checkIn, checkIn.plusDays(31), 2, "TRY"));
+        assertThat(thirtyOne.statusCode()).isEqualTo(400);
+        assertThat(thirtyOne.body().get("code").asText())
+                .isEqualTo(PricingErrorCodes.INVALID_PERIOD);
+    }
+
+    @Test
     void shouldSwitchDefaultPlanBackAndForth_whenBothPlansAreComplete() {
         var planA = ratePlanService.create("PLAN-A", "Plan A", "Plan A", true);
         saveCompleteBasePrices(planA.id(), new BigDecimal("100.00"), new BigDecimal("120.00"));

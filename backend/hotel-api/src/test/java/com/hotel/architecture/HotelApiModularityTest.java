@@ -209,6 +209,18 @@ class HotelApiModularityTest {
     }
 
     @Test
+    void shouldForbidApplicationDependingOnWebLayer_whenCheckingModuleLayers() {
+        noClasses()
+                .that()
+                .resideInAPackage("com.hotel..internal.application..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage("com.hotel..internal.web..")
+                .allowEmptyShould(true)
+                .check(productionClasses);
+    }
+
+    @Test
     void shouldForbidCyclicDependencies_whenCheckingModules() {
         SlicesRuleDefinition.slices()
                 .matching("com.hotel.(*)..")

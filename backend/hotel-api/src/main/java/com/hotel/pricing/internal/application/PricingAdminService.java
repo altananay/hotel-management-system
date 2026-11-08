@@ -8,24 +8,8 @@ import com.hotel.pricing.internal.domain.ManualPrice;
 import com.hotel.pricing.internal.domain.PricingSettings;
 import com.hotel.pricing.internal.domain.RatePlan;
 import com.hotel.pricing.internal.domain.Season;
-import com.hotel.pricing.internal.web.PricingWebMapper;
-import com.hotel.pricing.internal.web.dto.ManualFxRateCreateRequest;
-import com.hotel.pricing.internal.web.dto.ManualFxRateResponse;
-import com.hotel.pricing.internal.web.dto.ManualFxRateUpdateRequest;
-import com.hotel.pricing.internal.web.dto.ManualPriceCreateRequest;
-import com.hotel.pricing.internal.web.dto.ManualPriceResponse;
-import com.hotel.pricing.internal.web.dto.ManualPriceUpdateRequest;
-import com.hotel.pricing.internal.web.dto.PriceMatrixRequest;
-import com.hotel.pricing.internal.web.dto.PriceMatrixResponse;
-import com.hotel.pricing.internal.web.dto.PriceRowRequest;
-import com.hotel.pricing.internal.web.dto.RatePlanCreateRequest;
-import com.hotel.pricing.internal.web.dto.RatePlanResponse;
-import com.hotel.pricing.internal.web.dto.RatePlanUpdateRequest;
-import com.hotel.pricing.internal.web.dto.SeasonCreateRequest;
-import com.hotel.pricing.internal.web.dto.SeasonResponse;
-import com.hotel.pricing.internal.web.dto.SeasonUpdateRequest;
-import com.hotel.pricing.internal.web.dto.SettingsResponse;
-import com.hotel.pricing.internal.web.dto.SettingsUpdateRequest;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -40,7 +24,6 @@ public class PricingAdminService {
     private final ManualFxRateService manualFxRateService;
     private final PricingSettingsService settingsService;
     private final RoomTypeLookup roomTypeLookup;
-    private final PricingWebMapper mapper;
 
     public PricingAdminService(
             RatePlanService ratePlanService,
@@ -49,8 +32,7 @@ public class PricingAdminService {
             ManualPriceService manualPriceService,
             ManualFxRateService manualFxRateService,
             PricingSettingsService settingsService,
-            RoomTypeLookup roomTypeLookup,
-            PricingWebMapper mapper) {
+            RoomTypeLookup roomTypeLookup) {
         this.ratePlanService = ratePlanService;
         this.seasonService = seasonService;
         this.priceMatrixService = priceMatrixService;
@@ -58,123 +40,118 @@ public class PricingAdminService {
         this.manualFxRateService = manualFxRateService;
         this.settingsService = settingsService;
         this.roomTypeLookup = roomTypeLookup;
-        this.mapper = mapper;
     }
 
-    public RatePlanResponse createRatePlan(RatePlanCreateRequest request) {
-        RatePlan plan =
-                ratePlanService.create(
-                        request.code(),
-                        request.nameTr(),
-                        request.nameEn(),
-                        request.active() == null || request.active());
-        return mapper.toResponse(plan, List.of());
+    public RatePlanAdminView createRatePlan(
+            String code, String nameTr, String nameEn, boolean active) {
+        RatePlan plan = ratePlanService.create(code, nameTr, nameEn, active);
+        return new RatePlanAdminView(plan, List.of());
     }
 
-    public RatePlanResponse updateRatePlan(UUID id, RatePlanUpdateRequest request) {
-        RatePlan plan = ratePlanService.update(id, request.nameTr(), request.nameEn(), request.active());
-        return mapper.toResponse(plan, seasonService.list(id));
+    public RatePlanAdminView updateRatePlan(
+            UUID id, String nameTr, String nameEn, Boolean active) {
+        RatePlan plan = ratePlanService.update(id, nameTr, nameEn, active);
+        return new RatePlanAdminView(plan, seasonService.list(id));
     }
 
-    public RatePlanResponse setDefault(UUID id) {
+    public RatePlanAdminView setDefault(UUID id) {
         RatePlan plan = ratePlanService.setDefault(id);
-        return mapper.toResponse(plan, seasonService.list(id));
+        return new RatePlanAdminView(plan, seasonService.list(id));
     }
 
-    public SeasonResponse createSeason(UUID ratePlanId, SeasonCreateRequest request) {
-        Season season =
-                seasonService.create(
-                        ratePlanId,
-                        request.code(),
-                        request.nameTr(),
-                        request.nameEn(),
-                        request.startDate(),
-                        request.endDate());
-        return mapper.toResponse(season);
+    public Season createSeason(
+            UUID ratePlanId,
+            String code,
+            String nameTr,
+            String nameEn,
+            LocalDate startDate,
+            LocalDate endDate) {
+        return seasonService.create(
+                ratePlanId, code, nameTr, nameEn, startDate, endDate);
     }
 
-    public SeasonResponse updateSeason(UUID seasonId, SeasonUpdateRequest request) {
-        Season season =
-                seasonService.update(
-                        seasonId,
-                        request.nameTr(),
-                        request.nameEn(),
-                        request.startDate(),
-                        request.endDate());
-        return mapper.toResponse(season);
+    public Season updateSeason(
+            UUID seasonId,
+            String nameTr,
+            String nameEn,
+            LocalDate startDate,
+            LocalDate endDate) {
+        return seasonService.update(seasonId, nameTr, nameEn, startDate, endDate);
     }
 
     public void deleteSeason(UUID seasonId) {
         seasonService.delete(seasonId);
     }
 
-    public PriceMatrixResponse saveBasePrices(UUID ratePlanId, PriceMatrixRequest request) {
-        return mapper.toResponse(
-                priceMatrixService.saveBasePrices(ratePlanId, commands(request.rows())));
+    public PriceMatrixService.MatrixView saveBasePrices(
+            UUID ratePlanId, List<PriceMatrixService.PriceRowCommand> rows) {
+        return priceMatrixService.saveBasePrices(ratePlanId, rows);
     }
 
-    public PriceMatrixResponse saveSeasonPrices(UUID seasonId, PriceMatrixRequest request) {
-        return mapper.toResponse(
-                priceMatrixService.saveSeasonPrices(seasonId, commands(request.rows())));
+    public PriceMatrixService.MatrixView saveSeasonPrices(
+            UUID seasonId, List<PriceMatrixService.PriceRowCommand> rows) {
+        return priceMatrixService.saveSeasonPrices(seasonId, rows);
     }
 
-    public ManualPriceResponse createManualPrice(ManualPriceCreateRequest request) {
+    public void deleteBasePrice(UUID ratePlanId, UUID priceRowId) {
+        priceMatrixService.deleteBasePrice(ratePlanId, priceRowId);
+    }
+
+    public void deleteSeasonPrice(UUID seasonId, UUID priceRowId) {
+        priceMatrixService.deleteSeasonPrice(seasonId, priceRowId);
+    }
+
+    public ManualPriceAdminView createManualPrice(
+            UUID ratePlanId,
+            UUID roomTypeId,
+            int guests,
+            LocalDate startDate,
+            LocalDate endDate,
+            BigDecimal amountTry) {
         ManualPrice manualPrice =
                 manualPriceService.create(
-                        request.ratePlanId(),
-                        request.roomTypeId(),
-                        request.guests(),
-                        request.startDate(),
-                        request.endDate(),
-                        request.amountTry());
-        return mapper.toResponse(manualPrice, roomType(manualPrice.roomTypeId()));
+                        ratePlanId, roomTypeId, guests, startDate, endDate, amountTry);
+        return new ManualPriceAdminView(manualPrice, roomType(manualPrice.roomTypeId()));
     }
 
-    public ManualPriceResponse updateManualPrice(
-            UUID id, ManualPriceUpdateRequest request) {
+    public ManualPriceAdminView updateManualPrice(
+            UUID id,
+            UUID roomTypeId,
+            Integer guests,
+            LocalDate startDate,
+            LocalDate endDate,
+            BigDecimal amountTry) {
         ManualPrice manualPrice =
                 manualPriceService.update(
-                        id,
-                        request.roomTypeId(),
-                        request.guests(),
-                        request.startDate(),
-                        request.endDate(),
-                        request.amountTry());
-        return mapper.toResponse(manualPrice, roomType(manualPrice.roomTypeId()));
+                        id, roomTypeId, guests, startDate, endDate, amountTry);
+        return new ManualPriceAdminView(manualPrice, roomType(manualPrice.roomTypeId()));
     }
 
     public void deleteManualPrice(UUID id) {
         manualPriceService.delete(id);
     }
 
-    public ManualFxRateResponse createManualFxRate(ManualFxRateCreateRequest request) {
-        FxRate fxRate =
-                manualFxRateService.create(request.currency(), request.rateDate(), request.rate());
-        return mapper.toResponse(fxRate);
+    public FxRate createManualFxRate(
+            String currency, LocalDate rateDate, BigDecimal rate) {
+        return manualFxRateService.create(currency, rateDate, rate);
     }
 
-    public ManualFxRateResponse updateManualFxRate(
-            UUID id, ManualFxRateUpdateRequest request) {
-        return mapper.toResponse(manualFxRateService.update(id, request.rate()));
+    public FxRate updateManualFxRate(UUID id, BigDecimal rate) {
+        return manualFxRateService.update(id, rate);
     }
 
     public void deleteManualFxRate(UUID id) {
         manualFxRateService.delete(id);
     }
 
-    public SettingsResponse updateSettings(SettingsUpdateRequest request) {
-        PricingSettings settings =
-                settingsService.update(request.bufferPercent(), request.roundingStep());
-        return mapper.toResponse(settings);
-    }
-
-    private List<PriceMatrixService.PriceRowCommand> commands(List<PriceRowRequest> rows) {
-        return rows.stream()
-                .map(row -> new PriceMatrixService.PriceRowCommand(row.roomTypeId(), row.guests(), row.amountTry()))
-                .toList();
+    public PricingSettings updateSettings(
+            BigDecimal bufferPercent, BigDecimal roundingStep) {
+        return settingsService.update(bufferPercent, roundingStep);
     }
 
     private RoomTypeSnapshot roomType(UUID id) {
-        return roomTypeLookup.findByIds(List.of(RoomTypeId.of(id))).stream().findFirst().orElse(null);
+        return roomTypeLookup.findByIds(List.of(RoomTypeId.of(id))).stream()
+                .findFirst()
+                .orElse(null);
     }
 }
