@@ -195,9 +195,6 @@ test.describe("Pricing management (AC-1..AC-6)", () => {
         { rows: seasonRows },
       );
       expect(seasonSave.status()).toBe(200);
-      const seasonMatrix = await json<{
-        rows: Array<{ id: string; roomTypeId: string; guests: number }>;
-      }>(seasonSave);
 
       const defaultResponse = await adminSend(
         page,
@@ -322,17 +319,19 @@ test.describe("Pricing management (AC-1..AC-6)", () => {
       const targetBaseRow = baseMatrix.rows.find(
         (row) => row.roomTypeId === roomTypes[0].id && row.guests === 1,
       );
-      const targetSeasonRow = seasonMatrix.rows.find(
-        (row) => row.roomTypeId === roomTypes[0].id && row.guests === 1,
-      );
       expect(targetBaseRow).toBeTruthy();
-      expect(targetSeasonRow).toBeTruthy();
-      const deleteSeasonPrice = await adminSend(
-        page,
-        "DELETE",
-        `/admin-api/pricing/seasons/${season.id}/prices/${targetSeasonRow!.id}`,
+
+      const seasonDeleteResponse = page.waitForResponse(
+        (response) =>
+          response.url().includes(`/admin-api/pricing/seasons/${season.id}/prices/`) &&
+          response.request().method() === "DELETE",
       );
-      expect(deleteSeasonPrice.status()).toBe(204);
+      await page
+        .getByTestId("admin-pricing-season-prices")
+        .getByTestId("admin-pricing-price-delete")
+        .first()
+        .click();
+      expect((await seasonDeleteResponse).status()).toBe(204);
       const afterSeasonDelete = await page.request.get(
         `${API_BASE_URL}/api/pricing/quote?roomTypeId=${roomTypes[0].id}&checkIn=${checkIn}&checkOut=${checkOut}&guests=1&currency=TRY`,
       );
@@ -344,12 +343,17 @@ test.describe("Pricing management (AC-1..AC-6)", () => {
       expect(afterSeasonBody.nights[2].priceSource).toBe("BASE");
 
       // Deleting the base price makes only that combination unquotable; default stays default.
-      const deleteBasePrice = await adminSend(
-        page,
-        "DELETE",
-        `/admin-api/pricing/rate-plans/${plan!.id}/prices/${targetBaseRow!.id}`,
+      const baseDeleteResponse = page.waitForResponse(
+        (response) =>
+          response.url().includes(`/admin-api/pricing/rate-plans/${plan!.id}/prices/`) &&
+          response.request().method() === "DELETE",
       );
-      expect(deleteBasePrice.status()).toBe(204);
+      await page
+        .getByTestId("admin-pricing-prices")
+        .getByTestId("admin-pricing-price-delete")
+        .first()
+        .click();
+      expect((await baseDeleteResponse).status()).toBe(204);
       const afterBaseDelete = await page.request.get(
         `${API_BASE_URL}/api/pricing/quote?roomTypeId=${roomTypes[0].id}&checkIn=${checkIn}&checkOut=${checkOut}&guests=1&currency=TRY`,
       );

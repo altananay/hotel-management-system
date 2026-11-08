@@ -20,9 +20,9 @@ içerecektir.** 0007 yazılırken bu madde kontrol edilecektir.
 
 ## Test özeti
 
-- `backend/hotel-api`: `mvn -B verify` → 72 test, 0 failure/error; `PricingIT` 14 test.
+- `backend/hotel-api`: `mvn -B verify` → 73 test, 0 failure/error; `PricingIT` 15 test.
 - `backend/admin-api`: değişiklik yok; mevcut doğrulama CI'da.
-- `admin-web`: ESLint + `tsc --noEmit` geçti; 44 Vitest testi; `next build` başarılı.
+- `admin-web`: ESLint + `tsc --noEmit` geçti; 45 Vitest testi; `next build` başarılı.
 - E2E: `npx playwright test tests/pricing --grep @pricing` → 1 passed.
 - 0001–0005 kanıt arşivleri: `git diff` + untracked kontrolü temiz.
 

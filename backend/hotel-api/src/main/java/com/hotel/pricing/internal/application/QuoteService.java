@@ -121,7 +121,10 @@ public class QuoteService implements PricingQuoteApi {
         RatePlan plan = ratePlanService.findActiveDefault().orElseThrow(this::defaultPlanRequired);
         PricingSettings settings = settingsService.get();
         LocalDate lastNight = request.checkOut().minusDays(1);
-        List<LocalDate> nights = request.checkIn().datesUntil(request.checkOut()).toList();
+        List<LocalDate> nights =
+                java.util.stream.LongStream.range(0, nightsCount)
+                        .mapToObj(request.checkIn()::plusDays)
+                        .toList();
 
         List<ManualPrice> manualPrices =
                 manualPriceRepository

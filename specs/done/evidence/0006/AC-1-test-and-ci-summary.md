@@ -6,13 +6,15 @@ Tarih: 2026-11-08
 
 - `backend/hotel-api`: `.\mvnw.cmd -B verify`
   - Sonuç: `BUILD SUCCESS`
-  - Unit + integration: `Tests run: 72, Failures: 0, Errors: 0, Skipped: 0`
-  - `PricingIT`: 14 test (şema, TRY/EUR/USD, manuel fiyat/kur, sezon fallback,
+  - Unit + integration: `Tests run: 73, Failures: 0, Errors: 0, Skipped: 0`
+  - `PricingIT`: 15 test (şema, TRY/EUR/USD, manuel fiyat/kur, sezon fallback,
     default bütünlüğü, overlap/duplicate, snapshot değişmezliği, ayar etkisi,
-    30/31 gece sınırı, baz/sezon fiyat silme).
+    30/31 gece sınırı, baz/sezon fiyat silme, yanlış plan/sezon sahipliği).
   - `AdminPricingControllerTest`: 8 test (401/403, 204 delete, 404 yanlış/eksik satır,
     503, eksik liste, MANAGER erişimi).
-  - `PricingPropertiesTest`: varsayılan 30 gece, pozitif override, geçersiz değer.
+  - `PricingPropertiesTest`: varsayılan 30 gece, property binding, geçersiz değer.
+  - `QuoteServiceMaxStayTest`: sabit `Clock` ile 30/31 gece sınırı ve DB sorgusundan
+    önce reddetme.
   - `TcmbFxParserTest` + `TcmbFxServiceTest`: hafta içi/hafta sonu/bozuk XML/erişilemezlik.
   - `HotelApiModularityTest`: `pricing → catalog` izinli read kenarı ve
     `internal.application → internal.web` yasağı yeşil.
@@ -21,8 +23,9 @@ Tarih: 2026-11-08
 ## Admin-web
 
 - `npm run lint`: geçti (ESLint + `tsc --noEmit`).
-- `npm test`: 44 test geçti; `PricingManager` yükleme/boş/hata/dolu, bayat kur
-  uyarısı, plan düzenleme ve baz/sezon fiyat satırı silme.
+- `npm test`: 45 test geçti; `PricingManager` yükleme/boş/hata/dolu, bayat kur
+  uyarısı, plan düzenleme, baz/sezon fiyat satırı silme ve pasif oda tipinde
+  silme butonunun görünmemesi.
 - `npm run build`: başarılı; `/pricing` route'u üretildi.
 
 ## E2E

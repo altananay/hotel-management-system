@@ -19,6 +19,7 @@ import com.hotel.pricing.internal.domain.PricingErrorCodes;
 import com.hotel.pricing.internal.persistence.FxRateEntity;
 import com.hotel.pricing.internal.persistence.FxRateJpaRepository;
 import com.hotel.sharedkernel.api.DomainError;
+import com.hotel.sharedkernel.api.HotelDate;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -28,7 +29,6 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 import org.flywaydb.core.Flyway;
@@ -157,7 +157,7 @@ class PricingIT {
 
     @Test
     void shouldQuoteTryWithBaseSeasonAndManualPrice_whenPlanIsDefault() {
-        LocalDate checkIn = LocalDate.now(ZoneOffset.UTC).plusDays(10);
+        LocalDate checkIn = HotelDate.now(clock).value().plusDays(10);
         LocalDate checkOut = checkIn.plusDays(3);
         var plan = ratePlanService.create("STANDARD", "Standart", "Standard", true);
         saveCompleteBasePrices(plan.id(), new BigDecimal("100.00"), new BigDecimal("120.00"));
@@ -196,12 +196,12 @@ class PricingIT {
 
     @Test
     void shouldQuoteEurWithBufferAndRoundEachNightUp_whenTcmbRateExists() {
-        LocalDate checkIn = LocalDate.now(ZoneOffset.UTC).plusDays(10);
+        LocalDate checkIn = HotelDate.now(clock).value().plusDays(10);
         LocalDate checkOut = checkIn.plusDays(2);
         var plan = ratePlanService.create("STANDARD", "Standart", "Standard", true);
         saveCompleteBasePrices(plan.id(), new BigDecimal("100.01"), new BigDecimal("120.01"));
         ratePlanService.setDefault(plan.id());
-        saveTcmbEurRate(LocalDate.now(ZoneOffset.UTC).minusDays(1), new BigDecimal("32.500000"));
+        saveTcmbEurRate(HotelDate.now(clock).value().minusDays(1), new BigDecimal("32.500000"));
 
         String url =
                 baseUrl()
@@ -222,7 +222,7 @@ class PricingIT {
 
     @Test
     void shouldReturn503WhenDefaultPlanIsMissingAnd409WhenPriceIsMissing() {
-        LocalDate checkIn = LocalDate.now(ZoneOffset.UTC).plusDays(10);
+        LocalDate checkIn = HotelDate.now(clock).value().plusDays(10);
         LocalDate checkOut = checkIn.plusDays(1);
         JsonNode noPlan =
                 getRaw(
@@ -262,7 +262,7 @@ class PricingIT {
 
     @Test
     void shouldRejectInactiveRoomTypeAndInvalidGuestsAndCurrency() {
-        LocalDate checkIn = LocalDate.now(ZoneOffset.UTC).plusDays(10);
+        LocalDate checkIn = HotelDate.now(clock).value().plusDays(10);
         LocalDate checkOut = checkIn.plusDays(1);
         assertThat(
                         getRaw(quoteUrl(ROOM_TYPE_INACTIVE, checkIn, checkOut, 1, "TRY"))
@@ -327,8 +327,53 @@ class PricingIT {
     }
 
     @Test
+    void shouldRejectDeletingPriceRowThroughAnotherPlanOrSeason() {
+        LocalDate start = HotelDate.now(clock).value().plusDays(20);
+        var planA = ratePlanService.create("PLAN-A", "Plan A", "Plan A", true);
+        var planB = ratePlanService.create("PLAN-B", "Plan B", "Plan B", true);
+        priceMatrixService.saveBasePrices(
+                planB.id(),
+                List.of(
+                        new PriceMatrixService.PriceRowCommand(
+                                ROOM_TYPE_2, 1, new BigDecimal("100.00"))));
+        UUID baseRowId =
+                priceMatrixService.getBaseMatrix(planB.id()).rows().getFirst().id();
+
+        assertThatThrownBy(() -> priceMatrixService.deleteBasePrice(planA.id(), baseRowId))
+                .isInstanceOf(DomainError.class)
+                .satisfies(
+                        ex ->
+                                assertThat(((DomainError) ex).code())
+                                        .isEqualTo(
+                                                PricingErrorCodes.RATE_PLAN_PRICE_NOT_FOUND));
+        assertThat(priceMatrixService.getBaseMatrix(planB.id()).rows()).hasSize(1);
+
+        var seasonA =
+                seasonService.create(
+                        planA.id(), "A-SEASON", "A Sezon", "A Season", start, start.plusDays(2));
+        var seasonB =
+                seasonService.create(
+                        planB.id(), "B-SEASON", "B Sezon", "B Season", start, start.plusDays(2));
+        priceMatrixService.saveSeasonPrices(
+                seasonB.id(),
+                List.of(
+                        new PriceMatrixService.PriceRowCommand(
+                                ROOM_TYPE_2, 1, new BigDecimal("150.00"))));
+        UUID seasonRowId =
+                priceMatrixService.getSeasonMatrix(seasonB.id()).rows().getFirst().id();
+        assertThatThrownBy(
+                        () -> priceMatrixService.deleteSeasonPrice(seasonA.id(), seasonRowId))
+                .isInstanceOf(DomainError.class)
+                .satisfies(
+                        ex ->
+                                assertThat(((DomainError) ex).code())
+                                        .isEqualTo(PricingErrorCodes.SEASON_PRICE_NOT_FOUND));
+        assertThat(priceMatrixService.getSeasonMatrix(seasonB.id()).rows()).hasSize(1);
+    }
+
+    @Test
     void shouldDeleteBasePriceAndOnlyBreakThatCombination_whenDefaultPlanStaysDefault() {
-        LocalDate checkIn = LocalDate.now(ZoneOffset.UTC).plusDays(10);
+        LocalDate checkIn = HotelDate.now(clock).value().plusDays(10);
         LocalDate checkOut = checkIn.plusDays(1);
         var plan = ratePlanService.create("STANDARD", "Standart", "Standard", true);
         saveCompleteBasePrices(plan.id(), new BigDecimal("100.00"), new BigDecimal("120.00"));
@@ -360,7 +405,7 @@ class PricingIT {
 
     @Test
     void shouldDeleteSeasonPriceFallbackToBaseAndKeepOldSnapshotUnchanged() {
-        LocalDate checkIn = LocalDate.now(ZoneOffset.UTC).plusDays(10);
+        LocalDate checkIn = HotelDate.now(clock).value().plusDays(10);
         LocalDate checkOut = checkIn.plusDays(2);
         var plan = ratePlanService.create("STANDARD", "Standart", "Standard", true);
         saveCompleteBasePrices(plan.id(), new BigDecimal("100.00"), new BigDecimal("120.00"));
@@ -398,7 +443,7 @@ class PricingIT {
 
     @Test
     void shouldAcceptThirtyNightsAndRejectThirtyOneNights_whenQuoting() {
-        LocalDate checkIn = LocalDate.now(ZoneOffset.UTC).plusDays(10);
+        LocalDate checkIn = HotelDate.now(clock).value().plusDays(10);
         var plan = ratePlanService.create("STANDARD", "Standart", "Standard", true);
         saveCompleteBasePrices(plan.id(), new BigDecimal("100.00"), new BigDecimal("120.00"));
         ratePlanService.setDefault(plan.id());
@@ -444,7 +489,7 @@ class PricingIT {
 
     @Test
     void shouldKeepOldSnapshotUnchangedAndProduceDifferentSnapshot_whenPriceChanges() {
-        LocalDate checkIn = LocalDate.now(ZoneOffset.UTC).plusDays(10);
+        LocalDate checkIn = HotelDate.now(clock).value().plusDays(10);
         LocalDate checkOut = checkIn.plusDays(2);
         var plan = ratePlanService.create("STANDARD", "Standart", "Standard", true);
         saveCompleteBasePrices(plan.id(), new BigDecimal("100.00"), new BigDecimal("120.00"));
@@ -469,7 +514,7 @@ class PricingIT {
 
     @Test
     void shouldPreferManualFxAndApplyUpdatedSettings_whenQuotingEur() {
-        LocalDate checkIn = LocalDate.now(ZoneOffset.UTC).plusDays(10);
+        LocalDate checkIn = HotelDate.now(clock).value().plusDays(10);
         LocalDate checkOut = checkIn.plusDays(1);
         var plan = ratePlanService.create("STANDARD", "Standart", "Standard", true);
         saveCompleteBasePrices(plan.id(), new BigDecimal("100.00"), new BigDecimal("120.00"));
@@ -499,7 +544,7 @@ class PricingIT {
 
     @Test
     void shouldFallbackToBasePriceAndRejectOverlapsAndDuplicates() {
-        LocalDate checkIn = LocalDate.now(ZoneOffset.UTC).plusDays(10);
+        LocalDate checkIn = HotelDate.now(clock).value().plusDays(10);
         LocalDate checkOut = checkIn.plusDays(1);
         var plan = ratePlanService.create("STANDARD", "Standart", "Standard", true);
         saveCompleteBasePrices(plan.id(), new BigDecimal("100.00"), new BigDecimal("120.00"));
@@ -564,7 +609,7 @@ class PricingIT {
 
     @Test
     void shouldReturn503WhenEurHasNoFxRate() {
-        LocalDate checkIn = LocalDate.now(ZoneOffset.UTC).plusDays(10);
+        LocalDate checkIn = HotelDate.now(clock).value().plusDays(10);
         LocalDate checkOut = checkIn.plusDays(1);
         var plan = ratePlanService.create("STANDARD", "Standart", "Standard", true);
         saveCompleteBasePrices(plan.id(), new BigDecimal("100.00"), new BigDecimal("120.00"));

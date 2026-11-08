@@ -226,6 +226,44 @@ describe("PricingManager (AC-2)", () => {
     );
   });
 
+  it("shouldNotRenderDeleteForPassiveRoomType_whenMatrixContainsInactiveRow", async () => {
+    server.use(
+      http.get(`*/admin-api/pricing/rate-plans/${PLAN_ID}/prices`, () =>
+        HttpResponse.json({
+          roomTypes: [
+            matrix.roomTypes[0],
+            {
+              id: "0199f2c0-0000-7000-8000-000000000304",
+              nameTr: "Pasif Oda",
+              nameEn: "Passive Room",
+              maxGuests: 2,
+              active: false,
+            },
+          ],
+          rows: [
+            matrix.rows[0],
+            {
+              id: "inactive-row",
+              roomTypeId: "0199f2c0-0000-7000-8000-000000000304",
+              guests: 1,
+              amountTry: "90.00",
+              updatedAt: "2026-11-08T10:00:00Z",
+            },
+          ],
+          missing: [],
+        }),
+      ),
+    );
+
+    renderManager();
+    const base = await screen.findByTestId("admin-pricing-prices");
+    await waitFor(() =>
+      expect(within(base).getAllByTestId("admin-pricing-price-delete")).toHaveLength(
+        1,
+      ),
+    );
+  });
+
   it("shouldDeleteBaseAndSeasonPriceRows_whenDeleteClicked", async () => {
     const deleteUrls: string[] = [];
     server.use(
