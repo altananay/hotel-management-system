@@ -70,12 +70,19 @@ export function usePricingMutations() {
   });
 
   const setDefault = useMutation({
-    mutationFn: (id: string) =>
+    mutationFn: (input: {
+      id: string;
+      expectedDefaultPlanId: string | null;
+    }) =>
       withCsrfRetry((csrfToken) =>
         adminApiRequest(
-          `/admin-api/pricing/rate-plans/${id}/default`,
+          `/admin-api/pricing/rate-plans/${input.id}/default`,
           RatePlanSchema,
-          { method: "PUT", csrfToken },
+          {
+            method: "PUT",
+            body: { expectedDefaultPlanId: input.expectedDefaultPlanId },
+            csrfToken,
+          },
         ),
       ),
     onSuccess: invalidateAll,

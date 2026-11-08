@@ -125,10 +125,12 @@ Ayrıntılı altyapı, migration, seed ve backend/frontend başlatma adımları 
 
 - Testler: `npx playwright test tests/pricing --grep @pricing` (`@media` sonrası).
 - Sıra: SUPER_ADMIN login → `/pricing` yükleme/boş/hata/dolu → plan → sezon →
-  baz/sezon fiyat matrisi → varsayılan plan → manuel kur → manuel fiyat → public
-  teklif API (TRY/EUR/USD, çok gece) → 30 gece kabul / 31 gece 400 → sezon fiyatı
-  silme (baz fallback) → baz fiyat silme (409 + eksik uyarısı) → oda vitrininde
-  fiyat yok → FRONT_DESK okuma/yazma/silme 403.
+  baz/sezon fiyat matrisi → varsayılan plan → eskimiş `expectedDefaultPlanId`
+  için 409 → manuel kur → manuel fiyat → public teklif API (TRY/EUR/USD, çok
+  gece) → 30 gece kabul / 31 gece 400 → sezon fiyatı silme (baz fallback) →
+  baz fiyat silme (409 + eksik uyarısı) → sıfır/negatif tutar
+  (`pricing.invalid_amount`) ve sıfır misafir (`pricing.invalid_guests`) →
+  oda vitrininde fiyat yok → FRONT_DESK okuma/yazma/silme 403.
 - Local/CI'da TCMB scheduler kapalıdır (`HOTEL_PRICING_TCMB_ENABLED=false`);
   bayat kur uyarısı `db/seed/pricing` içindeki dünkü TCMB kuruyla gösterilir.
 - Kanıtlar: `specs/done/evidence/0006/`; `E2E_EVIDENCE_DIR` verilmezse bu dizine

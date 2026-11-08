@@ -54,8 +54,8 @@ public class PricingAdminService {
         return new RatePlanAdminView(plan, seasonService.list(id));
     }
 
-    public RatePlanAdminView setDefault(UUID id) {
-        RatePlan plan = ratePlanService.setDefault(id);
+    public RatePlanAdminView setDefault(UUID id, UUID expectedDefaultPlanId) {
+        RatePlan plan = ratePlanService.setDefault(id, expectedDefaultPlanId);
         return new RatePlanAdminView(plan, seasonService.list(id));
     }
 

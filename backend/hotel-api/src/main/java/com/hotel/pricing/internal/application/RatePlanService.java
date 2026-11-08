@@ -76,6 +76,16 @@ public class RatePlanService {
 
     @Transactional
     public RatePlan setDefault(UUID id) {
+        return setDefaultInternal(id, null, false);
+    }
+
+    @Transactional
+    public RatePlan setDefault(UUID id, UUID expectedDefaultPlanId) {
+        return setDefaultInternal(id, expectedDefaultPlanId, true);
+    }
+
+    private RatePlan setDefaultInternal(
+            UUID id, UUID expectedDefaultPlanId, boolean enforceExpectedDefault) {
         List<RatePlanEntity> all = repository.findAllLocked();
         RatePlanEntity target =
                 all.stream()
@@ -87,6 +97,20 @@ public class RatePlanService {
                     PricingErrorCodes.RATE_PLAN_IN_USE,
                     "Only an active rate plan can be the default.",
                     DomainErrorCategory.CONFLICT);
+        }
+        if (enforceExpectedDefault) {
+            UUID currentDefaultId =
+                    all.stream()
+                            .filter(RatePlanEntity::isDefaultPlan)
+                            .map(RatePlanEntity::getId)
+                            .findFirst()
+                            .orElse(null);
+            if (!Objects.equals(currentDefaultId, expectedDefaultPlanId)) {
+                throw new DomainError(
+                        PricingErrorCodes.RATE_PLAN_IN_USE,
+                        "The default plan changed concurrently; refresh and retry.",
+                        DomainErrorCategory.CONFLICT);
+            }
         }
         var missing = priceMatrixService.findMissingForPlan(id);
         if (!missing.isEmpty()) {

@@ -208,7 +208,7 @@ class AdminPricingControllerTest {
     void shouldReturn409WithMissingList_whenDefaultPlanIsIncomplete() throws Exception {
         UUID planId = UUID.fromString("0199f2c0-0000-7000-8000-000000000701");
         UUID roomTypeId = UUID.fromString("0199f2c0-0000-7000-8000-000000000301");
-        when(adminService.setDefault(planId))
+        when(adminService.setDefault(planId, null))
                 .thenThrow(
                         new PricingDefaultIncompleteException(
                                 List.of(new MissingPrice(roomTypeId, 2))));
@@ -219,6 +219,28 @@ class AdminPricingControllerTest {
                 .andExpect(jsonPath("$.code").value("pricing.default_rate_plan_incomplete"))
                 .andExpect(jsonPath("$.missing[0].roomTypeId").value(roomTypeId.toString()))
                 .andExpect(jsonPath("$.missing[0].guests").value(2));
+    }
+
+    @Test
+    void shouldForwardExpectedDefaultPlanId_andReturn409WhenItIsStale() throws Exception {
+        UUID planId = UUID.fromString("0199f2c0-0000-7000-8000-000000000701");
+        UUID expectedDefaultPlanId = UUID.fromString("0199f2c0-0000-7000-8000-000000000702");
+        when(adminService.setDefault(planId, expectedDefaultPlanId))
+                .thenThrow(
+                        new DomainError(
+                                PricingErrorCodes.RATE_PLAN_IN_USE,
+                                "The default plan changed concurrently; refresh and retry.",
+                                DomainErrorCategory.CONFLICT));
+        mockMvc.perform(
+                        put("/admin-api/pricing/rate-plans/" + planId + "/default")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        "{\"expectedDefaultPlanId\":\""
+                                                + expectedDefaultPlanId
+                                                + "\"}")
+                                .header("Authorization", "Bearer " + token("SUPER_ADMIN")))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("pricing.rate_plan_in_use"));
     }
 
     private String token(String role) throws Exception {

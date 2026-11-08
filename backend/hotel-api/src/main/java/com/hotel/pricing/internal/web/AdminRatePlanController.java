@@ -11,6 +11,7 @@ import com.hotel.pricing.internal.web.dto.RatePlanUpdateRequest;
 import com.hotel.pricing.internal.web.dto.SeasonCreateRequest;
 import com.hotel.pricing.internal.web.dto.SeasonResponse;
 import com.hotel.pricing.internal.web.dto.SeasonUpdateRequest;
+import com.hotel.pricing.internal.web.dto.SetDefaultRatePlanRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -72,8 +73,12 @@ public class AdminRatePlanController {
     }
 
     @PutMapping("/rate-plans/{id}/default")
-    public RatePlanResponse setDefault(@PathVariable UUID id) {
-        return mapper.toResponse(adminService.setDefault(id));
+    public RatePlanResponse setDefault(
+            @PathVariable UUID id,
+            @RequestBody(required = false) SetDefaultRatePlanRequest request) {
+        UUID expectedDefaultPlanId =
+                request == null ? null : request.expectedDefaultPlanId();
+        return mapper.toResponse(adminService.setDefault(id, expectedDefaultPlanId));
     }
 
     @GetMapping("/rate-plans/{id}/seasons")

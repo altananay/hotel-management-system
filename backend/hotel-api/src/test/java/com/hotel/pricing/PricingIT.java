@@ -3,6 +3,8 @@ package com.hotel.pricing;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -32,8 +34,16 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,6 +52,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
@@ -299,6 +310,146 @@ class PricingIT {
                         ex ->
                                 assertThat(((PricingDefaultIncompleteException) ex).missing())
                                         .isNotEmpty());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    void shouldReturnStablePricingCodes_whenAmountOrGuestsAreNotPositive() throws Exception {
+        var plan = ratePlanService.create("QA-VALIDATION", "QA", "QA", true);
+        LocalDate start = HotelDate.now(clock).value().plusDays(10);
+        String manualPriceTemplate =
+                """
+                {"ratePlanId":"%s","roomTypeId":"%s","guests":%d,"startDate":"%s","endDate":"%s","amountTry":"%s"}
+                """;
+
+        mockMvc.perform(
+                        post("/admin-api/pricing/manual-prices")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        manualPriceTemplate.formatted(
+                                                plan.id(),
+                                                ROOM_TYPE_2,
+                                                1,
+                                                start,
+                                                start.plusDays(1),
+                                                "0.00")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(PricingErrorCodes.INVALID_AMOUNT));
+
+        mockMvc.perform(
+                        post("/admin-api/pricing/manual-prices")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        manualPriceTemplate.formatted(
+                                                plan.id(),
+                                                ROOM_TYPE_2,
+                                                1,
+                                                start,
+                                                start.plusDays(1),
+                                                "-1.00")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(PricingErrorCodes.INVALID_AMOUNT));
+
+        mockMvc.perform(
+                        post("/admin-api/pricing/manual-prices")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        manualPriceTemplate.formatted(
+                                                plan.id(),
+                                                ROOM_TYPE_2,
+                                                0,
+                                                start,
+                                                start.plusDays(1),
+                                                "10.00")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(PricingErrorCodes.INVALID_GUESTS));
+
+        String matrixTemplate =
+                """
+                {"rows":[{"roomTypeId":"%s","guests":%d,"amountTry":"%s"}]}
+                """;
+        mockMvc.perform(
+                        put("/admin-api/pricing/rate-plans/{id}/prices", plan.id())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(matrixTemplate.formatted(ROOM_TYPE_2, 1, "0.00")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(PricingErrorCodes.INVALID_AMOUNT));
+
+        mockMvc.perform(
+                        put("/admin-api/pricing/rate-plans/{id}/prices", plan.id())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(matrixTemplate.formatted(ROOM_TYPE_2, 0, "10.00")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(PricingErrorCodes.INVALID_GUESTS));
+
+        var season =
+                seasonService.create(
+                        plan.id(), "QA-SEASON", "QA", "QA", start, start.plusDays(5));
+        mockMvc.perform(
+                        put("/admin-api/pricing/seasons/{id}/prices", season.id())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(matrixTemplate.formatted(ROOM_TYPE_2, 1, "0.00")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(PricingErrorCodes.INVALID_AMOUNT));
+    }
+
+    @Test
+    void shouldAllowOnlyOneConcurrentDefaultChange_whenExpectedDefaultIsStale()
+            throws Exception {
+        var planA = ratePlanService.create("CONCURRENT-A", "A", "A", true);
+        saveCompleteBasePrices(planA.id(), new BigDecimal("100.00"), new BigDecimal("120.00"));
+        var planB = ratePlanService.create("CONCURRENT-B", "B", "B", true);
+        saveCompleteBasePrices(planB.id(), new BigDecimal("110.00"), new BigDecimal("130.00"));
+        var planC = ratePlanService.create("CONCURRENT-C", "C", "C", true);
+        saveCompleteBasePrices(planC.id(), new BigDecimal("120.00"), new BigDecimal("140.00"));
+        ratePlanService.setDefault(planA.id());
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CountDownLatch ready = new CountDownLatch(2);
+        CountDownLatch start = new CountDownLatch(1);
+        Callable<Object> changeToB =
+                () -> {
+                    ready.countDown();
+                    start.await();
+                    return ratePlanService.setDefault(planB.id(), planA.id());
+                };
+        Callable<Object> changeToC =
+                () -> {
+                    ready.countDown();
+                    start.await();
+                    return ratePlanService.setDefault(planC.id(), planA.id());
+                };
+
+        try {
+            Future<Object> futureB = executor.submit(changeToB);
+            Future<Object> futureC = executor.submit(changeToC);
+            assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue();
+            start.countDown();
+
+            int successes = 0;
+            List<DomainError> conflicts = new ArrayList<>();
+            for (Future<Object> future : List.of(futureB, futureC)) {
+                try {
+                    future.get(10, TimeUnit.SECONDS);
+                    successes++;
+                } catch (ExecutionException ex) {
+                    assertThat(ex.getCause()).isInstanceOf(DomainError.class);
+                    conflicts.add((DomainError) ex.getCause());
+                }
+            }
+
+            assertThat(successes).isEqualTo(1);
+            assertThat(conflicts).hasSize(1);
+            assertThat(conflicts.getFirst().code()).isEqualTo(PricingErrorCodes.RATE_PLAN_IN_USE);
+            assertThat(
+                            ratePlanService.list().stream()
+                                    .filter(plan -> plan.defaultPlan())
+                                    .count())
+                    .isEqualTo(1);
+        } finally {
+            start.countDown();
+            executor.shutdownNow();
+        }
     }
 
     private void insertRoomTypes() {

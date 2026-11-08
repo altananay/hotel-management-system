@@ -29,16 +29,28 @@ içerecektir.** 0007 yazılırken bu madde kontrol edilecektir.
 - **Açık bulgu yok.** Anonim quote için rate limiting/operasyonel hardening ayrı
   spec/backlog konusudur.
 
+## QA bulguları — Rev.2
+
+- **QA-1:** Fiyat DTO'larındaki `@DecimalMin`/`@Min` kısıtları kaldırıldı; sıfır/negatif
+  tutar `pricing.invalid_amount`, sıfır misafir `pricing.invalid_guests` döner.
+  `AdminPricingControllerTest`, `PricingIT`, admin-web Vitest ve `@pricing` E2E ile
+  doğrulandı.
+- **QA-2:** Varsayılan plan endpoint'i `expectedDefaultPlanId` önkoşulu taşır; eşzamanlı
+  iki istekten yalnız biri başarılı olur, eskimiş önkoşul `409 pricing.rate_plan_in_use`
+  döner. `PricingIT` eşzamanlılık testi ve admin-web mutation testi eklendi.
+- QA yeniden doğrulaması fix sonrası QA ajanı tarafından yapılacak.
+
 ## Test özeti
 
-- `backend/hotel-api`: `mvn -B verify` → 74 test, 0 failure/error; `PricingIT` 16 test.
+- `backend/hotel-api`: `mvn -B verify` → 76 test, 0 failure/error; `PricingIT` 18 test.
 - `backend/admin-api`: değişiklik yok; mevcut doğrulama CI'da.
-- `admin-web`: ESLint + `tsc --noEmit` geçti; 47 Vitest testi; `next build` başarılı.
-- E2E: `npx playwright test tests/pricing --grep @pricing` → 1 passed.
+- `admin-web`: ESLint + `tsc --noEmit` geçti; 50 Vitest testi; `next build` başarılı.
+- E2E: `npx playwright test tests/pricing --grep @pricing` → 1 passed; sıfır/negatif
+  tutar, sıfır misafir ve eskimiş varsayılan önkoşulu kodları doğrulanır.
 - 0001–0005 kanıt arşivleri: `git diff` + untracked kontrolü temiz.
 
 ## Kapanış durumu
 
 - Spec `specs/0006-pricing.md` olarak bırakıldı; DoD gereği Takım Yöneticisi kapanış onayından
   sonra `specs/done/` altına taşınacak.
-- SCORECARD dolduruldu (spec revizyon 1, düzeltme turu 2).
+- SCORECARD dolduruldu (spec revizyon 2, düzeltme turu 4).
