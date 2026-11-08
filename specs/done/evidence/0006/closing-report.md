@@ -1,4 +1,4 @@
-# 0006 — Kapanış Raporu (Takım Yöneticisi onayına sunulur)
+# 0006 — Kapanış Raporu (Takım Yöneticisi onayı verildi — 2026-11-08)
 
 ## 0007 planlama kaydı
 
@@ -35,15 +35,17 @@ içerecektir.** 0007 yazılırken bu madde kontrol edilecektir.
   tutar `pricing.invalid_amount`, sıfır misafir `pricing.invalid_guests` döner.
   `AdminPricingControllerTest`, `PricingIT`, admin-web Vitest ve `@pricing` E2E ile
   doğrulandı.
-- **QA-2:** Varsayılan plan endpoint'i `expectedDefaultPlanId` önkoşulu taşır; eşzamanlı
-  iki istekten yalnız biri başarılı olur, eskimiş önkoşul `409 pricing.rate_plan_in_use`
-  döner. `PricingIT` eşzamanlılık testi ve admin-web mutation testi eklendi.
-- QA yeniden doğrulaması fix sonrası QA ajanı tarafından yapılacak.
+- **QA-2:** Varsayılan plan endpoint'i `expectedDefaultPlanId` önkoşulu taşır; iki **farklı
+  plana** eşzamanlı geçişte yalnız biri başarılı olur, zaten varsayılan plana istek
+  idempotenttir; eskimiş önkoşul `409 pricing.rate_plan_in_use` döner. `PricingIT`
+  eşzamanlılık testi ve admin-web mutation testi eklendi.
+- QA yeniden doğrulaması 2026-11-08'de tamamlandı; QA-1/QA-2 kapandı, açık bulgu yok
+  (`specs/0006-qa-retest.md`).
 
 ## Test özeti
 
 - `backend/hotel-api`: `mvn -B verify` → 76 test, 0 failure/error; `PricingIT` 18 test.
-- `backend/admin-api`: değişiklik yok; mevcut doğrulama CI'da.
+- `backend/admin-api`: 5/5 test (QA retest, 2026-11-08).
 - `admin-web`: ESLint + `tsc --noEmit` geçti; 50 Vitest testi; `next build` başarılı.
 - E2E: `npx playwright test tests/pricing --grep @pricing` → 1 passed; sıfır/negatif
   tutar, sıfır misafir ve eskimiş varsayılan önkoşulu kodları doğrulanır.
@@ -51,6 +53,9 @@ içerecektir.** 0007 yazılırken bu madde kontrol edilecektir.
 
 ## Kapanış durumu
 
-- Spec `specs/0006-pricing.md` olarak bırakıldı; DoD gereği Takım Yöneticisi kapanış onayından
-  sonra `specs/done/` altına taşınacak.
+- Takım Yöneticisi kapanış onayı 2026-11-08'de verildi.
+- Spec `specs/done/0006-pricing.md` altına taşındı; DoD tamamlandı.
+- QA-1/QA-2 kapandı; QA retest `specs/0006-qa-retest.md`; açık bulgu yok.
+- `specs/0006-qa-findings.md`, `specs/0006-qa-retest.md` ve `specs/done/evidence/0006/`
+  kanıtları korundu; `0001–0005` arşivlerine dokunulmadı.
 - SCORECARD dolduruldu (spec revizyon 2, düzeltme turu 4).

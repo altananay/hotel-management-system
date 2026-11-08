@@ -1,4 +1,4 @@
-# 0006 — Test ve CI Özeti (Rev.1)
+# 0006 — Test ve CI Özeti (Rev.1 + QA Rev.2)
 
 Tarih: 2026-11-08
 
@@ -50,3 +50,10 @@ Tarih: 2026-11-08
 - CI, eski spec'lerin arşivlerini korumak için tüm E2E kanıtlarını
   `$RUNNER_TEMP/e2e-evidence` altına yazar; 0001–0005 kontrolü tracked
   dosyalarda `git diff` + untracked ile yapılır.
+
+## QA yeniden doğrulama (2026-11-08)
+
+- hotel-api 76 test (`PricingIT` 18/18), admin-api 5/5, admin-web 50/50 Vitest.
+- E2E: `@pricing` 1/1, `@seeded` 2/2, `@admin` 3/3, `@media` 1/1.
+- CI run 113 (integration `9532e25`): tüm job'lar success.
+- Ayrıntı: `specs/0006-qa-retest.md`; açık QA bulgusu yok.

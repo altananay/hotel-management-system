@@ -10,12 +10,12 @@
 
 - **Spec No:** `0006`
 - **Başlık:** Fiyatlandırma ve Fiyat Teklifi (`pricing`)
-- **Durum:** Rev.1 uygulama tamamlandı; kapanış onayı bekliyor (2026-11-08)
+- **Durum:** Tamamlandı (2026-11-08) — kapanış onayı Takım Yöneticisi tarafından verildi
 - **Branch:** `feature/0006-pricing`
-- **İlgili doküman/kararlar:** `docs/architecture.md` (§3 `pricing`, §5 R1/R3/R6, §7/D15, §8, §10 D8/D15, §11), `docs/domain.md` (§1 fiyat terimleri, §3.4–§3.7, §3.13–§3.14, rol tablosu), `docs/conventions.md` (§1, §2.1, §2.3, §2.4, §3, §4), `docs/frontend.md`, `docs/testing.md`, `docs/git.md`, `specs/done/0002-room-catalog.md`, `specs/done/0004-admin-identity.md`, `specs/done/0005-media.md`, Takım Yöneticisi 0006 brief'i (2026-11-08); Onaylı kararlar: `Q1=C`, `Q2=A`, `Q3=A (koşullu)`, `Q4=A`, `Q5=A`, `Q6=A`, `Q7=A`, `Q8=A`; misafir sayısı fiyatı etkiler (2026-11-08)
-- **Tarih:** 2026-11-08
+- **İlgili doküman/kararlar:** `docs/architecture.md` (§3 `pricing`, §5 R1/R3/R6, §7/D15, §8, §10 D8/D15, §11), `docs/domain.md` (§1 fiyat terimleri, §3.4–§3.7, §3.13–§3.14, rol tablosu), `docs/conventions.md` (§1, §2.1, §2.3, §2.4, §3, §4), `docs/frontend.md`, `docs/testing.md`, `docs/git.md`, `specs/done/0002-room-catalog.md`, `specs/done/0004-admin-identity.md`, `specs/done/0005-media.md`, Takım Yöneticisi 0006 brief'i (2026-11-08), `specs/0006-qa-findings.md`, `specs/0006-qa-retest.md`; Onaylı kararlar: `Q1=C`, `Q2=A`, `Q3=A (koşullu)`, `Q4=A`, `Q5=A`, `Q6=A`, `Q7=A`, `Q8=A`; misafir sayısı fiyatı etkiler (2026-11-08)
+- **Tarih:** 2026-11-08 (Kapanış: 2026-11-08)
 - **Sahip:** Analist (`analyst`)
-- **Onaylayan (Takım Yöneticisi):** Takım Yöneticisi (Onaylandı — 2026-11-08)
+- **Onaylayan (Takım Yöneticisi):** Takım Yöneticisi (Onaylandı — 2026-11-08; kapanış onayı — 2026-11-08)
 
 ## 1. Intent (Neden?)
 
@@ -39,8 +39,8 @@ Otel yönetimi, oda tipleri için tarife planı ve sezon bazlı, misafir sayıs�
   - **Olaylar:** `RatePlanChanged` olayı ve promo kullanım olayları bu dilimde yayımlanmaz; tüketicisi yoktur. İhtiyaç doğduğunda ayrı spec/ekleme ile ele alınır.
 
 - **REQ-2 (Admin Fiyat Yönetimi — Q1=C, Q2=A, Q8=A):** `admin-web` üzerinde TR, sade bir fiyat yönetimi ekranı bulunmalıdır. `SUPER_ADMIN` ve `MANAGER` tarife planlarını, sezonları, plan + oda tipi + misafir sayısı baz/gece fiyatlarını, manuel fiyat/kur override'larını ve buffer/yuvarlama ayarlarını yönetebilmeli; güncel TCMB kuru, son güncelleme zamanı, kur kaynağı ve bayat kur uyarısını görebilmelidir. `FRONT_DESK` tüm fiyat yönetimi işlemlerinde **403** almalıdır; arayüzde gizleme güvenlik sayılmaz. Tüm admin çağrıları `admin-api` gateway üzerinden `hotel-api` admin yüzeyine gitmeli; admin-web doğrudan `hotel-api`'ye istek atmamalıdır.
-  - **Kapsam:** Tarife planı oluşturma/düzenleme/aktifleştirme/pasifleştirme/varsayılan yapma; sezon oluşturma/düzenleme; baz ve sezon fiyatlarını oda tipi + misafir sayısı matrisinde girme; manuel fiyat ve manuel kur override'ları; buffer/yuvarlama ayarları; güncel ve geçmiş kur görüntüleme; varsayılan plan için eksik fiyat uyarısı. Toplu içe aktarma, takvim grid'i, promo kodları, fiyat audit'i, admin kullanıcı yönetimi ve onay iş akışı bu dilimde yoktur.
-  - **Varsayılan plan ve bütünlük:** Bir plan varsayılan yapılırken aktif olmalı ve aktif tüm oda tiplerinin `1..maxGuests` misafir sayıları için baz fiyatı tanımlı olmalıdır; eksik varsa varsayılan yapma reddedilir ve eksik kombinasyonlar listelenir. Sonradan eklenen yeni bir oda tipi için fiyat girilene kadar admin ekranında eksik uyarısı görünür; o kombinasyon için public teklif üretilmez, diğer kombinasyonlar çalışmaya devam eder.
+  - **Kapsam:** Tarife planı oluşturma/düzenleme/aktifleştirme/pasifleştirme/varsayılan yapma; sezon oluşturma/düzenleme; baz ve sezon fiyatlarını oda tipi + misafir sayısı matrisinde girme ve satır bazlı silme; manuel fiyat ve manuel kur override'ları; buffer/yuvarlama ayarları; güncel ve geçmiş kur görüntüleme; varsayılan plan için eksik fiyat uyarısı. Toplu içe aktarma, takvim grid'i, promo kodları, fiyat audit'i, admin kullanıcı yönetimi ve onay iş akışı bu dilimde yoktur.
+  - **Varsayılan plan ve bütünlük:** Bir plan varsayılan yapılırken aktif olmalı ve aktif tüm oda tiplerinin `1..maxGuests` misafir sayıları için baz fiyatı tanımlı olmalıdır; eksik varsa varsayılan yapma reddedilir ve eksik kombinasyonlar listelenir. Varsayılan değişiminde istemci gördüğü mevcut varsayılanı `expectedDefaultPlanId` olarak gönderir; farklıysa `409 pricing.rate_plan_in_use` döner; zaten varsayılan plana istek idempotenttir. Sonradan eklenen yeni bir oda tipi için fiyat girilene kadar admin ekranında eksik uyarısı görünür; o kombinasyon için public teklif üretilmez, diğer kombinasyonlar çalışmaya devam eder.
   - **Sezon ve override doğrulaması:** Sezon başlangıcı bitişten sonra olamaz; aynı plan içinde çakışan sezon `409` ile reddedilir. Manuel fiyat aralığı başlangıcı bitişten sonra olamaz; aynı plan + oda tipi + misafir sayısı için çakışan manuel fiyat `409` ile reddedilir. Manuel kur aynı para birimi + tarih için tektir. Negatif/sıfır tutar, geçersiz buffer/yuvarlama adımı ve geçersiz para birimi `400` ile reddedilir.
   - **Değişikliğin etkisi/iptali:** Plan, sezon, fiyat, override veya ayar değişikliği yalnız yeni teklifleri etkiler; mevcut fiyat snapshot'ları değişmez. Plan pasifleştirme veya sezon/override silme, geçmiş snapshot'ları geriye dönük etkilemez. Admin ekranı bu etkiyi kullanıcıya açıkça göstermelidir.
   - **Durumlar:** Fiyat ekranı **yükleme**, **boş** (henüz plan/fiyat yok), **hata** (kullanıcı dostu mesaj + tekrar dene) ve **dolu** durumlarını desteklemelidir. Teknik hata kodu/stack trace kullanıcıya gösterilmez. Hata ve boş durumlarında ekran çökmemelidir.
@@ -111,7 +111,7 @@ Otel yönetimi, oda tipleri için tarife planı ve sezon bazlı, misafir sayıs�
 
 ## 4. Context
 
-- **Mevcut durum (2026-11-08):** `0005` medya hattı kapandı; admin kimlik/oturum/JWT/JWKS/gateway ve admin-web login `0004`'te hazır. `pricing` modülü boş iskelettir; `pricing` şeması `V2__init_pricing_schema.sql` ile (şema + `app` DML izinleri) hazırdır, tablo yoktur. `hotel_core`'da sıradaki global migration numarası **V12**'dir (V1–V11 dolu). `catalog.api` içinde aktif oda tipi read portu (`RoomTypeLookup`/`ActiveRoomType`) `0005` ile mevcuttur; `media → catalog` read kenarı aynı ihtiyacın örneğidir.
+- **Spec yazımı sırasındaki durum (2026-11-08, tarihsel bağlam):** `0005` medya hattı kapandı; admin kimlik/oturum/JWT/JWKS/gateway ve admin-web login `0004`'te hazır. O tarihte `pricing` modülü boş iskeletti; `pricing` şeması `V2__init_pricing_schema.sql` ile (şema + `app` DML izinleri) hazırdı, tablo yoktu; `hotel_core`'da sıradaki global migration numarası **V12**'ydi (V1–V11 dolu). `catalog.api` içinde aktif oda tipi read portu (`RoomTypeLookup`/`ActiveRoomType`) `0005` ile mevcuttu; `media → catalog` read kenarı aynı ihtiyacın örneğidir. Uygulama sonrası güncel durum: Revizyon 1/2, AC'ler ve `specs/done/evidence/0006/`; V12/V13 migration'ları ve pricing tabloları mevcuttur.
 - **İlgili uygulamalar/modüller:**
   - `backend/hotel-api` (`:8081`): `pricing` modülü (domain/application/persistence/web), `catalog.api` read tüketimi, public quote ve admin fiyat yüzeyi.
   - `backend/admin-api` (`:8082`): yalnız gateway pass-through; iş kuralı yok.
@@ -149,6 +149,7 @@ Otel yönetimi, oda tipleri için tarife planı ve sezon bazlı, misafir sayıs�
   - **Public teklif:** Anonim `GET /api/pricing/quote?roomTypeId=...&checkIn=YYYY-MM-DD&checkOut=YYYY-MM-DD&guests=N&currency=TRY|EUR|USD`. `200` yanıtı `roomTypeId`, `ratePlanCode`, `ratePlanNameTr/En`, `checkIn`, `checkOut`, `guests`, `currency`, `nights[]` (tarih, `seasonCode`, `seasonNameTr/En`, `priceSource`, `baseAmountTry`, `fxRate`, `fxSource`, `fxRateDate`, `fxStale`, `bufferPercent`, `roundingStep`, `amount`), `total`, `quotedAt`, `expiresAt` taşır. Tutarlar string ondalıklıdır. `400/404/409/503` RFC 7807.
   - **Booking portu:** HTTP değil, `pricing.api` üzerinden senkron read portu; rezervasyon anında snapshot payload'ı döndürür. `booking` snapshot'ı saklar; fiyat hesaplamaz.
   - **Admin plan/sezon:** `GET/POST /admin-api/pricing/rate-plans`, `PATCH /admin-api/pricing/rate-plans/{id}`, `PUT /admin-api/pricing/rate-plans/{id}/default`; `GET/POST /admin-api/pricing/rate-plans/{id}/seasons`, `PATCH/DELETE /admin-api/pricing/seasons/{id}`. Tümü `SUPER_ADMIN`/`MANAGER`; gateway üzerinden. Varsayılan plan bütünlüğü eksikse `409 pricing.default_rate_plan_incomplete`.
+  - **Varsayılan plan önkoşulu:** `PUT /admin-api/pricing/rate-plans/{id}/default` gövdesi `{"expectedDefaultPlanId":"<uuid|null>"}` taşır; ilk varsayılan için `null`, mevcut varsayılan farklıysa `409 pricing.rate_plan_in_use` döner. Zaten varsayılan plana yapılan istek idempotent no-op `200`'dir.
   - **Admin fiyat/override/ayar:** `GET/PUT /admin-api/pricing/rate-plans/{id}/prices` (baz matris), `DELETE /admin-api/pricing/rate-plans/{id}/prices/{priceRowId}`, `GET/PUT /admin-api/pricing/seasons/{id}/prices` (sezon matris), `DELETE /admin-api/pricing/seasons/{id}/prices/{priceRowId}`, `GET/POST/PATCH/DELETE /admin-api/pricing/manual-prices`, `GET/POST/PATCH/DELETE /admin-api/pricing/manual-fx-rates`, `GET/PUT /admin-api/pricing/settings`, `GET /admin-api/pricing/fx-rates`, `GET /admin-api/pricing/room-types` (aktif oda tipleri). Tümü `SUPER_ADMIN`/`MANAGER`; gateway üzerinden. Fiyat satırı silme `204` döner; satır üst kayda ait değilse veya yoksa `404 pricing.rate_plan_price_not_found` / `pricing.season_price_not_found`.
   - **Hata kodları (asgari):** `pricing.invalid_period`, `pricing.invalid_guests`, `pricing.invalid_currency`, `pricing.invalid_amount`, `pricing.invalid_buffer`, `pricing.invalid_rounding_step`, `pricing.room_type_not_found`, `pricing.price_not_configured`, `pricing.default_rate_plan_required`, `pricing.default_rate_plan_incomplete`, `pricing.rate_plan_not_found`, `pricing.rate_plan_duplicate`, `pricing.rate_plan_in_use`, `pricing.rate_plan_price_not_found`, `pricing.season_not_found`, `pricing.season_price_not_found`, `pricing.season_overlap`, `pricing.manual_price_overlap`, `pricing.manual_fx_duplicate`, `pricing.fx_rate_unavailable`, `security.forbidden`, `system.internal_error`. HTTP eşlemesi `docs/conventions.md` §2.3'e uyar.
   - **Admin testid'leri (asgari):** `admin-pricing-page`, `admin-pricing-loading`, `admin-pricing-empty`, `admin-pricing-error`, `admin-pricing-retry`, `admin-pricing-rate-plans`, `admin-pricing-rate-plan-row`, `admin-pricing-rate-plan-default`, `admin-pricing-seasons`, `admin-pricing-season-row`, `admin-pricing-prices`, `admin-pricing-price-row`, `admin-pricing-price-delete`, `admin-pricing-manual-prices`, `admin-pricing-manual-fx`, `admin-pricing-settings`, `admin-pricing-fx-warning`, `admin-pricing-save`.
@@ -187,7 +188,8 @@ Otel yönetimi, oda tipleri için tarife planı ve sezon bazlı, misafir sayıs�
 
 - **AC-2 (Admin Fiyat Yönetimi, Roller ve Ekran Durumları — REQ-2, Q1=C, Q2=A, Q8=A):**
   - `admin-web` `/pricing` ekranı TR ve sadedir; `SUPER_ADMIN`/`MANAGER` plan, sezon, baz/sezon fiyatı (oda tipi + misafir sayısı), manuel fiyat/kur, buffer/yuvarlama ve güncel/geçmiş kur yönetimini yapabilir; `FRONT_DESK` tüm fiyat işlemlerinde **403** alır. Arayüzde gizleme güvenlik sayılmaz; admin-web doğrudan `hotel-api`'ye istek atmaz.
-  - Varsayılan plan yapma; aktif tüm oda tiplerinin `1..maxGuests` baz fiyatları tamamsa başarılı olur; eksik varsa `409 pricing.default_rate_plan_incomplete` ile reddedilir ve eksik kombinasyonlar listelenir. Aynı anda tek varsayılan plan korunur; istek `expectedDefaultPlanId` taşır ve eşzamanlı iki varsayılan isteğinde yalnız biri başarılıdır; eskimiş önkoşul `409 pricing.rate_plan_in_use` döner. İlk varsayılan için `null` kabul edilir.
+  - Varsayılan plan yapma; aktif tüm oda tiplerinin `1..maxGuests` baz fiyatları tamamsa başarılı olur; eksik varsa `409 pricing.default_rate_plan_incomplete` ile reddedilir ve eksik kombinasyonlar listelenir. Aynı anda tek varsayılan plan korunur; istek `expectedDefaultPlanId` taşır. **İki farklı plana** eşzamanlı geçiş isteğinde yalnız biri başarılıdır; **zaten varsayılan plana yapılan istek idempotenttir (no-op `200`)**; eskimiş `expectedDefaultPlanId` `409 pricing.rate_plan_in_use` döner. İlk varsayılan için `null` kabul edilir.
+  - Baz/sezon fiyat satırı silme: `DELETE` başarılı `204`; satır yok/üst kayda ait değil `404 pricing.rate_plan_price_not_found` / `pricing.season_price_not_found`; yetkisiz rol `403`; UI'da satır bazlı `Sil` vardır, input temizleme otomatik silme sayılmaz; silme mevcut snapshot'ları etkilemez.
   - Sezon çakışması, manuel fiyat çakışması, aynı para birimi + tarih manuel kur tekrarı `409`; negatif/sıfır tutar `pricing.invalid_amount`, sıfır misafir `pricing.invalid_guests`, geçersiz buffer/yuvarlama, geçersiz para birimi `400`; hata gövdeleri RFC 7807 ve stabil kodludur. Başarılı kayıtlar `updatedAt` ile görünür.
   - Ekran **yükleme**, **boş**, **hata** (kullanıcı dostu mesaj + `admin-pricing-retry`) ve **dolu** durumlarını gösterir; teknik hata kodu/stack trace sızdırmaz. Asgari testid seti Context'te listelenmiştir.
   - Güncel TCMB kuru, son güncelleme, kaynak ve bayat kur uyarısı görünür; kur geçmişi tarih/para birimi/kaynak ile listelenir. TCMB yoksa son bilinen kur + uyarı gösterilir; akış bloke edilmez.
@@ -222,7 +224,7 @@ Otel yönetimi, oda tipleri için tarife planı ve sezon bazlı, misafir sayıs�
   - 0007 planlama kaydı spec'te ve kapanış raporunda açıkça yer alır: “0007 oda detay sayfası spec'i, oda vitrini kartlarında fiyat gösterimini zorunlu olarak içerecektir.” 0007 yazılırken bu madde kontrol edilir.
   - Test kapsamı: birim (`*Test`) + Testcontainers IT (`*IT`) + admin-web Vitest/RTL/MSW + `@pricing` E2E. TCMB fixture/fake ve `Clock`; gerçek ağ yok. E2E sırası 0002 `@empty` → seed → 0002 `@seeded` → 0003 `@seeded` → `@admin` → `@media` → `@pricing`; 0002/0003/0005, `@admin` ve `@media` yeşil kalır.
   - `@pricing` E2E: yetkili admin login → plan/sezon/baz fiyat (oda tipi + misafir sayısı) → varsayılan plan → manuel fiyat/kur → buffer/yuvarlama → public teklif API doğrulaması (TRY/EUR/USD, çok gece, misafir sayısı) → bayat kur uyarısı; `FRONT_DESK` 403; geçersiz tarih/misafir/para birimi/negatif tutar reddi; 0002/0003/0005 testleri değişmez.
-  - Kanıtlar `specs/done/evidence/0006/` altına: `AC-2-admin-pricing-loading.png`, `AC-2-admin-pricing-empty.png`, `AC-2-admin-pricing-error.png`, `AC-2-admin-pricing-filled.png`, `AC-3-admin-fx-warning.png`, `AC-4-quote-response.md`, `AC-5-snapshot-immutability.md`, `QA-1-QA-2-fix-summary.md` ve test/CI özetleri. 0001–0005 arşivleri değişmez.
+  - Kanıtlar `specs/done/evidence/0006/` altına: `AC-2-admin-pricing-loading.png`, `AC-2-admin-pricing-empty.png`, `AC-2-admin-pricing-error.png`, `AC-2-admin-pricing-filled.png`, `AC-2-admin-pricing-delete.png`, `AC-3-admin-fx-warning.png`, `AC-4-quote-response.md`, `AC-5-snapshot-immutability.md`, `QA-1-QA-2-fix-summary.md`, `closing-report.md` ve test/CI özetleri; QA retest `specs/0006-qa-retest.md`. 0001–0005 arşivleri değişmez.
   - Doküman/CI: `docs/architecture.md` §3/§5 R3/§7/D15, `docs/conventions.md` §3/§4, `docs/frontend.md`, `.env.example`, `.github/workflows/ci.yml`, `HotelApiModularityTest`, `e2e/README.md` güncellenir; pipeline (lint + build + test + smoke) yeşildir.
   - Promosyon kodları, oda detay sayfası, booking/payment, KDV/fatura, audit, toplu içe aktarma ve takvim grid'i 0006'da yoktur; kapsam dışı maddeleri ihlal eden değişiklik build/inceleme kapısında reddedilir.
 
@@ -246,23 +248,27 @@ Otel yönetimi, oda tipleri için tarife planı ve sezon bazlı, misafir sayıs�
 - **QA-2:** `PUT /admin-api/pricing/rate-plans/{id}/default` artık
   `expectedDefaultPlanId` önkoşulu taşır. İstemci gördüğü varsayılan planı gönderir;
   kilit altında mevcut varsayılan farklıysa `409 pricing.rate_plan_in_use` döner.
-  İlk varsayılan için `null` kabul edilir. `PricingIT` eşzamanlı iki isteğin yalnız
-  birinin başarılı olduğunu, admin-web ise güncel varsayılan ID'sinin gönderildiğini
-  doğrular.
+  İlk varsayılan için `null` kabul edilir. `PricingIT` iki **farklı plana** eşzamanlı
+  geçişte yalnız birinin başarılı olduğunu, zaten varsayılan plana isteğin idempotent
+  olduğunu; admin-web ise güncel varsayılan ID'sinin gönderildiğini doğrular.
+- **QA retest (2026-11-08):** QA-1/QA-2 kapandı; açık bulgu yok
+  (`specs/0006-qa-retest.md`). AC-2, iki **farklı** plana eşzamanlı geçişte tek
+  başarı + no-op idempotent olarak netleştirildi; `expectedDefaultPlanId`
+  sözleşmesi Context'e işlendi.
 
 ## 6. Definition of Done
 
 - [x] Tüm AC'ler doğrulandı (test ve/veya görsel kanıt)
 - [x] Pipeline yeşil (lint + build + test + kritik akış smoke)
-- [ ] Kod incelemesi onaylandı (Takım Yöneticisi) — Code Reviewer subagent turları tamamlandı; 2 kapsam/katman itirazı raporlandı, Takım Yöneticisi kapanış onayı bekliyor
+- [x] Kod incelemesi onaylandı (Takım Yöneticisi) — Code Reviewer turları tamamlandı; Takım Yöneticisi kapanış onayı 2026-11-08
 - [x] Davranış değiştiyse dokümanlar güncellendi (`docs/architecture.md`, `docs/conventions.md`, `docs/frontend.md`, `.env.example`, CI)
-- [ ] Spec `specs/done/` klasörüne taşındı, görsel kanıtlar eklendi — Takım Yöneticisi kapanış onayından sonra taşınacak
+- [x] Spec `specs/done/0006-pricing.md` klasörüne taşındı; QA raporları ve `specs/done/evidence/0006/` kanıtları korundu
 - [x] CR-01 baz/sezon fiyatı delete endpointleri ve admin-ui satır silme tamamlandı
 - [x] CR-03 `internal.application` → `internal.web` bağımlılığı kaldırıldı; ArchUnit kuralı eklendi
 - [x] CR-14 maksimum 30 gece sınırı ve config tamamlandı
 - [x] QA-1 sıfır/negatif tutar ve sıfır misafir için stabil pricing hata kodları
 - [x] QA-2 eşzamanlı varsayılan plan değişimi için `expectedDefaultPlanId` önkoşulu
-- [ ] QA yeniden doğrulaması (QA ajanı) — fix sonrası bekliyor
+- [x] QA yeniden doğrulaması tamamlandı (bkz. `specs/0006-qa-retest.md`; QA-1/QA-2 kapalı, açık bulgu yok)
 - [x] SCORECARD dolduruldu
 - [x] 0007 planlama kaydı (oda kartlarında fiyat gösterimi zorunlu) kapanış raporunda doğrulandı
 - [x] 0001–0005 arşivleri değişmedi (SHA-256/`git diff`)
@@ -271,6 +277,6 @@ Otel yönetimi, oda tipleri için tarife planı ve sezon bazlı, misafir sayıs�
 
 - **Spec revizyon sayısı:** 2 (Rev.1 CR-01/CR-03/CR-14; Rev.2 QA-1/QA-2)
 - **Düzeltme turu sayısı:** 4 (ilk Code Review turu + CR-01/CR-03/CR-14 düzeltme turu + CR-19/CR-20/CR-21 takip turu + QA-1/QA-2 turu)
-- **Bulgu gerçek/gürültü oranı:** 25 bulgu (23 Code Review + 2 QA); 25 gerçek/uygulandı. İlk turda ertelenen CR-10 (maksimum gece) ve CR-13 (application→web), Rev.1'de sırasıyla CR-14 ve CR-03 olarak uygulandı ve kapatıldı; QA-1 ve QA-2 Rev.2'de kapatıldı; açık bulgu yok.
+- **Bulgu gerçek/gürültü oranı:** 25 bulgu (23 Code Review + 2 QA); 25 gerçek/uygulandı, gürültü 0. İlk turda ertelenen CR-10 (maksimum gece) ve CR-13 (application→web), Rev.1'de sırasıyla CR-14 ve CR-03 olarak uygulandı ve kapatıldı; QA-1 ve QA-2 Rev.2'de kapatıldı; açık bulgu yok.
 - **Regresyon sayısı:** 0
 - **Kaçan hata (escaped bug):** 0 (bilinen)
