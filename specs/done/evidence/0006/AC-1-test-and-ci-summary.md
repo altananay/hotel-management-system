@@ -10,7 +10,8 @@ Tarih: 2026-11-08
   - `PricingIT`: 16 test (şema, TRY/EUR/USD, manuel fiyat/kur, sezon fallback,
     default bütünlüğü, overlap/duplicate, snapshot değişmezliği, ayar etkisi,
     30/31 gece sınırı, baz/sezon fiyat silme, yanlış plan/sezon sahipliği ve
-    yanlış plan üzerinden HTTP `DELETE` 404).
+    yanlış plan üzerinden endpoint-level MockMvc `DELETE` 404; gerçek servlet/JWT
+    ağı testi değil).
   - `AdminPricingControllerTest`: 8 test (401/403, 204 delete, 404 yanlış/eksik satır,
     503, eksik liste, MANAGER erişimi).
   - `PricingPropertiesTest`: varsayılan 30 gece, property binding, geçersiz değer.
@@ -24,9 +25,9 @@ Tarih: 2026-11-08
 ## Admin-web
 
 - `npm run lint`: geçti (ESLint + `tsc --noEmit`).
-- `npm test`: 45 test geçti; `PricingManager` yükleme/boş/hata/dolu, bayat kur
-  uyarısı, plan düzenleme, baz/sezon fiyat satırı silme ve pasif oda tipinde
-  silme butonunun görünmemesi.
+- `npm test`: 47 test geçti; `PricingManager` yükleme/boş/hata/dolu, bayat kur
+  uyarısı, plan düzenleme, baz/sezon fiyat satırı silme, pasif oda tipinde silme
+  butonunun görünmemesi ve 404/403 silme hata mesajları.
 - `npm run build`: başarılı; `/pricing` route'u üretildi.
 
 ## E2E

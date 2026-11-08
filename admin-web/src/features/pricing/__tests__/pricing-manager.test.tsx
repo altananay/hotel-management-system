@@ -298,6 +298,76 @@ describe("PricingManager (AC-2)", () => {
     expect(deleteUrls[1]).toContain(`/seasons/${SEASON_ID}/prices/`);
   });
 
+  it("shouldShow404MessageAndKeepScreenAlive_whenDeleteRowIsMissing", async () => {
+    server.use(
+      http.delete(
+        `*/admin-api/pricing/rate-plans/${PLAN_ID}/prices/:rowId`,
+        () =>
+          HttpResponse.json(
+            {
+              type: "about:blank",
+              title: "Not Found",
+              status: 404,
+              detail: "not found",
+              instance: "/admin-api/pricing/rate-plans",
+              code: "pricing.rate_plan_price_not_found",
+              requestId: "req-404",
+            },
+            { status: 404 },
+          ),
+      ),
+    );
+
+    renderManager();
+    const base = await screen.findByTestId("admin-pricing-prices");
+    fireEvent.click(
+      within(base).getAllByTestId("admin-pricing-price-delete")[0],
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("admin-pricing-action-error")).toHaveTextContent(
+        "Fiyat satırı bulunamadı; liste yenilendi.",
+      ),
+    );
+    expect(screen.getByTestId("admin-pricing-page")).toBeInTheDocument();
+    expect(screen.getByTestId("admin-pricing-prices")).toBeInTheDocument();
+  });
+
+  it("shouldShow403MessageAndKeepScreenAlive_whenDeleteIsForbidden", async () => {
+    server.use(
+      http.delete(
+        `*/admin-api/pricing/rate-plans/${PLAN_ID}/prices/:rowId`,
+        () =>
+          HttpResponse.json(
+            {
+              type: "about:blank",
+              title: "Forbidden",
+              status: 403,
+              detail: "forbidden",
+              instance: "/admin-api/pricing/rate-plans",
+              code: "security.forbidden",
+              requestId: "req-403",
+            },
+            { status: 403 },
+          ),
+      ),
+    );
+
+    renderManager();
+    const base = await screen.findByTestId("admin-pricing-prices");
+    fireEvent.click(
+      within(base).getAllByTestId("admin-pricing-price-delete")[0],
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("admin-pricing-action-error")).toHaveTextContent(
+        "Bu işlem için yetkiniz yok.",
+      ),
+    );
+    expect(screen.getByTestId("admin-pricing-page")).toBeInTheDocument();
+    expect(screen.getByTestId("admin-pricing-prices")).toBeInTheDocument();
+  });
+
   it("shouldRenderFilledStateAndStaleFxWarning_whenDataExists", async () => {
     renderManager();
 

@@ -286,11 +286,17 @@ export function PricingManager() {
     }
   }, [settingsQuery.data]);
 
-  const run = async (action: () => Promise<unknown>) => {
+  const run = async (
+    action: () => Promise<unknown>,
+    onError?: (error: unknown) => Promise<void> | void,
+  ) => {
     setActionError(null);
     try {
       await action();
     } catch (error) {
+      if (onError) {
+        await onError(error);
+      }
       const code =
         error instanceof AdminApiClientError ? error.code : undefined;
       const missing =
@@ -930,11 +936,20 @@ export function PricingManager() {
             isError={basePricesQuery.isError}
             onRetry={() => void basePricesQuery.refetch()}
             onDelete={(rowId) =>
-              void run(() =>
-                mutations.deleteBasePrice.mutateAsync({
-                  ratePlanId: selectedPlan.id,
-                  priceRowId: rowId,
-                }),
+              void run(
+                () =>
+                  mutations.deleteBasePrice.mutateAsync({
+                    ratePlanId: selectedPlan.id,
+                    priceRowId: rowId,
+                  }),
+                async (error) => {
+                  if (
+                    error instanceof AdminApiClientError &&
+                    error.status === 404
+                  ) {
+                    await basePricesQuery.refetch();
+                  }
+                },
               )
             }
           />
@@ -960,11 +975,20 @@ export function PricingManager() {
               isError={seasonPricesQuery.isError}
               onRetry={() => void seasonPricesQuery.refetch()}
               onDelete={(rowId) =>
-                void run(() =>
-                  mutations.deleteSeasonPrice.mutateAsync({
-                    seasonId: selectedSeasonId,
-                    priceRowId: rowId,
-                  }),
+                void run(
+                  () =>
+                    mutations.deleteSeasonPrice.mutateAsync({
+                      seasonId: selectedSeasonId,
+                      priceRowId: rowId,
+                    }),
+                  async (error) => {
+                    if (
+                      error instanceof AdminApiClientError &&
+                      error.status === 404
+                    ) {
+                      await seasonPricesQuery.refetch();
+                    }
+                  },
                 )
               }
             />

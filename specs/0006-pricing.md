@@ -253,7 +253,7 @@ Otel yönetimi, oda tipleri için tarife planı ve sezon bazlı, misafir sayıs�
 ## 7. SCORECARD
 
 - **Spec revizyon sayısı:** 1 (CR-01 delete endpointleri + CR-14 maksimum 30 gece)
-- **Düzeltme turu sayısı:** 2 (ilk Code Review turu + CR-01/CR-03/CR-14 düzeltme turu)
-- **Bulgu gerçek/gürültü oranı:** 20 bulgu; 18 gerçek/uygulandı, 2 kapsam/katman kararı (CR-10, CR-13) itiraz/ertelendi
+- **Düzeltme turu sayısı:** 3 (ilk Code Review turu + CR-01/CR-03/CR-14 düzeltme turu + CR-19/CR-20/CR-21 takip turu)
+- **Bulgu gerçek/gürültü oranı:** 23 bulgu; 23 gerçek/uygulandı. İlk turda ertelenen CR-10 (maksimum gece) ve CR-13 (application→web), Rev.1'de sırasıyla CR-14 ve CR-03 olarak uygulandı ve kapatıldı; açık bulgu yok.
 - **Regresyon sayısı:** 0
 - **Kaçan hata (escaped bug):** 0 (bilinen)

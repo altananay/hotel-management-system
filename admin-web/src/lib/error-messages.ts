@@ -3,6 +3,7 @@ const ADMIN_ERROR_MESSAGES: Record<string, string> = {
   "security.invalid_credentials": "Kullanıcı adı veya parola hatalı.",
   "security.csrf_invalid":
     "Oturum doğrulaması yenilenemedi. Lütfen tekrar deneyin.",
+  "security.forbidden": "Bu işlem için yetkiniz yok.",
   "system.network_error": "Sunucuya ulaşılamadı. Lütfen tekrar deneyin.",
   "system.internal_error":
     "Yönetim servisinde geçici bir sorun oluştu. Lütfen tekrar deneyin.",

@@ -336,7 +336,7 @@ class PricingIT {
 
     @Test
     @WithMockUser(roles = "MANAGER")
-    void shouldReturn404OverHttpWhenDeletingBasePriceThroughAnotherPlan() throws Exception {
+    void shouldReturn404AtEndpointWhenDeletingBasePriceThroughAnotherPlan() throws Exception {
         var planA = ratePlanService.create("PLAN-A", "Plan A", "Plan A", true);
         var planB = ratePlanService.create("PLAN-B", "Plan B", "Plan B", true);
         priceMatrixService.saveBasePrices(
