@@ -78,6 +78,10 @@ jobs:
   e2e:
     name: E2E Smoke (Playwright Chromium)
     runs-on: ubuntu-latest
+    env:
+      # E2E tests regenerate evidence for older specs. Keep those writes out of
+      # the tracked archive so the 0001-0005 immutability check stays meaningful.
+      E2E_EVIDENCE_DIR: ${{ runner.temp }}/e2e-evidence
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -246,7 +250,7 @@ jobs:
 
       - name: Verify 0002 evidence is byte-identical after the 0003 run
         working-directory: e2e
-        run: node scripts/sha256-manifest.mjs verify ../specs/done/evidence/0002 "$RUNNER_TEMP/0002-before.json" ../specs/done/evidence/0003/AC-6-0002-evidence-sha256.txt
+        run: node scripts/sha256-manifest.mjs verify ../specs/done/evidence/0002 "$RUNNER_TEMP/0002-before.json" "$RUNNER_TEMP/0003-0002-evidence-sha256.txt"
 
       - name: Run @admin login and session tests
         working-directory: e2e
@@ -266,26 +270,26 @@ jobs:
 
       - name: Verify 0001-0005 evidence archives are unchanged
         run: |
-          mkdir -p specs/done/evidence/0006
+          mkdir -p "$E2E_EVIDENCE_DIR/0006"
           ARCHIVES="specs/done/evidence/0001 specs/done/evidence/0002 specs/done/evidence/0003 specs/done/evidence/0004 specs/done/evidence/0005"
           if ! git diff --exit-code -- $ARCHIVES; then
-            echo "Tracked 0001-0005 evidence changed" | tee specs/done/evidence/0006/AC-6-archive-unchanged.log
+            echo "Tracked 0001-0005 evidence changed" | tee "$E2E_EVIDENCE_DIR/0006/AC-6-archive-unchanged.log"
             exit 1
           fi
           UNTRACKED="$(git ls-files --others --exclude-standard -- $ARCHIVES)"
           if [ -n "$UNTRACKED" ]; then
-            echo "Untracked files appeared under 0001-0005 evidence:" | tee specs/done/evidence/0006/AC-6-archive-unchanged.log
-            echo "$UNTRACKED" | tee -a specs/done/evidence/0006/AC-6-archive-unchanged.log
+            echo "Untracked files appeared under 0001-0005 evidence:" | tee "$E2E_EVIDENCE_DIR/0006/AC-6-archive-unchanged.log"
+            echo "$UNTRACKED" | tee -a "$E2E_EVIDENCE_DIR/0006/AC-6-archive-unchanged.log"
             exit 1
           fi
-          echo "0001-0005 evidence archives unchanged (git diff + untracked check)." > specs/done/evidence/0006/AC-6-archive-unchanged.log
+          echo "0001-0005 evidence archives unchanged (git diff + untracked check)." > "$E2E_EVIDENCE_DIR/0006/AC-6-archive-unchanged.log"
 
       - name: Upload 0005 media evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: 0005-media-evidence
-          path: specs/done/evidence/0005
+          path: ${{ runner.temp }}/e2e-evidence/0005
           if-no-files-found: warn
 
       - name: Upload admin E2E failure artifacts
@@ -306,7 +310,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: 0003-evidence
-          path: specs/done/evidence/0003
+          path: ${{ runner.temp }}/e2e-evidence/0003
           if-no-files-found: warn
 
       - name: Upload 0004 evidence
@@ -314,7 +318,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: 0004-evidence
-          path: specs/done/evidence/0004
+          path: ${{ runner.temp }}/e2e-evidence/0004
           if-no-files-found: warn
 
       - name: Upload 0006 pricing evidence
@@ -322,7 +326,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: 0006-pricing-evidence
-          path: specs/done/evidence/0006
+          path: ${{ runner.temp }}/e2e-evidence/0006
           if-no-files-found: warn
 
       - name: Tear down infrastructure

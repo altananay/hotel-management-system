@@ -10,6 +10,9 @@ deneyimini Playwright ile doğrular.
 - Ortak helper her spec'i kendi alt dizinine yazar:
   - `0002` smoke testleri → `<kök>/0002/`
   - `0003` design testleri → `<kök>/0003/`
+- CI, eski spec'lerin arşivlerini korumak için tüm E2E kanıtlarını
+  `$RUNNER_TEMP/e2e-evidence` altına yazar; `0001–0005` üzerinde `git diff`
+  ve untracked kontrolü bu sayede anlamlı kalır.
 - `0002` arşivi değiştirilmez. `0002` regresyon koşumunu **geçici bir kökle**
   çalıştırın; böylece arşivdeki PNG'ler yeniden yazılmaz:
 
@@ -19,8 +22,8 @@ deneyimini Playwright ile doğrular.
   E2E_EVIDENCE_DIR=$RUNNER_TEMP/evidence-0002 npx playwright test tests/smoke.spec.ts --grep @seeded
   ```
 
-- `0003` design testleri varsayılan köke yazar. `0002` izolasyonu SHA-256
-  manifestiyle kanıtlanır:
+- `0003` design testleri yerelde varsayılan köke, CI'da geçici köke yazar.
+  `0002` izolasyonu SHA-256 manifestiyle kanıtlanır:
 
   ```bash
   node scripts/sha256-manifest.mjs capture ../specs/done/evidence/0002 "$RUNNER_TEMP/0002-before.json"
@@ -129,7 +132,8 @@ Ayrıntılı altyapı, migration, seed ve backend/frontend başlatma adımları 
 - Local/CI'da TCMB scheduler kapalıdır (`HOTEL_PRICING_TCMB_ENABLED=false`);
   bayat kur uyarısı `db/seed/pricing` içindeki dünkü TCMB kuruyla gösterilir.
 - Kanıtlar: `specs/done/evidence/0006/`; `E2E_EVIDENCE_DIR` verilmezse bu dizine
-  yazılır. 0001–0005 arşivleri CI'da `git diff` + untracked kontrolüyle korunur.
+  yazılır. CI tüm E2E kanıtlarını `$RUNNER_TEMP/e2e-evidence` altına yazar;
+  0001–0005 arşivleri `git diff` + untracked kontrolüyle korunur.
 
 ## 0005 medya E2E
 
@@ -140,4 +144,5 @@ Ayrıntılı altyapı, migration, seed ve backend/frontend başlatma adımları 
   yayın → kapak → public `room-card-image` (WebP) → FRONT_DESK 403 →
   unpublish/placeholder → archive onayı.
 - Kanıtlar: `specs/done/evidence/0005/`; `E2E_EVIDENCE_DIR` verilmezse bu dizine
-  yazılır. 0001–0004 arşivleri SHA-256 manifestiyle korunur.
+  yazılır. CI'da geçici köke yazılır. 0001–0004 arşivleri SHA-256 manifestiyle
+  korunur.

@@ -42,3 +42,6 @@ Tarih: 2026-11-08
 - Kanıtlar: `AC-2-admin-pricing-{loading,empty,error,filled,delete}.png`,
   `AC-3-admin-fx-warning.png` (ayrı görsel), `AC-4-quote-response.md`,
   `AC-5-snapshot-immutability.md`.
+- CI, eski spec'lerin arşivlerini korumak için tüm E2E kanıtlarını
+  `$RUNNER_TEMP/e2e-evidence` altına yazar; 0001–0005 kontrolü tracked
+  dosyalarda `git diff` + untracked ile yapılır.
