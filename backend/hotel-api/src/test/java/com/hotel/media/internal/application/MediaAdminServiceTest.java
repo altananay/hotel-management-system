@@ -484,7 +484,8 @@ class MediaAdminServiceTest {
     }
 
     private static ActiveRoomType activeRoom() {
-        return new ActiveRoomType(RoomTypeId.of(ROOM_TYPE_ID), "Kemerli Süit", "Arched Suite");
+        return new ActiveRoomType(
+                RoomTypeId.of(ROOM_TYPE_ID), "Kemerli Süit", "Arched Suite", 2);
     }
 
     private static MediaVariantEntity variant(

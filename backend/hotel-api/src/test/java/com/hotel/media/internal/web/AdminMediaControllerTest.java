@@ -129,7 +129,8 @@ class AdminMediaControllerTest {
                                                 UUID.fromString(
                                                         "0199f2c0-0000-7000-8000-000000000301")),
                                         "Kemerli Mağara Süit",
-                                        "Arched Cave Suite")));
+                                        "Arched Cave Suite",
+                                        2)));
 
         mockMvc.perform(
                         get("/admin-api/media/room-types")
