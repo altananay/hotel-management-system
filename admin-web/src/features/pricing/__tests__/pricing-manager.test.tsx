@@ -226,6 +226,40 @@ describe("PricingManager (AC-2)", () => {
     );
   });
 
+  it("shouldDeleteBaseAndSeasonPriceRows_whenDeleteClicked", async () => {
+    const deleteUrls: string[] = [];
+    server.use(
+      http.delete(
+        `*/admin-api/pricing/rate-plans/${PLAN_ID}/prices/:rowId`,
+        ({ request }) => {
+          deleteUrls.push(request.url);
+          return new HttpResponse(null, { status: 204 });
+        },
+      ),
+      http.delete(
+        `*/admin-api/pricing/seasons/${SEASON_ID}/prices/:rowId`,
+        ({ request }) => {
+          deleteUrls.push(request.url);
+          return new HttpResponse(null, { status: 204 });
+        },
+      ),
+    );
+
+    renderManager();
+    await screen.findByTestId("admin-pricing-prices");
+    await screen.findByTestId("admin-pricing-season-prices");
+    const deleteButtons = await screen.findAllByTestId(
+      "admin-pricing-price-delete",
+    );
+    expect(deleteButtons.length).toBeGreaterThanOrEqual(2);
+    fireEvent.click(deleteButtons[0]);
+    fireEvent.click(deleteButtons[1]);
+
+    await waitFor(() => expect(deleteUrls).toHaveLength(2));
+    expect(deleteUrls[0]).toContain(`/rate-plans/${PLAN_ID}/prices/`);
+    expect(deleteUrls[1]).toContain(`/seasons/${SEASON_ID}/prices/`);
+  });
+
   it("shouldRenderFilledStateAndStaleFxWarning_whenDataExists", async () => {
     renderManager();
 

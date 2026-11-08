@@ -186,6 +186,28 @@ export function usePricingMutations() {
     onSuccess: invalidateAll,
   });
 
+  const deleteBasePrice = useMutation({
+    mutationFn: (input: { ratePlanId: string; priceRowId: string }) =>
+      withCsrfRetry((csrfToken) =>
+        adminApiSend(
+          `/admin-api/pricing/rate-plans/${input.ratePlanId}/prices/${input.priceRowId}`,
+          { method: "DELETE", csrfToken },
+        ),
+      ),
+    onSuccess: invalidateAll,
+  });
+
+  const deleteSeasonPrice = useMutation({
+    mutationFn: (input: { seasonId: string; priceRowId: string }) =>
+      withCsrfRetry((csrfToken) =>
+        adminApiSend(
+          `/admin-api/pricing/seasons/${input.seasonId}/prices/${input.priceRowId}`,
+          { method: "DELETE", csrfToken },
+        ),
+      ),
+    onSuccess: invalidateAll,
+  });
+
   const createManualPrice = useMutation({
     mutationFn: (input: {
       ratePlanId: string;
@@ -293,6 +315,8 @@ export function usePricingMutations() {
     deleteSeason,
     saveBasePrices,
     saveSeasonPrices,
+    deleteBasePrice,
+    deleteSeasonPrice,
     createManualPrice,
     updateManualPrice,
     deleteManualPrice,

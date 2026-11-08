@@ -37,7 +37,11 @@ const ADMIN_ERROR_MESSAGES: Record<string, string> = {
   "pricing.rate_plan_not_found": "Tarife planı bulunamadı.",
   "pricing.rate_plan_duplicate": "Bu plan kodu zaten kullanılıyor.",
   "pricing.rate_plan_in_use": "Varsayılan plan pasifleştirilemez.",
+  "pricing.rate_plan_price_not_found":
+    "Fiyat satırı bulunamadı; liste yenilendi.",
   "pricing.season_not_found": "Sezon bulunamadı.",
+  "pricing.season_price_not_found":
+    "Sezon fiyat satırı bulunamadı; liste yenilendi.",
   "pricing.season_duplicate": "Bu sezon kodu planda zaten kullanılıyor.",
   "pricing.season_overlap": "Sezon tarihleri aynı plandaki başka bir sezonla çakışıyor.",
   "pricing.manual_price_overlap": "Manuel fiyat aralığı başka bir manuel fiyatla çakışıyor.",

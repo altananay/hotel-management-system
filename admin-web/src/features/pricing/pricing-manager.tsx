@@ -48,6 +48,7 @@ function PriceMatrixSection({
   saving,
   isError,
   onRetry,
+  onDelete,
 }: {
   title: string;
   testId: string;
@@ -58,6 +59,7 @@ function PriceMatrixSection({
   saving: boolean;
   isError?: boolean;
   onRetry?: () => void;
+  onDelete?: (rowId: string) => void;
 }) {
   if (isError) {
     return (
@@ -106,7 +108,8 @@ function PriceMatrixSection({
                 <th className="py-2 pr-4">Misafir</th>
                 <th className="py-2 pr-4">TRY Gece Fiyatı</th>
                 <th className="py-2 pr-4">Güncelleme</th>
-                <th className="py-2">Durum</th>
+                <th className="py-2 pr-4">Durum</th>
+                <th className="py-2">İşlem</th>
               </tr>
             </thead>
             <tbody>
@@ -141,11 +144,23 @@ function PriceMatrixSection({
                       <td className="py-2 pr-4 text-xs text-slate-500">
                         {formatDateTime(storedRow?.updatedAt ?? "")}
                       </td>
-                      <td className="py-2">
+                      <td className="py-2 pr-4">
                         {roomType.active ? (
                           <span className="text-emerald-700">Aktif</span>
                         ) : (
                           <span className="text-slate-500">Pasif / salt okunur</span>
+                        )}
+                      </td>
+                      <td className="py-2">
+                        {storedRow && roomType.active && onDelete && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            data-testid="admin-pricing-price-delete"
+                            onClick={() => onDelete(storedRow.id)}
+                          >
+                            Sil
+                          </Button>
                         )}
                       </td>
                     </tr>
@@ -914,6 +929,14 @@ export function PricingManager() {
             saving={mutations.saveBasePrices.isPending}
             isError={basePricesQuery.isError}
             onRetry={() => void basePricesQuery.refetch()}
+            onDelete={(rowId) =>
+              void run(() =>
+                mutations.deleteBasePrice.mutateAsync({
+                  ratePlanId: selectedPlan.id,
+                  priceRowId: rowId,
+                }),
+              )
+            }
           />
 
           {selectedSeasonId && (
@@ -936,6 +959,14 @@ export function PricingManager() {
               saving={mutations.saveSeasonPrices.isPending}
               isError={seasonPricesQuery.isError}
               onRetry={() => void seasonPricesQuery.refetch()}
+              onDelete={(rowId) =>
+                void run(() =>
+                  mutations.deleteSeasonPrice.mutateAsync({
+                    seasonId: selectedSeasonId,
+                    priceRowId: rowId,
+                  }),
+                )
+              }
             />
           )}
 
