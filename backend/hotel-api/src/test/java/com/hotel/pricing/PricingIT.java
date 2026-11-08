@@ -2,6 +2,9 @@ package com.hotel.pricing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.hotel.pricing.api.FxSource;
 import com.hotel.pricing.api.PriceSnapshot;
@@ -38,10 +41,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -52,6 +58,7 @@ import tools.jackson.databind.ObjectMapper;
 /** Integration tests for pricing schema, admin services and the public quote API (AC-1..AC-5). */
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class PricingIT {
 
@@ -105,6 +112,7 @@ class PricingIT {
 
     @Autowired private JdbcTemplate jdbcTemplate;
     @Autowired private ObjectMapper objectMapper;
+    @Autowired private MockMvc mockMvc;
     @Autowired private RatePlanService ratePlanService;
     @Autowired private SeasonService seasonService;
     @Autowired private PriceMatrixService priceMatrixService;
@@ -324,6 +332,28 @@ class PricingIT {
                 "Açıklama",
                 "Description",
                 2);
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    void shouldReturn404OverHttpWhenDeletingBasePriceThroughAnotherPlan() throws Exception {
+        var planA = ratePlanService.create("PLAN-A", "Plan A", "Plan A", true);
+        var planB = ratePlanService.create("PLAN-B", "Plan B", "Plan B", true);
+        priceMatrixService.saveBasePrices(
+                planB.id(),
+                List.of(
+                        new PriceMatrixService.PriceRowCommand(
+                                ROOM_TYPE_2, 1, new BigDecimal("100.00"))));
+        UUID rowId = priceMatrixService.getBaseMatrix(planB.id()).rows().getFirst().id();
+
+        mockMvc.perform(
+                        delete(
+                                "/admin-api/pricing/rate-plans/{planId}/prices/{rowId}",
+                                planA.id(),
+                                rowId))
+                .andExpect(status().isNotFound())
+                .andExpect(
+                        jsonPath("$.code").value(PricingErrorCodes.RATE_PLAN_PRICE_NOT_FOUND));
     }
 
     @Test

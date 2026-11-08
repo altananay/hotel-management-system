@@ -6,10 +6,11 @@ Tarih: 2026-11-08
 
 - `backend/hotel-api`: `.\mvnw.cmd -B verify`
   - Sonuç: `BUILD SUCCESS`
-  - Unit + integration: `Tests run: 73, Failures: 0, Errors: 0, Skipped: 0`
-  - `PricingIT`: 15 test (şema, TRY/EUR/USD, manuel fiyat/kur, sezon fallback,
+  - Unit + integration: `Tests run: 74, Failures: 0, Errors: 0, Skipped: 0`
+  - `PricingIT`: 16 test (şema, TRY/EUR/USD, manuel fiyat/kur, sezon fallback,
     default bütünlüğü, overlap/duplicate, snapshot değişmezliği, ayar etkisi,
-    30/31 gece sınırı, baz/sezon fiyat silme, yanlış plan/sezon sahipliği).
+    30/31 gece sınırı, baz/sezon fiyat silme, yanlış plan/sezon sahipliği ve
+    yanlış plan üzerinden HTTP `DELETE` 404).
   - `AdminPricingControllerTest`: 8 test (401/403, 204 delete, 404 yanlış/eksik satır,
     503, eksik liste, MANAGER erişimi).
   - `PricingPropertiesTest`: varsayılan 30 gece, property binding, geçersiz değer.
